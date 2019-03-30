@@ -1,0 +1,12 @@
+# LightFX
+A self-contained cross-platform lightmap baker,
+based on Embree and Websocket++.
+
+All the necessary repos are embedded as git submodules,
+integrated as one CMake project. No additional dependencies required.
+
+# Build
+* clone this repo with --recursive flag, or if you didn't, run:
+`git submodule update --init --recursive`
+* run the `build_boost` script that suits your system, if you are building for 64-bit platforms, pass `64` or `32_64`(Apple Darwin gcc) as the first parameter. Don't misspell.
+* if everything builds without hiccups, you should be able to use CMake to configure the project environment smoothly.

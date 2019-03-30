@@ -1,0 +1,12 @@
+[submodule "ext/websocketpp"]
+	path = ext/websocketpp
+	url = https://github.com/zaphoyd/websocketpp
+[submodule "ext/boost"]
+	path = ext/boost
+	url = https://github.com/boostorg/boost
+[submodule "ext/embree"]
+	path = ext/embree
+	url = https://github.com/embree/embree
+[submodule "ext/tbb"]
+	path = ext/tbb
+	url = https://github.com/wjakob/tbb
