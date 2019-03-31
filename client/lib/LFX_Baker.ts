@@ -1,8 +1,10 @@
 'use strict';
 
-import fs = require("fs");
-import WebSocket = require('ws');
-import {LFX_World, LFX_Buffer, LFX_File, LFX_TerrainLightMapInfo, LFX_MeshLightMapInfo} from './LFX_Types';
+import ps from 'path';
+import fs from 'fs';
+import WebSocket from 'ws';
+import { LFX_World, LFX_Buffer, LFX_File, LFX_TerrainLightMapInfo,
+    LFX_MeshLightMapInfo } from './LFX_Types';
 
 const LFX_FILE_VERSION = 0x2000;
 const LFX_FILE_TERRAIN = 0x01;
@@ -33,7 +35,7 @@ export class LFX_Baker {
 
     //
     _connected: boolean = false;
-    _socket: WebSocket | null = null;  
+    _socket: WebSocket | null = null;
 
     constructor() {
         LFX_Baker.Instance = this;
@@ -46,13 +48,13 @@ export class LFX_Baker {
 
         //
         this._socket.onopen = function(evt) {
-            console.log("LFX Connection opened");
+            console.log('LFX Connection opened');
             LFX_Baker.Instance._connected = true;
         }
 
         //
         this._socket.onclose = function(evt) {
-            console.log("LFX Connection closed");
+            console.log('LFX Connection closed');
             LFX_Baker.Instance._socket = null;
             LFX_Baker.Instance._connected = false;
 
@@ -61,7 +63,7 @@ export class LFX_Baker {
             LFX_Baker.Instance.Progress = 0;
         }
 
-        // 
+        //
         this._socket.onmessage = function(evt) {
             let data = evt.data as Uint8Array;
             let buff = new LFX_Buffer;
@@ -73,7 +75,7 @@ export class LFX_Baker {
 
         //
         this._socket.onerror = function(evt) {
-           console.log("LFX Connection error " + evt.message);
+           console.log('LFX Connection error ' + evt.message);
         }
     }
 
@@ -93,7 +95,7 @@ export class LFX_Baker {
         let length = 4; // head
         if (data != null) {
             length += data.byteLength;
-        } 
+        }
 
         let buff = new ArrayBuffer(length);
         let dview = new DataView(buff);
@@ -116,19 +118,19 @@ export class LFX_Baker {
     //
     delDir(path: string) {
         if(fs.existsSync(path)){
-            
+
         }
     }
 
     Upload(asset_path: string) {
         let buff = new LFX_Buffer;
 
-        let immediatePath = process.cwd() + "/lightfx";
+        let immediatePath = ps.resolve('lightfx');
         if (fs.existsSync(immediatePath)) {
             // 删除零时文件
             let files = fs.readdirSync(immediatePath);
             files.forEach((file, index) => {
-                let curPath = immediatePath + "/" + file;
+                let curPath = immediatePath + '/' + file;
                 if(!fs.statSync(curPath).isDirectory()){
                     fs.unlinkSync(curPath);
                 }
@@ -138,18 +140,18 @@ export class LFX_Baker {
             fs.mkdirSync(immediatePath);
         }
 
-        let outputPath = process.cwd() + "/lightfx/output";
+        let outputPath = ps.resolve('lightfx/output');
         if (fs.existsSync(outputPath)) {
             // 删除输出文件
             let files = fs.readdirSync(outputPath);
             files.forEach((file, index) => {
-                let curPath = outputPath + "/" + file;
+                let curPath = outputPath + '/' + file;
                 if(!fs.statSync(curPath).isDirectory()){
                     fs.unlinkSync(curPath);
                 }
             });
         }
-      
+
         // Head
         buff.WriteInt32(LFX_FILE_VERSION);
         buff.WriteString(this.World.Name);
@@ -229,15 +231,15 @@ export class LFX_Baker {
         buff.WriteInt32(LFX_FILE_EOF);
 
         // Save
-        fs.writeFileSync(immediatePath + "/lfx.i", buff.Buffer);
+        fs.writeFileSync(immediatePath + '/lfx.i', buff.Buffer);
 
         // Copy Textures
         //
         for (let i = 0; i < this.World.Textures.length; ++i) {
-            let data = fs.readFileSync(asset_path + "/" + this.World.Textures[i]);
-            let target = this.World.Textures[i].replace("/", "$");
-            
-            fs.writeFileSync(immediatePath + "/" + target, data);
+            let data = fs.readFileSync(asset_path + '/' + this.World.Textures[i]);
+            let target = this.World.Textures[i].replace('/', '$');
+
+            fs.writeFileSync(immediatePath + '/' + target, data);
         }
     }
 
@@ -245,9 +247,9 @@ export class LFX_Baker {
     Download() {
         let file = new LFX_File;
 
-        let outputPath = process.cwd() + "/lightfx/output";
+        let outputPath = ps.resolve('lightfx/output');
 
-        let buff = fs.readFileSync(outputPath + "/lfx.o");
+        let buff = fs.readFileSync(ps.resolve(outputPath, 'lfx.o'));
         if (buff != null) {
             let stream = new LFX_Buffer;
             stream.Assign(buff);
@@ -278,7 +280,7 @@ export class LFX_Baker {
                     let count = stream.ReadInt();
                     for (let i = 0; i < count; ++i) {
                         let info = new LFX_MeshLightMapInfo;
-                        
+
                         info.Id = stream.ReadInt();
                         info.Index = stream.ReadInt();
                         info.Offset[0] = stream.ReadFloat();
@@ -291,7 +293,7 @@ export class LFX_Baker {
                 }
                 else {
                     // error
-                    console.log("LightFX unknown chunk " + cid);
+                    console.log('LightFX unknown chunk ' + cid);
                 }
 
             } while (1);
@@ -313,10 +315,10 @@ export class LFX_Baker {
         this.Send(LFX_PK_STOP, null);
     }
 
-    // 更新消息 
+    // 更新消息
     //
     ProcessMessage(data: LFX_Buffer) {
-        let pid = data.ReadInt(); 
+        let pid = data.ReadInt();
 
         if (pid == LFX_PK_PROGRESS) {
             this.OnProgress(data);
@@ -325,7 +327,7 @@ export class LFX_Baker {
             this.OnLog(data);
         }
         else {
-            console.log("Unknown message " + pid);
+            console.log('Unknown message ' + pid);
         }
     }
 

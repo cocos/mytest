@@ -4,7 +4,7 @@
 //
 export class LFX_Settings {
     Server: string = "localhost:9002";
-    
+
     // 环境光照
     Ambient: number[] = [0, 0, 0];
     // 天空辐照度(用于全局光照)
@@ -16,7 +16,7 @@ export class LFX_Settings {
     // Gamma值
     Gamma = 2.2;
     // 全局光照缩放
-    GIScale = 0.5; 
+    GIScale = 0.5;
     // 全局光照采样数
     GISamples = 25;
     // 全局光照光线最大跟踪次数
@@ -38,7 +38,7 @@ export class LFX_Triangle {
 }
 
 export class LFX_Material {
-    // 
+    //
     Diffuse: number[] = [1, 1, 1];
     // 纹理，(所有'/'或者'\\'都必须转换成'$')
     Texture: string = "";
@@ -257,10 +257,10 @@ export class LFX_World {
                     return tex;
                 }
             }
-    
+
             this.Textures.push(tex);
         }
-        
+
         return tex;
     }
 }

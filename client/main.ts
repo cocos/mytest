@@ -1,6 +1,15 @@
-import { LFX_Vertex, LFX_Mesh, LFX_Triangle, LFX_Material, LFX_Light, LFX_File } from './lib/LFX_Types';
-import { LFX_Baker, LFX_STAGE_START, LFX_STAGE_DIRECT_LIGHTING, LFX_STAGE_INDIRECT_LIGHTING, LFX_STAGE_POST_PROCESS, LFX_STAGE_END } from './lib/LFX_Baker';
-import exec = require('child_process')
+'use strict';
+
+import ps from 'path';
+import exec from 'child_process';
+import { LFX_Vertex, LFX_Mesh, LFX_Triangle, LFX_Material,
+    LFX_Light } from './lib/LFX_Types';
+import { LFX_Baker, LFX_STAGE_START, LFX_STAGE_DIRECT_LIGHTING,
+    LFX_STAGE_INDIRECT_LIGHTING, LFX_STAGE_POST_PROCESS,
+    LFX_STAGE_END } from './lib/LFX_Baker';
+
+// change here if using custom build path
+const LFX_SERVER = ps.resolve(__dirname, '../build/Release/LightFX');
 
 let Baker = new LFX_Baker;
 
@@ -11,9 +20,9 @@ let Baker = new LFX_Baker;
 //
 if (1) {
     // 场景名字
-    Baker.World.Name = "Test";
+    Baker.World.Name = 'Test';
     // 服务器地址
-    Baker.World.Settings.Server = "localhost:9002";
+    Baker.World.Settings.Server = 'localhost:9002';
     // 环境光照
     Baker.World.Settings.Ambient = [0.0, 0.0, 0.0];
     // 天空辐照度(用于全局光照)
@@ -43,7 +52,7 @@ if (1) {
 //
 if (1) {
     let plane = new LFX_Mesh;
-    plane.Id = "plane1";
+    plane.Id = 'plane1';
     plane.CastShadow = false;
     plane.RecieveShadow = true;
     plane.LightMapSize = 1024;
@@ -55,28 +64,28 @@ if (1) {
     v0.UV = [0, 0];
     v0.LUV = [0, 0]
     plane.VertexBuffer.push(v0);
-    
+
     let v1 = new LFX_Vertex;
     v1.Position = [100, 0, 0];
     v1.Normal = [0, 1, 0];
     v1.UV = [1, 0];
     v1.LUV = [1, 0];
     plane.VertexBuffer.push(v1);
-    
+
     let v2 = new LFX_Vertex;
     v2.Position = [0, 0, 100];
     v2.Normal = [0, 1, 0];
     v2.UV = [0, 1];
     v2.LUV = [0, 1];
     plane.VertexBuffer.push(v2);
-    
+
     let v3 = new LFX_Vertex;
     v3.Position = [100, 0, 100];
     v3.Normal = [0, 1, 0];
     v3.UV = [1, 1];
     v3.LUV = [1, 1];
     plane.VertexBuffer.push(v3);
-    
+
     // 三角形
     let tri0 = new LFX_Triangle;
     tri0.Index = [0, 2, 1];
@@ -91,7 +100,7 @@ if (1) {
     // 材质
     let mtl = new LFX_Material;
     mtl.Diffuse = [1, 1, 1];
-    mtl.Texture = Baker.World.AddUniqueTexture(""); // 相对路径
+    mtl.Texture = Baker.World.AddUniqueTexture(''); // 相对路径
     plane.MaterialBuffer.push(mtl);
 
     Baker.World.Meshes.push(plane);
@@ -102,7 +111,7 @@ if (1) {
 //
 if (1) {
     let plane = new LFX_Mesh;
-    plane.Id = "plane2";
+    plane.Id = 'plane2';
     plane.CastShadow = true;
     plane.RecieveShadow = false;
     plane.LightMapSize = 0;
@@ -114,21 +123,21 @@ if (1) {
     v0.UV = [0, 0];
     v0.LUV = [0, 0]
     plane.VertexBuffer.push(v0);
-    
+
     let v1 = new LFX_Vertex;
     v1.Position = [50, 10, 0];
     v1.Normal = [0, 1, 0];
     v1.UV = [1, 0];
     v1.LUV = [1, 0];
     plane.VertexBuffer.push(v1);
-    
+
     let v2 = new LFX_Vertex;
     v2.Position = [0, 10, 50];
     v2.Normal = [0, 1, 0];
     v2.UV = [0, 1];
     v2.LUV = [0, 1];
     plane.VertexBuffer.push(v2);
-    
+
     let v3 = new LFX_Vertex;
     v3.Position = [50, 10, 50];
     v3.Normal = [0, 1, 0];
@@ -140,7 +149,7 @@ if (1) {
         plane.VertexBuffer[i].Position[0] += 25;
         plane.VertexBuffer[i].Position[2] += 25;
     }
-    
+
     // 三角形
     let tri0 = new LFX_Triangle;
     tri0.Index = [0, 2, 1];
@@ -155,7 +164,7 @@ if (1) {
     // 材质
     let mtl = new LFX_Material;
     mtl.Diffuse = [1, 1, 1];
-    mtl.Texture = Baker.World.AddUniqueTexture(""); // 相对路径
+    mtl.Texture = Baker.World.AddUniqueTexture(''); // 相对路径
     plane.MaterialBuffer.push(mtl);
 
     Baker.World.Meshes.push(plane);
@@ -234,7 +243,7 @@ class App {
 
     constructor() {
         // 启动服务器
-        exec.execFile(process.cwd() + "/LightFX.exe");
+        exec.execFile(LFX_SERVER, { cwd: __dirname });
 
         // 链接服务器
         this._baker.Connect();
@@ -248,7 +257,7 @@ class App {
             if (!this._baker.Started) {
                 // 开始烘培
                 if (this._baker._connected) {
-                    this._baker.Upload("asset目录");
+                    this._baker.Upload('asset目录');
                     this._baker.Start();
                 }
             }
@@ -257,29 +266,29 @@ class App {
                 if (this._stage != this._baker.Stage) {
                     this._stage = this._baker.Stage;
                     if (this._stage == LFX_STAGE_START) {
-                        console.log("Start");
+                        console.log('Start');
                     }
                     else if (this._stage == LFX_STAGE_DIRECT_LIGHTING) {
-                        console.log("Direct lighting");
+                        console.log('Direct lighting');
                     }
                     else if (this._stage == LFX_STAGE_INDIRECT_LIGHTING) {
-                        console.log("Indirect lighting");
+                        console.log('Indirect lighting');
                     }
                     else if (this._stage == LFX_STAGE_POST_PROCESS) {
-                        console.log("Post process");
+                        console.log('Post process');
                     }
-                } 
+                }
 
                 // 更新进度条
                 if (this._progress != this._baker.Progress) {
-                    
+
                     this._progress = this._baker.Progress
                     console.log(this._progress);
                 }
 
                 // 结束了
                 if (this._stage == LFX_STAGE_END) {
-                    console.log("End");
+                    console.log('End');
 
                     let file = this._baker.Download();
 
@@ -288,10 +297,10 @@ class App {
                         // 对应output/LFX_Mesh_xxxx.png
 
                         let info = file.MeshInfos[i];
-                        console.log("Mesh " + info.Id + ":" +
-                        " Index(" + info.Index + ") " +
-                        " Offset(" + info.Offset[0] + ", " + info.Offset[1] + ") " +
-                        " Scale(" + info.Scale[0] + ", " + info.Scale[1] + ")");
+                        console.log('Mesh ' + info.Id + ':' +
+                        ' Index(' + info.Index + ') ' +
+                        ' Offset(' + info.Offset[0] + ', ' + info.Offset[1] + ') ' +
+                        ' Scale(' + info.Scale[0] + ', ' + info.Scale[1] + ')');
                     }
 
                     // 地形的Lightmap信息
@@ -304,10 +313,9 @@ class App {
                     clearInterval(timer);
                 }
             }
-            
+
         }, 100);
     }
 }
-
 
 export = new App;

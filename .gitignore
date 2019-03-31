@@ -27,3 +27,6 @@ x64
 /*.cpp
 
 **/node_modules
+/client/**/*.js
+/client/**/*.map
+/client/lightfx
