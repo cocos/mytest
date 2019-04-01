@@ -30,6 +30,7 @@ add_executable(LightFX
   include/LFX_TextureAtlas.h
   include/LFX_Vec3.inl
   include/LFX_Baker.h
+  include/LFX_AOBaker.h
   include/LFX_Geom.h
   include/LFX_ILBakerSampling.h
   include/LFX_Rasterizer.h
@@ -54,6 +55,7 @@ add_executable(LightFX
   include/LFX_Vec2.inl
   include/lodepng.h
 
+  src/LFX_AOBaker.cpp
   src/LFX_Baker.cpp
   src/LFX_ILBakerRandom.cpp
   src/LFX_ImagePNG.cpp
