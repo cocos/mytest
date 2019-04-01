@@ -34,6 +34,10 @@ namespace LFX {
 					_calcuIndirectLightingTerrain();
 					break;
 
+				case World::STAGE_AMBIENT_OCCLUSION:
+					_calcuAmbientOcclusionTerrain();
+					break;
+
 				case World::STAGE_POST_PROCESS:
 					_postProcess();
 					break;
@@ -47,6 +51,10 @@ namespace LFX {
 
 				case World::STAGE_INDIRECT_LIGHTING:
 					_calcuIndirectLightingMesh();
+					break;
+
+				case World::STAGE_AMBIENT_OCCLUSION:
+					_calcuAmbientOcclusionMesh();
 					break;
 
 				case World::STAGE_POST_PROCESS:
@@ -163,6 +171,24 @@ namespace LFX {
 			if (lights.size() > 0) {
 				World::Instance()->GetTerrain()->CalcuIndirectLighting(xblock, yblock, lights);
 			}
+		}
+	}
+
+	void LFX_Baker::_calcuAmbientOcclusionMesh()
+	{
+		if (World::Instance()->GetSetting()->AOLevel > 0) {
+			Mesh * pMesh = World::Instance()->GetMesh(mIndex);
+
+			if (pMesh->GetLightingMapSize() > 0) {
+				pMesh->CalcuAmbientOcclusion();
+			}
+		}
+	}
+
+	void LFX_Baker::_calcuAmbientOcclusionTerrain()
+	{
+		if (World::Instance()->GetSetting()->AOLevel > 0) {
+			//...
 		}
 	}
 

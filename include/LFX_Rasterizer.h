@@ -32,7 +32,6 @@ namespace LFX {
 		virtual void DoRasterize2() = 0;
 
 		virtual void DoLighting(const std::vector<Light *> & lights) = 0;
-		virtual void DoAmbientOcclusion() = 0;
 	};
 
 

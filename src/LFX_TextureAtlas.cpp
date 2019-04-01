@@ -20,7 +20,7 @@ namespace LFX {
 		const Rectangle<float> * pItem = NULL;
 		for (size_t i = 0; i < mAtlasArray.size(); ++i)
 		{
-			pItem = _AtlasInsert(mAtlasArray[i], pixels, w, h);
+			pItem = _AtlasInsert(mAtlasArray[i], pixels, w, h, mOptions.Border, mOptions.Border);
 			if (pItem != NULL)
 			{
 				item.index = i;
@@ -39,9 +39,19 @@ namespace LFX {
 		Atlas * pNewAtlas = new Atlas;
 		pNewAtlas->Width = width;
 		pNewAtlas->Height = height;
-		pNewAtlas->Pixels.resize(pNewAtlas->Width * pNewAtlas->Height * 3);
-		pItem = _AtlasInsert(pNewAtlas, pixels, w, h);
+		pNewAtlas->Pixels.resize(pNewAtlas->Width * pNewAtlas->Height * mOptions.Channels);
 		mAtlasArray.push_back(pNewAtlas);
+		
+		int uborder = mOptions.Border;
+		int vborder = mOptions.Border;
+		if (width < w + mOptions.Border * 2) {
+			uborder = 0;
+		}
+		if (height < h + mOptions.Border * 2) {
+			vborder = 0;
+		}
+
+		pItem = _AtlasInsert(pNewAtlas, pixels, w, h, uborder, vborder);
 
 		item.index = mAtlasArray.size() - 1;
 		item.offsetU = pItem->x;
@@ -52,16 +62,16 @@ namespace LFX {
 		return mAtlasArray.size() - 1;
 	}
 
-	const Rectangle<float> * TextureAtlasPacker::_AtlasInsert(Atlas * pAtlas, unsigned char * pixels, int w, int h)
+	const Rectangle<float> * TextureAtlasPacker::_AtlasInsert(Atlas * pAtlas, unsigned char * pixels, int w, int h, int uborder, int vborder)
 	{
 		int tw = w;
-		int th =h;
+		int th = h;
 		int aw = pAtlas->Width;
 		int ah = pAtlas->Height;
 
 		Rectangle<int> region;
-		region.w = tw + mOptions.Border * 2;
-		region.h = th + mOptions.Border * 2;
+		region.w = tw + uborder * 2;
+		region.h = th + vborder * 2;
 
 		for (int v = 0; v < ah; ++v) {
 			region.y = v;
@@ -78,7 +88,7 @@ namespace LFX {
 					u = std::max(u, test->right() - 1);
 				}
 				else {
-					return _AtlasAppend(pAtlas, pixels, region);
+					return _AtlasAppend(pAtlas, pixels, region, uborder, vborder);
 				}
 			}
 		}
@@ -98,17 +108,18 @@ namespace LFX {
 		return NULL;
 	}
 
-	const Rectangle<float> * TextureAtlasPacker::_AtlasAppend(Atlas * pAtlas, unsigned char * pixels, const Rectangle<int> & region)
+	const Rectangle<float> * TextureAtlasPacker::_AtlasAppend(Atlas * pAtlas, unsigned char * pixels, const Rectangle<int> & region, int uborder, int vborder)
 	{
-		int width = region.w - mOptions.Border * 2;
-		int height = region.h - mOptions.Border * 2;
+		int width = region.w - uborder * 2;
+		int height = region.h - vborder * 2;
+		int channels = mOptions.Channels;
 
 		for (int j = 0; j < region.w; ++j)
 		{
 			for (int i = 0; i < region.h; ++i)
 			{
-				int su = i - mOptions.Border;
-				int sv = j - mOptions.Border;
+				int su = i - uborder;
+				int sv = j - vborder;
 				su = Clamp<int>(su, 0, width - 1);
 				sv = Clamp<int>(sv, 0, height - 1);
 				int srcIndex = j * width + i;
@@ -117,15 +128,15 @@ namespace LFX {
 				int dv = region.y + j;
 				int dstIndex = (dv * pAtlas->Width + du);
 
-				pAtlas->Pixels[dstIndex * 3 + 0] = pixels[srcIndex * 3 + 0];
-				pAtlas->Pixels[dstIndex * 3 + 1] = pixels[srcIndex * 3 + 1];
-				pAtlas->Pixels[dstIndex * 3 + 2] = pixels[srcIndex * 3 + 2];
+				pAtlas->Pixels[dstIndex * channels + 0] = pixels[srcIndex * channels + 0];
+				pAtlas->Pixels[dstIndex * channels + 1] = pixels[srcIndex * channels + 1];
+				pAtlas->Pixels[dstIndex * channels + 2] = pixels[srcIndex * channels + 2];
 			}
 		}
 
 		Rectangle<float> ai;
-		ai.x = (region.x + mOptions.Border) / (float)pAtlas->Width;
-		ai.y = (region.y + mOptions.Border) / (float)pAtlas->Height;
+		ai.x = (region.x + uborder) / (float)pAtlas->Width;
+		ai.y = (region.y + vborder) / (float)pAtlas->Height;
 		ai.w = width / (float)pAtlas->Width;
 		ai.h = height / (float)pAtlas->Height;
 		pAtlas->Items.push_back(ai);

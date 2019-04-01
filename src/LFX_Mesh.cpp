@@ -1,5 +1,6 @@
 #include "LFX_Mesh.h"
 #include "LFX_World.h"
+#include "LFX_AOBaker.h"
 #include "LFX_ILBakerRaytrace.h"
 #include "LFX_EmbreeScene.h"
 
@@ -479,7 +480,9 @@ namespace LFX {
 						color.z += baker._ctx.BakeOutput[v * rasterizer->_width + u].z;
 					}
 				}
+
 				color /= (float)msaa * msaa;
+
 				ilm[index++] += color;
 			}
 		}
@@ -489,6 +492,40 @@ namespace LFX {
 
 	void Mesh::CalcuAmbientOcclusion()
 	{
+		AOBaker baker;
+
+		int msaa = World::Instance()->GetSetting()->GetBeastMSAA(mLightingMapSize, mLightingMapSize);
+		int width = msaa * mLightingMapSize;
+		int height = msaa * mLightingMapSize;
+
+		RasterizerSoft* rasterizer = new RasterizerSoft(this, width, height);
+		rasterizer->DoRasterize2();
+
+		for (int j = 0; j < mLightingMapSize; ++j)
+		{
+			for (int i = 0; i < mLightingMapSize; ++i)
+			{
+				Float3 color = Float3(0, 0, 0);
+
+				for (int n = 0; n < msaa; ++n)
+				{
+					for (int m = 0; m < msaa; ++m)
+					{
+						int x = i * msaa + m;
+						int y = j * msaa + n;
+
+						const RVertex& p = rasterizer->_rchart[y * rasterizer->_width + x];
+						color += baker.Calcu(p, LFX_MESH | LFX_TERRAIN, this);
+					}
+				}
+
+				color /= (float)msaa * msaa;
+
+				mLightingMap[j * mLightingMapSize + i] = mLightingMap[j * mLightingMapSize + i] * color;
+			}
+		}
+
+		delete rasterizer;
 	}
 
 	void Mesh::PostProcess()

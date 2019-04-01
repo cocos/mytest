@@ -51,6 +51,10 @@ namespace LFX {
 		stream >> mSetting.GIScale;
 		stream >> mSetting.GISamples;
 		stream >> mSetting.GIPathLength;
+		stream >> mSetting.AOLevel;
+		stream >> mSetting.AOStrength;
+		stream >> mSetting.AORadius;
+		stream >> mSetting.AOColor;
 		stream >> mSetting.Threads;
 
 		int ckId = 0;
@@ -145,11 +149,12 @@ namespace LFX {
 
 		// Pack and save terrain lightmap
 		if (mTerrain && !mSetting.Selected) {
-			int LMapSize = mTerrain->GetDesc().LMapSize;
+			int LSize = mTerrain->GetDesc().LMapSize;
 
 			TextureAtlasPacker::Options options;
 			options.Width = mSetting.Size;
 			options.Height = mSetting.Size;
+			options.Channels = mSetting.RGBEFormat ? 4 : 3;
 			options.Border = 0;
 			options.Height = 0;
 
@@ -160,7 +165,7 @@ namespace LFX {
 				for (int i = 0; i < mTerrain->GetDesc().BlockCount.x; ++i)
 				{
 					std::vector<Float3> colors;
-					colors.resize(LMapSize * LMapSize);
+					colors.resize(LSize * LSize);
 
 					mTerrain->GetLightingMap(i, j, colors);
 					for (int k = 0; k < colors.size(); ++k)
@@ -170,16 +175,32 @@ namespace LFX {
 					}
 
 					Image image;
-					image.pixels = new BYTE[LMapSize * LMapSize * 3];
-					image.width = LMapSize;
-					image.height = LMapSize;
-					image.channels = 3;
+					image.width = LSize;
+					image.height = LSize;
+					if (!mSetting.RGBEFormat) {
+						image.pixels = new BYTE[LSize * LSize * 3];
+						image.channels = 3;
+						for (int k = 0; k < colors.size(); ++k)
+						{
+							colors[k].saturate();
 
-					for (int k = 0; k < colors.size(); ++k)
-					{
-						image.pixels[k * 3 + 0] = (BYTE)(colors[k].x * 255);
-						image.pixels[k * 3 + 1] = (BYTE)(colors[k].y * 255);
-						image.pixels[k * 3 + 2] = (BYTE)(colors[k].z * 255);
+							image.pixels[k * 3 + 0] = (BYTE)(colors[k].x * 255);
+							image.pixels[k * 3 + 1] = (BYTE)(colors[k].y * 255);
+							image.pixels[k * 3 + 2] = (BYTE)(colors[k].z * 255);
+						}
+					}
+					else {
+						image.pixels = new BYTE[LSize * LSize * 4];
+						image.channels = 4;
+						for (int k = 0; k < colors.size(); ++k)
+						{
+							RGBE rgbe = RGBE_FROM(colors[k]);
+
+							image.pixels[k * 4 + 0] = rgbe.r;
+							image.pixels[k * 4 + 1] = rgbe.g;
+							image.pixels[k * 4 + 2] = rgbe.b;
+							image.pixels[k * 4 + 3] = rgbe.e;
+						}
 					}
 
 					TextureAtlasPacker::Item item;
@@ -218,16 +239,16 @@ namespace LFX {
 				for (int i = 0; i < mTerrain->GetDesc().BlockCount.x; ++i)
 				{
 					const auto & item = packed_items[blockIdx++];
-					float offset = Terrain::kLMapBorder / (float)(LMapSize);
+					float offset = Terrain::kLMapBorder / (float)(LSize);
 					float scale = 1 - offset * 2;
 
-					OutLightMapInfo remapInfo;
+					LightMapInfo remapInfo;
 					remapInfo.index = item.index;
 					remapInfo.offset[0] = item.offsetU + offset * item.scaleU;
 					remapInfo.offset[1] = item.offsetV + offset * item.scaleV;
 					remapInfo.scale[0] = item.scaleU * scale;
 					remapInfo.scale[1] = item.scaleV * scale;
-					fwrite(&remapInfo, sizeof(OutLightMapInfo), 1, fp);
+					fwrite(&remapInfo, sizeof(LightMapInfo), 1, fp);
 				}
 			}
 		}
@@ -236,7 +257,8 @@ namespace LFX {
 		TextureAtlasPacker::Options options;
 		options.Width = mSetting.Size;
 		options.Height = mSetting.Size;
-		options.Border = 0;
+		options.Channels = mSetting.RGBEFormat ? 4 : 3;
+		options.Border = 1;
 		options.Height = 0;
 		TextureAtlasPacker packer(options);
 
@@ -251,21 +273,37 @@ namespace LFX {
 			for (int k = 0; k < colors.size(); ++k)
 			{
 				colors[k] = Pow(colors[k], 1.0f / World::Instance()->GetSetting()->Gamma);
-				Saturate(colors[k]);
 			}
 
 			int LSize = mesh->GetLightingMapSize();
 
 			LFX::Image image;
-			image.pixels = new BYTE[LSize * LSize * 3];
 			image.width = LSize;
 			image.height = LSize;
-			image.channels = 3;
-			for (int k = 0; k < colors.size(); ++k)
-			{
-				image.pixels[k * 3 + 0] = (BYTE)(colors[k].x * 255);
-				image.pixels[k * 3 + 1] = (BYTE)(colors[k].y * 255);
-				image.pixels[k * 3 + 2] = (BYTE)(colors[k].z * 255);
+			if (!mSetting.RGBEFormat) {
+				image.pixels = new BYTE[LSize * LSize * 3];
+				image.channels = 3;
+				for (int k = 0; k < colors.size(); ++k)
+				{
+					colors[k].saturate();
+
+					image.pixels[k * 3 + 0] = (BYTE)(colors[k].x * 255);
+					image.pixels[k * 3 + 1] = (BYTE)(colors[k].y * 255);
+					image.pixels[k * 3 + 2] = (BYTE)(colors[k].z * 255);
+				}
+			}
+			else {
+				image.pixels = new BYTE[LSize * LSize * 4];
+				image.channels = 4;
+				for (int k = 0; k < colors.size(); ++k)
+				{
+					RGBE rgbe = RGBE_FROM(colors[k]);
+
+					image.pixels[k * 4 + 0] = rgbe.r;
+					image.pixels[k * 4 + 1] = rgbe.g;
+					image.pixels[k * 4 + 2] = rgbe.b;
+					image.pixels[k * 4 + 3] = rgbe.e;
+				}
 			}
 			colors.clear();
 
@@ -318,16 +356,16 @@ namespace LFX {
 				remapInfo.scale[0] = item.scaleU * scale;
 				remapInfo.scale[1] = item.scaleV * scale;
 #else
-				OutLightMapInfo remapInfo;
+				LightMapInfo remapInfo;
 				remapInfo.index = item.index;
 				remapInfo.offset[0] = item.offsetU;
 				remapInfo.offset[1] = item.offsetV;
 				remapInfo.scale[0] = item.scaleU;
 				remapInfo.scale[1] = item.scaleV;
 #endif
-				int sz = sizeof(OutLightMapInfo);
+				int sz = sizeof(LightMapInfo);
 				fwrite(&i, sizeof(int), 1, fp);
-				fwrite(&remapInfo, sizeof(OutLightMapInfo), 1, fp);
+				fwrite(&remapInfo, sizeof(LightMapInfo), 1, fp);
 			}
 		}
 		

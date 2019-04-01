@@ -4,6 +4,13 @@
 
 namespace LFX {
 
+	struct LightMapInfo
+	{
+		int index;
+		Float2 offset;
+		Float2 scale;
+	};
+
 	struct Vertex
 	{
 		Float3 Position;

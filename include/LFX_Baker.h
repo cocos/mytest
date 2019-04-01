@@ -24,15 +24,17 @@ namespace LFX {
 		void Enqueue(Entity * entity, int index, int stage);
 
 	protected:
-		void  _calcuDirectLightingMesh();
-		void  _calcuDirectLightingTerrain();
-		void  _calcuIndirectLightingMesh();
-		void  _calcuIndirectLightingTerrain();
-		void  _postProcess();
+		void _calcuDirectLightingMesh();
+		void _calcuDirectLightingTerrain();
+		void _calcuIndirectLightingMesh();
+		void _calcuIndirectLightingTerrain();
+		void _calcuAmbientOcclusionMesh();
+		void _calcuAmbientOcclusionTerrain();
+		void _postProcess();
 
 	protected:
 		int mId;
-		Entity * mEntity;
+		Entity* mEntity;
 		int mIndex;
 		int mStage;
 		bool mCompeleted;

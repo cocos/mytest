@@ -18,7 +18,6 @@ namespace LFX {
 		virtual void DoRasterize2();
 
 		virtual void DoLighting(const std::vector<Light *> & lights);
-		virtual void DoAmbientOcclusion() {}
 	};
 
 	extern bool RS_IsEdge(Rasterizer * rs, int u, int v, int aa);

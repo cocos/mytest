@@ -11,12 +11,14 @@ namespace LFX {
 		struct Options
 		{
 			int Width, Height;
+			int Channels;
 			int Space;
 			int Border;
 
 			Options()
 			{
 				Width = Height = 1024;
+				Channels = 3;
 				Space = 0;
 				Border = 0;
 			}
@@ -51,11 +53,11 @@ namespace LFX {
 
 	protected:
 		const Rectangle<float> *
-			_AtlasInsert(Atlas * pAtlas, unsigned char * pixels, int w, int h);
+			_AtlasInsert(Atlas * pAtlas, unsigned char * pixels, int w, int h, int uborder, int vborder);
 		const Rectangle<int> *
 			_AtlasIntersect(Atlas * pAtlas, const Rectangle<int> & region);
 		const Rectangle<float> *
-			_AtlasAppend(Atlas * pAtlas, unsigned char * pixels, const Rectangle<int> & region);
+			_AtlasAppend(Atlas * pAtlas, unsigned char * pixels, const Rectangle<int> & region, int uborder, int vborder);
 
 	protected:
 		Options mOptions;

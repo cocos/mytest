@@ -1,5 +1,6 @@
 #include "LFX_World.h"
 #include "LFX_Terrain.h"
+#include "LFX_AOBaker.h"
 #include "LFX_ILBakerRaytrace.h"
 #include "LFX_EmbreeScene.h"
 
@@ -700,6 +701,55 @@ namespace LFX {
 
 	void Terrain::CalcuAmbientOcclusion(int xblock, int yblock)
 	{
+		if (World::Instance()->GetSetting()->Selected) return;
+
+		AOBaker baker;
+
+		int mapSize = mDesc.LMapSize - Terrain::kLMapBorder * 2;
+		int msaa = World::Instance()->GetSetting()->MSAA;
+
+		int sx = mapSize * xblock;
+		int sy = mapSize * yblock;
+
+		Float3 * lmap = mLightingMap[yblock * mDesc.BlockCount.x + xblock];
+		for (int l = 0; l < mapSize; ++l)
+		{
+			int j = sy + l;
+			for (int i = sx; i < sx + mapSize; ++i)
+			{
+				Float3 color = Float3(0, 0, 0);
+
+				for (int y = 0; y < msaa; ++y)
+				{
+					for (int x = 0; x < msaa; ++x)
+					{
+						float u = (i + x / (float)msaa) / (mMapSizeU - 1);
+						float v = (j + y / (float)msaa) / (mMapSizeV - 1);
+
+						RVertex p;
+						p.Position.x = u * mDesc.Dimension.x;
+						p.Position.z = v * mDesc.Dimension.y;
+						p.Tangent = Float3(1, 0, 0);
+						p.Binormal = Float3(0, 0, 1);
+						p.UV = Float2(0, 0);
+						p.LUV = Float2(0, 0);
+						p.MaterialId = 0;
+
+						GetHeightAt(p.Position.y, p.Position.x, p.Position.z);
+						GetNormalAt(p.Normal, p.Position.x, p.Position.z);
+
+						p.Binormal = Float3::Cross(p.Normal, p.Tangent);
+						p.Tangent = Float3::Cross(p.Binormal, p.Normal);
+
+						color += baker.Calcu(p, LFX_MESH, this);
+					}
+				}
+
+				color /= (float)msaa * msaa;
+
+				lmap[(j - 0) * mapSize + (i - 0)] += color;
+			}
+		}
 	}
 
 	void Terrain::PostProcess(int xblock, int yblock)

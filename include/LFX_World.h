@@ -16,13 +16,6 @@ namespace LFX {
 	static const int LFX_FILE_LIGHT = 0x03;
 	static const int LFX_FILE_EOF = 0x00;
 
-	struct OutLightMapInfo
-	{
-		int index;
-		Float2 offset;
-		Float2 scale;
-	};
-
 	class EmbreeScene;
 
 	class LFX_ENTRY World
@@ -33,6 +26,7 @@ namespace LFX {
 		struct Settings
 		{
 			bool Selected;
+			bool RGBEFormat;
 
 			Float3 Ambient;
 			Float3 SkyRadiance;
@@ -43,15 +37,22 @@ namespace LFX {
 #endif
 			int Size;			// 128, 256, 512, 1024, 2048
 			float Gamma;
+
 			float GIScale;
 			int GISamples;
 			int GIPathLength;
+
+			int AOLevel;
+			float AOStrength;
+			float AORadius;
+			Float3 AOColor;
 
 			int Threads;
 
 			Settings()
 			{
 				Selected = false;
+				RGBEFormat = false;
 
 				MSAA = 1;
 #ifdef LFX_FEATURE_EDGE_AA
@@ -63,6 +64,11 @@ namespace LFX {
 				GIScale = 0.5f;
 				GISamples = 25;
 				GIPathLength = 4;
+
+				AOLevel = 0;
+				AOStrength = 0.5f;
+				AORadius = 1.0f;
+				AOColor = Float3(0.5f, 0.5f, 0.5f);
 
 				Threads = 1;
 			}
@@ -102,6 +108,7 @@ namespace LFX {
 
 			STAGE_DIRECT_LIGHTING,
 			STAGE_INDIRECT_LIGHTING,
+			STAGE_AMBIENT_OCCLUSION,
 			STAGE_POST_PROCESS,
 			STAGE_END,
 		};
