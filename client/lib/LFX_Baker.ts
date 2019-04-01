@@ -21,8 +21,9 @@ const LFX_PK_PROGRESS = 100;
 export const LFX_STAGE_START = 0;
 export const LFX_STAGE_DIRECT_LIGHTING = 1;
 export const LFX_STAGE_INDIRECT_LIGHTING = 2;
-export const LFX_STAGE_POST_PROCESS = 3;
-export const LFX_STAGE_END = 4;
+export const LFX_STAGE_AMBIENT_OCCLUSION = 3;
+export const LFX_STAGE_POST_PROCESS = 4;
+export const LFX_STAGE_END = 5;
 
 //
 export class LFX_Baker {
@@ -165,6 +166,10 @@ export class LFX_Baker {
         buff.WriteFloat(this.World.Settings.GIScale);
         buff.WriteInt32(this.World.Settings.GISamples);
         buff.WriteInt32(this.World.Settings.GIPathLength);
+        buff.WriteInt32(this.World.Settings.AOLevel);
+        buff.WriteFloat(this.World.Settings.AOStrength);
+        buff.WriteFloat(this.World.Settings.AORadius);
+        buff.WriteFloatArray(this.World.Settings.AOColor);
         buff.WriteInt32(this.World.Settings.Threads);
 
         // Meshes

@@ -21,6 +21,14 @@ export class LFX_Settings {
     GISamples = 25;
     // 全局光照光线最大跟踪次数
     GIPathLength = 4;
+    // AO等级(0：关闭，1：低，2：高)
+    AOLevel = 0;
+    // AO强度
+    AOStrength = 0.5;
+    // AO影响的范围
+    AORadius = 1.0;
+    // AO颜色
+    AOColor: number[] = [0.5, 0.5, 0.5];
     // 线程数量
     Threads = 1;
 }
