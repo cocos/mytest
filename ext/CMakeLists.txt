@@ -106,25 +106,26 @@ set(BOOST_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/boost)
 add_subdirectory(websocketpp)
 
 # Build Thread Building Blocks
-set(TBB_BUILD_SHARED          OFF  CACHE BOOL " " FORCE)
-set(TBB_BUILD_STATIC          ON   CACHE BOOL " " FORCE)
+set(TBB_BUILD_SHARED          ON   CACHE BOOL " " FORCE)
+set(TBB_BUILD_STATIC          OFF  CACHE BOOL " " FORCE)
 set(TBB_BUILD_TBBMALLOC       ON   CACHE BOOL " " FORCE)
 set(TBB_BUILD_TBBMALLOC_PROXY OFF  CACHE BOOL " " FORCE)
 set(TBB_BUILD_TESTS           OFF  CACHE BOOL " " FORCE)
 add_subdirectory(tbb)
-set_property(TARGET tbb_static tbb_def_files tbbmalloc_static PROPERTY FOLDER "dependencies")
+set_property(TARGET tbb tbb_def_files tbbmalloc PROPERTY FOLDER "dependencies")
+set_property(TARGET tbb tbb_def_files tbbmalloc PROPERTY RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 
 # Build Embree
 set(TBB_ROOT "")
 set(TBB_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tbb/include)
-set(TBB_LIBRARY tbb_static)
-set(TBB_LIBRARY_MALLOC tbbmalloc_static)
+set(TBB_LIBRARY tbb)
+set(TBB_LIBRARY_MALLOC tbbmalloc)
 set(ENABLE_INSTALLER OFF CACHE BOOL " " FORCE)
 set(ENABLE_TUTORIALS OFF CACHE BOOL " " FORCE)
 set(ENABLE_ISPC_SUPPORT OFF CACHE BOOL " " FORCE)
 add_subdirectory(embree)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/tbb/include)
-add_dependencies(embree tbb_static tbbmalloc_static)
+add_dependencies(embree tbb tbbmalloc)
 set_property(TARGET embree PROPERTY FOLDER "dependencies")
 
 # Expose inlcude directories
