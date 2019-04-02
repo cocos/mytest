@@ -232,7 +232,7 @@ inline Float3 GenerateRandomSphericalSample(float u1, float u2)
     // Generate unbiased distribution of spherical coordinates
     float x = u1;
     float y = u2;
-    float theta = 2.0f * std::acosf(std::sqrtf(1.0f - x));
+    float theta = 2.0f * std::acos(std::sqrt(1.0f - x));
     float phi = 2.0f * Pi * y;
 
     //  Convert spherical coordinates to unit vector

@@ -1,6 +1,5 @@
 .vscode
-/build
-/build64
+/build*
 .DS_Store
 CMakeCache.txt
 CMakeFiles

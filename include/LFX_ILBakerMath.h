@@ -78,9 +78,9 @@ namespace LFX { namespace ILBaker {
 	// away from the 'right' axis (+X).
 	inline void SphericalToCartesianXYZYUP(float r, float theta, float phi, Float3& xyz)
 	{
-		xyz.x = r * std::cosf(phi) * std::sinf(theta);
-		xyz.y = r * std::cosf(theta);
-		xyz.z = r * std::sinf(theta) * std::sinf(phi);
+		xyz.x = r * std::cos(phi) * std::sin(theta);
+		xyz.y = r * std::cos(theta);
+		xyz.z = r * std::sin(theta) * std::sin(phi);
 	}
 
 }}

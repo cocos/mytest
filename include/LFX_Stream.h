@@ -48,7 +48,7 @@ namespace LFX {
 	class LFX_ENTRY MemoryStream : public Stream
 	{
 	public:
-		MemoryStream(BYTE * data, int size, bool managed);
+		MemoryStream(uint8_t * data, int size, bool managed);
 		virtual ~MemoryStream();
 
 		virtual bool IsOpen();
@@ -65,7 +65,7 @@ namespace LFX {
 		virtual void * GetData() { return mData; }
 
 	protected:
-		BYTE * mData;
+		uint8_t * mData;
 		int mSize;
 		int mCursor;
 		bool mManaged;

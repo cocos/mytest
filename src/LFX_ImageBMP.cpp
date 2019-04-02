@@ -4,11 +4,11 @@ namespace LFX {
 
 	struct BMP_Header
 	{
-		WORD type;
-		DWORD sizefile;
-		WORD reserved1;
-		WORD reserved2;
-		DWORD offbytes;
+		uint16_t type;
+		uint32_t sizefile;
+		uint16_t reserved1;
+		uint16_t reserved2;
+		uint32_t offbytes;
 
 		union BMP_HeaderInfo
 		{
@@ -26,24 +26,24 @@ namespace LFX {
 				int clrimportant;
 			};
 
-			BYTE m[40];
+			uint8_t m[40];
 
 		} info;
 	};
 
 	struct BMP_RGBQuad
 	{
-		BYTE b;
-		BYTE g;
-		BYTE r;
-		BYTE a;
+		uint8_t b;
+		uint8_t g;
+		uint8_t r;
+		uint8_t a;
 	};
 
 	bool BMP_Test(Image & image, Stream & stream)
 	{
-		WORD type = 0;
+		uint16_t type = 0;
 
-		int nreads = stream.Read(&type, sizeof(WORD));
+		int nreads = stream.Read(&type, sizeof(uint16_t));
 
 		stream.Seek(-nreads, SEEK_CUR);
 
@@ -96,10 +96,10 @@ namespace LFX {
 			BMP_RGBQuad palette[256];
 			IS.Read(palette, sizeof(BMP_RGBQuad) * 256);
 
-			BYTE * data = new BYTE[image.width * image.height];
+			uint8_t * data = new uint8_t[image.width * image.height];
 			IS.Read(data, image.width * image.height);
 
-			image.pixels = new BYTE[image.width * image.height * 3];
+			image.pixels = new uint8_t[image.width * image.height * 3];
 			for (int i = 0; i < image.width * image.height; ++i)
 			{
 				image.pixels[i * 3 + 0] = palette[data[i]].r;
@@ -113,7 +113,7 @@ namespace LFX {
 		}
 		else if (header.info.bitcount == 24)
 		{
-			image.pixels = new BYTE[image.width * image.height * 3];
+			image.pixels = new uint8_t[image.width * image.height * 3];
 
 			IS.Read(image.pixels, image.width * image.height * 3);
 			for (int i = 0; i < image.width * image.height; ++i)
@@ -125,7 +125,7 @@ namespace LFX {
 		}
 		else if (header.info.bitcount == 32)
 		{
-			image.pixels = new BYTE[image.width * image.height * 4];
+			image.pixels = new uint8_t[image.width * image.height * 4];
 			IS.Read(image.pixels, image.width * image.height * 4);
 			for (int i = 0; i < image.width * image.height; ++i)
 			{
@@ -144,7 +144,7 @@ namespace LFX {
 		{
 			int line_bytes = image.width * header.info.bitcount / 8;
 
-			BYTE * buffer = new BYTE[line_bytes];
+			uint8_t * buffer = new uint8_t[line_bytes];
 			for (int i = 0, j = image.height - 1; i < j; ++i, --j)
 			{
 				memcpy(buffer, &image.pixels[i * line_bytes], line_bytes);
@@ -190,10 +190,10 @@ namespace LFX {
 
 		fwrite(&header.info, 40, 1, fp);
 
-		BYTE * buffer = new BYTE[line_bytes];
+		uint8_t * buffer = new uint8_t[line_bytes];
 		for (int j = image.height - 1; j >= 0; --j)
 		{
-			const BYTE * c_pixels = image.pixels + line_bytes * j;
+			const uint8_t * c_pixels = image.pixels + line_bytes * j;
 
 			memcpy(buffer, c_pixels, line_bytes);
 
@@ -208,5 +208,5 @@ namespace LFX {
 
 		return true;
 	}
-	
+
 }
