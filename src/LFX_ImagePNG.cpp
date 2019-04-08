@@ -3,7 +3,7 @@
 #include "lodepng.h"
 
 namespace LFX {
-	
+
 #define PNG_DWORD(c0, c1, c2, c3) ((c0) << 24 | (c1) << 16 | (c2) << 8 | (c3))
 
 	union PNG_Chunk
@@ -18,21 +18,21 @@ namespace LFX {
 
 	struct PNG_Header
 	{
-		DWORD width;
-		DWORD height;
-		BYTE bitdepth;
-		BYTE colortype;
-		BYTE compression;
-		BYTE filter;
-		BYTE interlace;
+		uint32_t width;
+		uint32_t height;
+		uint8_t bitdepth;
+		uint8_t colortype;
+		uint8_t compression;
+		uint8_t filter;
+		uint8_t interlace;
 	};
 
-	int PNG_Read8(BYTE & i8, Stream & IS)
+	int PNG_Read8(uint8_t & i8, Stream & IS)
 	{
 		return IS.Read(&i8, 1);
 	}
 
-	int PNG_Read16(WORD & i16, Stream & IS)
+	int PNG_Read16(uint16_t & i16, Stream & IS)
 	{
 		int nreads = IS.Read(&i16, 2);
 
@@ -41,7 +41,7 @@ namespace LFX {
 		return nreads;
 	}
 
-	int PNG_Read32(DWORD & i32, Stream & IS)
+	int PNG_Read32(uint32_t & i32, Stream & IS)
 	{
 		int nreads = IS.Read(&i32, 4);
 
@@ -63,8 +63,8 @@ namespace LFX {
 
 	bool PNG_Test(Stream & stream)
 	{
-		BYTE png_magic[8] = { 137, 80, 78, 71, 13, 10, 26, 10 };
-		BYTE magic[8];
+		uint8_t png_magic[8] = { 137, 80, 78, 71, 13, 10, 26, 10 };
+		uint8_t magic[8];
 
 		int nreads = stream.Read(magic, 8);
 
@@ -78,8 +78,8 @@ namespace LFX {
 		Stream & IS = stream;
 
 		int nreads = 0;
-		BYTE png_magic[8] = { 137, 80, 78, 71, 13, 10, 26, 10 };
-		BYTE magic[8];
+		uint8_t png_magic[8] = { 137, 80, 78, 71, 13, 10, 26, 10 };
+		uint8_t magic[8];
 
 		nreads += IS.Read(magic, 8);
 		if (memcmp(magic, png_magic, 8) != 0)
@@ -174,10 +174,19 @@ namespace LFX {
 			return false;
 		}
 
-		BYTE * data = NULL;
+		uint8_t * data = NULL;
 		size_t size = 0;
 
-		lodepng_encode_memory(&data, &size, image.pixels, image.width, image.height, colortype, 8, auto_convert);
+		LodePNGState state;
+		lodepng_state_init(&state);
+		state.info_raw.colortype = colortype;
+		state.info_raw.bitdepth = 8;
+		state.info_png.color.colortype = colortype;
+		state.info_png.color.bitdepth = 8;
+		state.encoder.auto_convert = auto_convert;
+		lodepng_encode(&data, &size, image.pixels, image.width, image.height, &state);
+  		lodepng_state_cleanup(&state);
+
 		if (data != NULL)
 		{
 			fwrite(data, size, 1, fp);

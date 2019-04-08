@@ -6,7 +6,7 @@ namespace LFX {
 
 	struct Image
 	{
-		BYTE * pixels;
+		uint8_t * pixels;
 
 		int channels;
 		int width;

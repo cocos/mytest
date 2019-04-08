@@ -2,7 +2,7 @@
 
 namespace LFX {
 
-	MemoryStream::MemoryStream(BYTE * data, int size, bool managed)
+	MemoryStream::MemoryStream(uint8_t * data, int size, bool managed)
 		: mSize(size)
 		, mCursor(0)
 		, mManaged(managed)

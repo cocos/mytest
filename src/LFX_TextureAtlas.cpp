@@ -41,7 +41,7 @@ namespace LFX {
 		pNewAtlas->Height = height;
 		pNewAtlas->Pixels.resize(pNewAtlas->Width * pNewAtlas->Height * mOptions.Channels);
 		mAtlasArray.push_back(pNewAtlas);
-		
+
 		int uborder = mOptions.Border;
 		int vborder = mOptions.Border;
 		if (width < w + mOptions.Border * 2) {
@@ -100,7 +100,8 @@ namespace LFX {
 	{
 		for (size_t i = 0; i < pAtlas->Regions.size(); ++i)
 		{
-			Rectangle<int> & rect = pAtlas->Regions[i] & region;
+			const Rectangle<int> & ri = pAtlas->Regions[i];
+			const Rectangle<int> & rect = ri & region;
 			if (rect.w > 0 && rect.h > 0)
 				return &pAtlas->Regions[i];
 		}

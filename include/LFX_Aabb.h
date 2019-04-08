@@ -3,7 +3,7 @@
 #include "LFX_Vec3.h"
 
 namespace LFX {
-	
+
 	struct Aabb
 	{
 		Float3 minimum;
@@ -90,7 +90,7 @@ namespace LFX {
 				(rk.minimum.z >= minimum.z && rk.maximum.z <= maximum.z);
 		}
 
-		bool Aabb::Intersect(const Aabb & rk) const
+		bool Intersect(const Aabb & rk) const
 		{
 			if (minimum.x >= rk.maximum.x ||
 				minimum.y >= rk.maximum.y ||

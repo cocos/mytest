@@ -62,7 +62,7 @@ namespace LFX {
 		}
 	};
 
-	
+
 
 	Terrain::Terrain(float * heightfiled, const Desc & desc)
 	{
@@ -145,7 +145,7 @@ namespace LFX {
 
 		mMapSizeU = mapSize * mDesc.BlockCount.x;
 		mMapSizeV = mapSize * mDesc.BlockCount.y;
-		
+
 		Aabb bound;
 		bound.minimum = mVertexBuffer[0].Position;
 		bound.maximum = mVertexBuffer[0].Position;
@@ -512,7 +512,7 @@ namespace LFX {
 
 		Float3 * lmap = mLightingMap[yblock * mDesc.BlockCount.x + xblock];
 		for (int j = 0; j < mapSize; ++j)
-		{ 
+		{
 			for (int i = 0; i < mapSize; ++i)
 			{
 				Float3 color = Float3(0, 0, 0);

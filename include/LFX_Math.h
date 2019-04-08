@@ -38,7 +38,7 @@ namespace LFX {
 		Float3 dir;
 	};
 
-	template<typename T> 
+	template<typename T>
 	void Swap(T& a, T& b)
 	{
 		T tmp = a;
@@ -46,7 +46,7 @@ namespace LFX {
 		b = tmp;
 	}
 
-	template<typename T> 
+	template<typename T>
 	T Min(T a, T b)
 	{
 		return a < b ? a : b;
@@ -60,7 +60,7 @@ namespace LFX {
 
 	inline float Round(float r)
 	{
-		return (r > 0.0f) ? std::floorf(r + 0.5f) : std::ceilf(r - 0.5f);
+		return (r > 0.0f) ? std::floor(r + 0.5f) : std::ceil(r - 0.5f);
 	}
 
 	inline float RandFloat()

@@ -2,6 +2,7 @@
 #include <websocketpp/server.hpp>
 #include <iostream>
 #include <set>
+#include <cstdarg>
 #include <websocketpp/common/thread.hpp>
 
 #include "LFX_World.h"
@@ -215,7 +216,7 @@ public:
 					char* data = new char[a.msg->get_raw_payload().length() + 1];
 					memcpy(data, a.msg->get_raw_payload().c_str(), a.msg->get_raw_payload().length());
 
-					LFX::MemoryStream stream((BYTE*)data, (int)a.msg->get_raw_payload().length(), true);
+					LFX::MemoryStream stream((uint8_t*)data, (int)a.msg->get_raw_payload().length(), true);
 
 					int pkId = 0;
 					if (stream.Read(&pkId, sizeof(pkId)) == 4) {
@@ -270,7 +271,7 @@ public:
 				opk.data.Progress = GProgress;
 				send_packet(*m_connections.begin(), PKProgress::PID, &opk);
 			}
-			
+
 		}
 
 		if (stage == LFX::World::STAGE_END) {
