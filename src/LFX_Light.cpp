@@ -37,9 +37,9 @@ namespace LFX {
 			float length = spotDir.len();
 			spotDir.normalize();
 
-			float kd = v.Normal.dot(-pLight->Direction);
-			float ka = (length - pLight->AttenStart) / (pLight->AttenEnd - pLight->AttenStart);
-			float ks = (spotDir.dot(pLight->Direction) - pLight->SpotOuter) / (pLight->SpotInner - pLight->SpotOuter);
+			kd = v.Normal.dot(-pLight->Direction);
+			ka = (length - pLight->AttenStart) / (pLight->AttenEnd - pLight->AttenStart);
+			ks = (spotDir.dot(pLight->Direction) - pLight->SpotOuter) / (pLight->SpotInner - pLight->SpotOuter);
 
 			kd = Clamp<float>(kd, 0, 1);
 			ka = std::pow(1 - Clamp<float>(ka, 0, 1), pLight->AttenFallOff);

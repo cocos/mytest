@@ -21,7 +21,7 @@ namespace LFX {
 
 		RGBA() { r = 0, g = 0, b = 0, a = 255; }
 		RGBA(int c) { _value = c; }
-		RGBA(unsigned char _r, unsigned char _g, unsigned char _b, unsigned char _a = 255) { r = _r, g = _b, b = _b, a = _a; }
+		RGBA(unsigned char _r, unsigned char _g, unsigned char _b, unsigned char _a = 255) { r = _r, g = _g, b = _b, a = _a; }
 		RGBA(const RGBA & c) { _value = c._value; }
 
 		RGBA & operator =(const RGBA & c)
@@ -81,7 +81,7 @@ namespace LFX {
 
 		RGBE() { r = 0, g = 0, b = 0, e = 0; }
 		RGBE(int c) { _value = c; }
-		RGBE(unsigned char _r, unsigned char _g, unsigned char _b, unsigned char _e = 0) { r = _r, g = _b, b = _b, e = _e; }
+		RGBE(unsigned char _r, unsigned char _g, unsigned char _b, unsigned char _e = 0) { r = _r, g = _g, b = _b, e = _e; }
 		RGBE(const RGBE & c) { _value = c._value; }
 
 		RGBE & operator =(const RGBE & c)

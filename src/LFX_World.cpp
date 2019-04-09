@@ -12,7 +12,6 @@ namespace LFX {
 	{
 		msInstance = this;
 
-		mTerrain = NULL;
 		mEmbreeScene = NULL;
 	}
 
@@ -29,7 +28,7 @@ namespace LFX {
 		if (!stream.IsOpen()) {
 			return false;
 		}
-		
+
 		// Check verison
 		int version;
 		stream >> version;
@@ -137,10 +136,10 @@ namespace LFX {
 		FileUtil::DeleteDir(path);
 		FileUtil::MakeDir(path);
 
-		String filename = path + "/lfx.o";
-		FILE * fp = fopen(filename.c_str(), "wb");
+		String lfx_file = path + "/lfx.o";
+		FILE * fp = fopen(lfx_file.c_str(), "wb");
 		if (fp == NULL) {
-			LOGE("Can not open file '%s'", filename.c_str());
+			LOGE("Can not open file '%s'", lfx_file.c_str());
 			return;
 		}
 
@@ -148,8 +147,10 @@ namespace LFX {
 		fwrite(&LFX_FILE_VERSION, 4, 1, fp);
 
 		// Pack and save terrain lightmap
-		if (mTerrain && !mSetting.Selected) {
-			int LSize = mTerrain->GetDesc().LMapSize;
+
+		for (int t = 0; t < mTerrains.size() && !mSetting.Selected; ++t) {
+			Terrain* terrain = mTerrains[t];
+			int LSize = terrain->GetDesc().LMapSize;
 
 			TextureAtlasPacker::Options options;
 			options.Width = mSetting.Size;
@@ -160,14 +161,14 @@ namespace LFX {
 
 			TextureAtlasPacker packer(options);
 			std::vector<TextureAtlasPacker::Item> packed_items;
-			for (int j = 0; j < mTerrain->GetDesc().BlockCount.y; ++j)
+			for (int j = 0; j < terrain->GetDesc().BlockCount.y; ++j)
 			{
-				for (int i = 0; i < mTerrain->GetDesc().BlockCount.x; ++i)
+				for (int i = 0; i < terrain->GetDesc().BlockCount.x; ++i)
 				{
 					std::vector<Float3> colors;
 					colors.resize(LSize * LSize);
 
-					mTerrain->GetLightingMap(i, j, colors);
+					terrain->GetLightingMap(i, j, colors);
 					for (int k = 0; k < colors.size(); ++k)
 					{
 						colors[k] = Pow(colors[k], 1.0f / mSetting.Gamma);
@@ -220,23 +221,24 @@ namespace LFX {
 
 				char filename[256];
 				sprintf(filename, "%s/LFX_Terrain_%04d.png", path.c_str(), i);
-				FILE * fp = fopen(filename, "wb");
-				LFX::PNG_Save(fp, image, false);
-				fclose(fp);
+				FILE * tfp = fopen(filename, "wb");
+				LFX::PNG_Save(tfp, image, false);
+				fclose(tfp);
 
 				image.pixels = NULL;
 			}
 
 			// chunk
 			fwrite(&LFX_FILE_TERRAIN, 4, 1, fp);
+			fwrite(&t, 4, 1, fp); // index
 
-			int numOfBlocks = mTerrain->GetDesc().BlockCount.x * mTerrain->GetDesc().BlockCount.y;
+			int numOfBlocks = terrain->GetDesc().BlockCount.x * terrain->GetDesc().BlockCount.y;
 			fwrite(&numOfBlocks, 4, 1, fp);
 
 			int blockIdx = 0;
-			for (int j = 0; j < mTerrain->GetDesc().BlockCount.y; ++j)
+			for (int j = 0; j < terrain->GetDesc().BlockCount.y; ++j)
 			{
-				for (int i = 0; i < mTerrain->GetDesc().BlockCount.x; ++i)
+				for (int i = 0; i < terrain->GetDesc().BlockCount.x; ++i)
 				{
 					const auto & item = packed_items[blockIdx++];
 					float offset = Terrain::kLMapBorder / (float)(LSize);
@@ -323,9 +325,9 @@ namespace LFX {
 
 			char filename[256];
 			sprintf(filename, "%s/LFX_Mesh_%04d.png", path.c_str(), i);
-			FILE * fp = fopen(filename, "wb");
-			LFX::PNG_Save(fp, image, false);
-			fclose(fp);
+			FILE * tfp = fopen(filename, "wb");
+			LFX::PNG_Save(tfp, image, false);
+			fclose(tfp);
 
 			image.pixels = NULL;
 		}
@@ -363,12 +365,11 @@ namespace LFX {
 				remapInfo.scale[0] = item.scaleU;
 				remapInfo.scale[1] = item.scaleV;
 #endif
-				int sz = sizeof(LightMapInfo);
 				fwrite(&i, sizeof(int), 1, fp);
 				fwrite(&remapInfo, sizeof(LightMapInfo), 1, fp);
 			}
 		}
-		
+
 		// end
 		fwrite(&LFX_FILE_EOF, 4, 1, fp);
 
@@ -401,11 +402,11 @@ namespace LFX {
 		}
 		mLights.clear();
 
-		if (mTerrain)
+		for (int i = 0; i < mTerrains.size(); ++i)
 		{
-			delete mTerrain;
+			delete mTerrains[i];
 		}
-		mTerrain = NULL;
+		mTerrains.clear();
 
 		if (mEmbreeScene)
 			delete mEmbreeScene;
@@ -499,9 +500,11 @@ namespace LFX {
 
 	Terrain * World::CreateTerrain(float * heightfield, const Terrain::Desc & desc)
 	{
-		mTerrain = new Terrain(heightfield, desc);
+		Terrain* terrain = new Terrain(heightfield, desc);
 
-		return mTerrain;
+		mTerrains.push_back(terrain);
+
+		return terrain;
 	}
 
 	bool _World_AttachMesh(BSPTree<Mesh *>::Node * node, Mesh * mesh)
@@ -587,9 +590,8 @@ namespace LFX {
 			_World_Optimize(mBSPTree.RootNode());
 		}
 
-		if (mTerrain != NULL)
-		{
-			mTerrain->Build();
+		for (int i = 0; i < mTerrains.size(); ++i) {
+			mTerrains[i]->Build();
 		}
 
 		//
@@ -621,15 +623,15 @@ namespace LFX {
 		{
 			if (mMeshes[i]->GetLightingMapSize())
 			{
-				mEntitys.push_back({mMeshes[i], (int)i});
+				mEntitys.push_back({ mMeshes[i], (int)i });
 			}
 		}
-		if (mTerrain != NULL) {
-			for (int i = 0; i < mTerrain->GetDesc().BlockCount.x * mTerrain->GetDesc().BlockCount.y; ++i)
+		for (int j = 0; j < mTerrains.size(); ++j) {
+			for (int i = 0; i < mTerrains[i]->GetDesc().BlockCount.x * mTerrains[i]->GetDesc().BlockCount.y; ++i)
 			{
-				if (mTerrain->_getBlockValids()[i])
+				if (mTerrains[i]->_getBlockValids()[i])
 				{
-					mEntitys.push_back({ mTerrain, i });
+					mEntitys.push_back({ mTerrains[i], i });
 				}
 			}
 		}
@@ -644,9 +646,7 @@ namespace LFX {
 	{
 		bool Compeleted = false;
 
-		if (mStage == STAGE_DIRECT_LIGHTING ||
-			mStage == STAGE_INDIRECT_LIGHTING ||
-			mStage == STAGE_POST_PROCESS)
+		if (mStage >= STAGE_DIRECT_LIGHTING || mStage <= STAGE_POST_PROCESS)
 		{
 			if (mIndex == mEntitys.size())
 			{
@@ -696,7 +696,7 @@ namespace LFX {
 		float dist = 0;
 
 		if (!Intersect(ray, &dist, node->aabb) || contract.td < dist)
-			return ;
+			return;
 
 		for (size_t i = 0; i < node->elems.size(); ++i)
 		{
@@ -716,6 +716,11 @@ namespace LFX {
 
 	bool World::RayCheck(Contact & contract, const Ray & ray, float len, int flags)
 	{
+		return mEmbreeScene->RayCheck(contract, ray, len, flags);
+	}
+
+	bool World::_RayCheckImp(Contact & contract, const Ray & ray, float len, int flags)
+	{
 		contract.td = FLT_MAX;
 		contract.tu = 0;
 		contract.tv = 0;
@@ -725,22 +730,28 @@ namespace LFX {
 
 		if ((flags & LFX_MESH) && mBSPTree.RootNode() != NULL)
 			_rayCheck(contract, mBSPTree.RootNode(), ray, len);
-		if ((flags & LFX_TERRAIN) && mTerrain != NULL)
-			mTerrain->RayCheck(contract, ray, len);
+		if ((flags & LFX_TERRAIN) && mTerrains.size() > 0) {
+			for (int i = 0; i < mTerrains.size(); ++i) {
+				mTerrains[i]->RayCheck(contract, ray, len);
+			}
+		}
 
 		if (contract.entity != NULL)
 		{
 			Vertex a, b, c;
-			if (contract.entity == mTerrain)
+			if (contract.entity->GetType() == LFX_TERRAIN)
 			{
-				Triangle tri = mTerrain->_getTriangle(contract.triIndex);
-				a = mTerrain->_getVertex(tri.Index0);
-				b = mTerrain->_getVertex(tri.Index1);
-				c = mTerrain->_getVertex(tri.Index2);
+				Terrain* terrain = (Terrain*)contract.entity;
+
+				Triangle tri = terrain->_getTriangle(contract.triIndex);
+				a = terrain->_getVertex(tri.Index0);
+				b = terrain->_getVertex(tri.Index1);
+				c = terrain->_getVertex(tri.Index2);
 			}
 			else
 			{
 				Mesh * mesh = (Mesh *)contract.entity;
+
 				Triangle tri = mesh->_getTriangle(contract.triIndex);
 				a = mesh->_getVertex(tri.Index0);
 				b = mesh->_getVertex(tri.Index1);
@@ -784,11 +795,25 @@ namespace LFX {
 
 	bool World::Occluded(const Ray & ray, float len, int flags)
 	{
-		if ((flags & LFX_MESH) && mBSPTree.RootNode() != NULL && _occluded(mBSPTree.RootNode(), ray, len))
-			return true;
-		if ((flags & LFX_TERRAIN) && mTerrain != NULL && mTerrain->Occluded(ray, len))
-			return true;
+		return mEmbreeScene->Occluded(ray.orig, ray.dir, len, flags);
+	}
+
+	bool World::_OccludedImp(const Ray & ray, float len, int flags)
+	{
+		if ((flags & LFX_MESH) && mBSPTree.RootNode() != NULL) {
+			if (_occluded(mBSPTree.RootNode(), ray, len)) {
+				return true;
+			}
+		}
+		if ((flags & LFX_TERRAIN)) {
+			for (int i = 0; i < mTerrains.size(); ++i) {
+				if (mTerrains[i]->Occluded(ray, len)) {
+					return true;
+				}
+			}
+		}
 
 		return false;
 	}
+
 }

@@ -6,6 +6,9 @@
 
 namespace LFX {
 
+#define LFX_MESH 0x01
+#define LFX_TERRAIN 0x02
+
 	struct LFX_ENTRY Material
 	{
 		Float3 diffuse;
@@ -23,6 +26,8 @@ namespace LFX {
 	public:
 		Entity();
 		virtual ~Entity();
+
+		virtual int GetType() = 0;
 
 		void SetUserData(void * data, int i = 0);
 		void * GetUserData(int i);

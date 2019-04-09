@@ -413,9 +413,9 @@ namespace LFX {
 		int sy = mapSize * yblock;
 		Float3 * lmap = mLightingMap[yblock * mDesc.BlockCount.x + xblock];
 
-		for (int l = 0; l < mapSize; ++l)
+		for (int line = 0; line < mapSize; ++line)
 		{
-			int j = sy + l;
+			int j = sy + line;
 			for (int i = sx; i < sx + mapSize; ++i)
 			{
 				Float3 color(0, 0, 0);
@@ -681,18 +681,10 @@ namespace LFX {
 
 			if (len > 0.01f * UNIT_LEN)
 			{
-#if 0
-				Contact contract;
-				if (World::Instance()->RayCheck(contract, ray, len, eFlag::MESH))
+				if (World::Instance()->Occluded(ray, len, LFX_MESH))
 				{
 					kd = ka = ks = 0;
 				}
-#else
-				if (World::Instance()->GetEmbreeScene()->Occluded(ray.orig, ray.dir, len, LFX_MESH))
-				{
-					kd = ka = ks = 0;
-				}
-#endif
 			}
 		}
 

@@ -147,10 +147,8 @@ namespace LFX {
 
 		// Terrain
 		Terrain * CreateTerrain(float * heightfield, const Terrain::Desc & desc);
-		Terrain * GetTerrain() { return mTerrain; }
-
-		//
-		EmbreeScene * GetEmbreeScene() { return mEmbreeScene; }
+		Terrain * GetTerrain(int i) { return mTerrains[i]; }
+		int GetTerrainCount() { return mTerrains.size(); }
 
 		void Build();
 		void Start();
@@ -163,6 +161,8 @@ namespace LFX {
 
 		bool RayCheck(Contact & contract, const Ray & ray, float len, int flags);
 		bool Occluded(const Ray & ray, float len, int flags);
+		bool _RayCheckImp(Contact & contract, const Ray & ray, float len, int flags);
+		bool _OccludedImp(const Ray & ray, float len, int flags);
 
 	protected:
 		Settings mSetting;
@@ -170,7 +170,7 @@ namespace LFX {
 		std::vector<Texture *> mTextures;
 		std::vector<Light *> mLights;
 		std::vector<Mesh *> mMeshes;
-		Terrain * mTerrain;
+		std::vector<Terrain *> mTerrains;
 
 		BSPTree<Mesh *> mBSPTree;
 		EmbreeScene * mEmbreeScene;

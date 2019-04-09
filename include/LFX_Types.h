@@ -32,9 +32,6 @@ namespace LFX {
 
 	typedef std::string String;
 
-#define LFX_MESH 0x01
-#define LFX_TERRAIN 0x02
-
 #ifndef FLT_MIN
 #define FLT_MIN 1.175494351e-38F
 #endif

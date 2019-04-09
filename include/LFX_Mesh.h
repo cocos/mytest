@@ -12,6 +12,8 @@ namespace LFX {
 		Mesh(const String & name);
 		virtual ~Mesh();
 
+		virtual int GetType() { return LFX_MESH; }
+
 		const String & GetName() { return mName; }
 		
 		void SetCastShadow(bool b) { mCastShadow = b; }

@@ -4,6 +4,8 @@
 
 namespace LFX {
 
+	class Entity;
+
 	struct LightMapInfo
 	{
 		int index;
@@ -217,7 +219,7 @@ namespace LFX {
 		float tu, tv;
 		int triIndex;
 		Vertex vhit;
-		void * entity;
+		Entity* entity;
 		bool backFacing;
 		const void * mtl;
 	};

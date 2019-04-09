@@ -24,7 +24,7 @@ namespace LFX {
 			if (mCompeleted)
 				continue;
 
-			if (mEntity == World::Instance()->GetTerrain()) {
+			if (mEntity->GetType() == LFX_TERRAIN) {
 				switch (mStage){
 				case World::STAGE_DIRECT_LIGHTING:
 					_calcuDirectLightingTerrain();
@@ -80,7 +80,7 @@ namespace LFX {
 
 	void LFX_Baker::_calcuDirectLightingMesh()
 	{
-		Mesh * pMesh = World::Instance()->GetMesh(mIndex);
+		Mesh * pMesh = (Mesh*)mEntity;
 		if (pMesh->GetLightingMapSize())
 		{
 			std::vector<Light *> lights;
@@ -101,7 +101,7 @@ namespace LFX {
 
 	void LFX_Baker::_calcuDirectLightingTerrain()
 	{
-		Terrain * pTerrain = World::Instance()->GetTerrain();
+		Terrain * pTerrain = (Terrain*)mEntity;
 
 		float blockSize = pTerrain->GetDesc().Dimension.x / pTerrain->GetDesc().BlockCount.x;
 
@@ -127,7 +127,7 @@ namespace LFX {
 		}
 
 		if (lights.size() > 0) {
-			World::Instance()->GetTerrain()->CalcuDirectLighting(xblock, yblock, lights);
+			pTerrain->CalcuDirectLighting(xblock, yblock, lights);
 		}
 	}
 
@@ -150,7 +150,7 @@ namespace LFX {
 	void LFX_Baker::_calcuIndirectLightingTerrain()
 	{
 		if (World::Instance()->GetSetting()->GIScale > 0) {
-			Terrain * pTerrain = World::Instance()->GetTerrain();
+			Terrain * pTerrain = (Terrain*)mEntity;
 			int nMapSize = pTerrain->GetDesc().LMapSize - Terrain::kLMapBorder * 2;
 
 			float blockSize = pTerrain->GetDesc().Dimension.x / pTerrain->GetDesc().BlockCount.x;
@@ -169,7 +169,7 @@ namespace LFX {
 			std::vector<Light *> lights;
 			pTerrain->GetLightList(lights, xblock, yblock, true);
 			if (lights.size() > 0) {
-				World::Instance()->GetTerrain()->CalcuIndirectLighting(xblock, yblock, lights);
+				pTerrain->CalcuIndirectLighting(xblock, yblock, lights);
 			}
 		}
 	}
@@ -194,15 +194,15 @@ namespace LFX {
 
 	void LFX_Baker::_postProcess()
 	{
-		if (mEntity != World::Instance()->GetTerrain())
+		if (mEntity->GetType() == LFX_MESH)
 		{
-			Mesh * pMesh = World::Instance()->GetMesh(mIndex);
+			Mesh * pMesh = (Mesh*)mEntity;
 
 			pMesh->PostProcess();
 		}
 		else
 		{
-			Terrain * pTerrain = World::Instance()->GetTerrain();
+			Terrain * pTerrain = (Terrain*)mEntity;
 			int xblock = mIndex % pTerrain->GetDesc().BlockCount.x;
 			int yblock = mIndex / pTerrain->GetDesc().BlockCount.y;
 

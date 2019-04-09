@@ -16,6 +16,7 @@ namespace LFX {
 
 		struct Desc
 		{
+			String Name;
 			int LMapSize;
 			float GridSize;
 			Float2 Dimension;
@@ -33,6 +34,8 @@ namespace LFX {
 	public:
 		Terrain(float * heightfiled, const Desc & desc);
 		virtual ~Terrain();
+
+		virtual int GetType() { return LFX_TERRAIN; }
 
 		const Desc & GetDesc() { return mDesc; }
 		Material * GetMaterial() { return &mMaterial; }

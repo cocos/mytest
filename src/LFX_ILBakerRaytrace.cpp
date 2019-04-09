@@ -149,7 +149,7 @@ namespace LFX {
 			if (len > 0.01f * UNIT_LEN)
 			{
 				Contact contract;
-				if (World::Instance()->GetEmbreeScene()->Occluded(ray.orig, ray.dir, len, LFX_TERRAIN | LFX_MESH))
+				if (World::Instance()->Occluded(ray, len, LFX_TERRAIN | LFX_MESH))
 				{
 					kd = ka = ks = 0;
 				}
@@ -219,7 +219,7 @@ namespace LFX {
 				sceneDistance = contact.td;
 			}
 #else
-			if (World::Instance()->GetEmbreeScene()->RayCheck(contact, ray, params.RayLen, LFX_TERRAIN | LFX_MESH))
+			if (World::Instance()->RayCheck(contact, ray, params.RayLen, LFX_TERRAIN | LFX_MESH))
 			{
 				sceneDistance = contact.td;
 			}

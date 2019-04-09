@@ -568,18 +568,10 @@ namespace LFX {
 
 			if (len > 0.01f * UNIT_LEN)
 			{
-#if 0
-				Contact contract;
-				if (World::Instance()->RayCheck(contract, ray, len, eFlag::MESH))
+				if (World::Instance()->Occluded(ray, len, LFX_MESH | LFX_TERRAIN))
 				{
 					kd = ka = ks = 0;
 				}
-#else
-				if (World::Instance()->GetEmbreeScene()->Occluded(ray.orig, ray.dir, len, LFX_MESH | LFX_TERRAIN))
-				{
-					kd = ka = ks = 0;
-				}
-#endif
 			}
 		}
 

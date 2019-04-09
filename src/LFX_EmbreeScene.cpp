@@ -15,8 +15,6 @@ namespace LFX {
 		{
 		}
 
-		rtcDevice = NULL;
-
 		rtcScene = NULL;
 	}
 
@@ -84,8 +82,9 @@ namespace LFX {
 #define _ES_TERRAIN_ENABLED 1
 #if _ES_TERRAIN_ENABLED
 		{
-			Terrain *pTerrain = World::Instance()->GetTerrain();
-			if (pTerrain != NULL) {
+			for (int i = 0; i < World::Instance()->GetTerrainCount(); ++i) {
+				Terrain *pTerrain = World::Instance()->GetTerrain(i);
+
 				std::vector<Vertex> & pVertex = pTerrain->_getVertexBuffer();
 				std::vector<Triangle> & pTriangle = pTerrain->_getTriBuffer();
 				int totalNumTriangles = pTerrain->_getTriBuffer().size();
@@ -96,14 +95,14 @@ namespace LFX {
 				rtcSetMask(rtcScene, geoID, LFX_TERRAIN);
 
 				Float4* meshVerts = reinterpret_cast<Float4*>(rtcMapBuffer(rtcScene, geoID, RTC_VERTEX_BUFFER));
-				for (int j = 0; j < World::Instance()->GetTerrain()->_getVertexBuffer().size(); ++j)
+				for (int j = 0; j < pTerrain->_getVertexBuffer().size(); ++j)
 				{
 					*meshVerts++ = Float4(pVertex[j].Position.x, pVertex[j].Position.y, pVertex[j].Position.z, 0);
 				}
 				rtcUnmapBuffer(rtcScene, geoID, RTC_VERTEX_BUFFER);
 
 				unsigned int * meshTriangles = reinterpret_cast<unsigned int*>(rtcMapBuffer(rtcScene, geoID, RTC_INDEX_BUFFER));
-				for (int j = 0; j < World::Instance()->GetTerrain()->_getTriBuffer().size(); ++j)
+				for (int j = 0; j < pTerrain->_getTriBuffer().size(); ++j)
 				{
 					*meshTriangles++ = pTriangle[j].Index0;
 					*meshTriangles++ = pTriangle[j].Index1;
@@ -111,7 +110,7 @@ namespace LFX {
 				}
 				rtcUnmapBuffer(rtcScene, geoID, RTC_INDEX_BUFFER);
 
-				mEntityMap.push_back(World::Instance()->GetTerrain());
+				mEntityMap.push_back(pTerrain);
 			}
 		}
 #endif
@@ -175,8 +174,8 @@ namespace LFX {
 				if (!r.Hit())
 					break;
 
-				void * entity = mEntityMap[r.geomID];
-				if (entity != NULL && entity != World::Instance()->GetTerrain())
+				Entity * entity = mEntityMap[r.geomID];
+				if (entity != NULL && entity->GetType() == LFX_MESH)
 				{
 					Mesh * mesh = (Mesh *)entity;
 					Material * m = GetMaterial(entity, r.primID);
@@ -210,12 +209,14 @@ namespace LFX {
 				if (contact.entity != NULL)
 				{
 					Vertex a, b, c;
-					if (contact.entity == World::Instance()->GetTerrain())
+					if (contact.entity->GetType() == LFX_TERRAIN)
 					{
-						Triangle tri = World::Instance()->GetTerrain()->_getTriangle(contact.triIndex);
-						a = World::Instance()->GetTerrain()->_getVertex(tri.Index0);
-						b = World::Instance()->GetTerrain()->_getVertex(tri.Index1);
-						c = World::Instance()->GetTerrain()->_getVertex(tri.Index2);
+						Terrain * terrain = (Terrain *)contact.entity;
+
+						Triangle tri = terrain->_getTriangle(contact.triIndex);
+						a = terrain->_getVertex(tri.Index0);
+						b = terrain->_getVertex(tri.Index1);
+						c = terrain->_getVertex(tri.Index2);
 					}
 					else
 					{
@@ -237,7 +238,7 @@ namespace LFX {
 		}
 		else
 		{
-			return World::Instance()->RayCheck(contact, ray, len, LFX_MESH | LFX_TERRAIN);
+			return World::Instance()->_RayCheckImp(contact, ray, len, LFX_MESH | LFX_TERRAIN);
 		}
 		
 		return false;
@@ -258,8 +259,8 @@ namespace LFX {
 				if (!r.Hit())
 					break;
 
-				void * entity = mEntityMap[r.geomID];
-				if (entity != NULL && entity != World::Instance()->GetTerrain())
+				Entity * entity = mEntityMap[r.geomID];
+				if (entity != NULL && entity->GetType() == LFX_MESH)
 				{
 					Mesh * mesh = (Mesh *)entity;
 					Material * m = GetMaterial(entity, r.primID);
@@ -292,19 +293,20 @@ namespace LFX {
 			Ray ray;
 			ray.orig = position;
 			ray.dir = direction;
-			return World::Instance()->Occluded(ray, len, LFX_MESH | LFX_TERRAIN);
+			return World::Instance()->_OccludedImp(ray, len, LFX_MESH | LFX_TERRAIN);
 		}
 	}
 
-	void EmbreeScene::TriangleLerp(Vertex & vout, void * pEntity, int triIndex, float u, float v)
+	void EmbreeScene::TriangleLerp(Vertex & vout, Entity * pEntity, int triIndex, float u, float v)
 	{
 		Vertex * pVertexBuffer;
 		Triangle * pTrangleBuffer;
 
-		if (pEntity == World::Instance()->GetTerrain())
+		if (pEntity->GetType() == LFX_TERRAIN)
 		{
-			std::vector<Vertex> & pVertex = World::Instance()->GetTerrain()->_getVertexBuffer();
-			std::vector<Triangle> & pTriangle = World::Instance()->GetTerrain()->_getTriBuffer();
+			Terrain * terrain = (Terrain *)pEntity;
+			std::vector<Vertex> & pVertex = terrain->_getVertexBuffer();
+			std::vector<Triangle> & pTriangle = terrain->_getTriBuffer();
 
 			pVertexBuffer = &pVertex[0];
 			pTrangleBuffer = &pTriangle[0];
@@ -337,11 +339,13 @@ namespace LFX {
 		vout.Binormal.normalize();
 	}
 
-	Material * EmbreeScene::GetMaterial(void * pEntity, int triIndex)
+	Material * EmbreeScene::GetMaterial(Entity * pEntity, int triIndex)
 	{
-		if (pEntity == World::Instance()->GetTerrain())
+		if (pEntity->GetType() == LFX_TERRAIN)
 		{
-			return World::Instance()->GetTerrain()->GetMaterial();
+			Terrain * terrain = (Terrain *)pEntity;
+
+			return terrain->GetMaterial();
 		}
 		else
 		{

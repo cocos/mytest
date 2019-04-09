@@ -56,13 +56,13 @@ namespace LFX {
 		bool Occluded(const Float3& position, const Float3& direction, float len, int mask);
 
 	protected:
-		void TriangleLerp(Vertex & vout, void * pEntity, int triIndex, float u, float v);
-		Material * GetMaterial(void * pEntity, int triIndex);
+		void TriangleLerp(Vertex & vout, Entity * pEntity, int triIndex, float u, float v);
+		Material * GetMaterial(Entity * pEntity, int triIndex);
 
 	protected:
 		RTCDevice rtcDevice;
 		RTCScene rtcScene;
-		std::vector<void *> mEntityMap;
+		std::vector<Entity *> mEntityMap;
 	};
 
 }
