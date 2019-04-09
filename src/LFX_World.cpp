@@ -179,19 +179,19 @@ namespace LFX {
 					image.width = LSize;
 					image.height = LSize;
 					if (!mSetting.RGBEFormat) {
-						image.pixels = new BYTE[LSize * LSize * 3];
+						image.pixels = new uint8_t[LSize * LSize * 3];
 						image.channels = 3;
 						for (int k = 0; k < colors.size(); ++k)
 						{
 							colors[k].saturate();
 
-							image.pixels[k * 3 + 0] = (BYTE)(colors[k].x * 255);
-							image.pixels[k * 3 + 1] = (BYTE)(colors[k].y * 255);
-							image.pixels[k * 3 + 2] = (BYTE)(colors[k].z * 255);
+							image.pixels[k * 3 + 0] = (uint8_t)(colors[k].x * 255);
+							image.pixels[k * 3 + 1] = (uint8_t)(colors[k].y * 255);
+							image.pixels[k * 3 + 2] = (uint8_t)(colors[k].z * 255);
 						}
 					}
 					else {
-						image.pixels = new BYTE[LSize * LSize * 4];
+						image.pixels = new uint8_t[LSize * LSize * 4];
 						image.channels = 4;
 						for (int k = 0; k < colors.size(); ++k)
 						{
@@ -283,19 +283,19 @@ namespace LFX {
 			image.width = LSize;
 			image.height = LSize;
 			if (!mSetting.RGBEFormat) {
-				image.pixels = new BYTE[LSize * LSize * 3];
+				image.pixels = new uint8_t[LSize * LSize * 3];
 				image.channels = 3;
 				for (int k = 0; k < colors.size(); ++k)
 				{
 					colors[k].saturate();
 
-					image.pixels[k * 3 + 0] = (BYTE)(colors[k].x * 255);
-					image.pixels[k * 3 + 1] = (BYTE)(colors[k].y * 255);
-					image.pixels[k * 3 + 2] = (BYTE)(colors[k].z * 255);
+					image.pixels[k * 3 + 0] = (uint8_t)(colors[k].x * 255);
+					image.pixels[k * 3 + 1] = (uint8_t)(colors[k].y * 255);
+					image.pixels[k * 3 + 2] = (uint8_t)(colors[k].z * 255);
 				}
 			}
 			else {
-				image.pixels = new BYTE[LSize * LSize * 4];
+				image.pixels = new uint8_t[LSize * LSize * 4];
 				image.channels = 4;
 				for (int k = 0; k < colors.size(); ++k)
 				{
@@ -430,7 +430,8 @@ namespace LFX {
 		String imagefile = String("lightfx/") + filename;
 
 		Image img;
-		if (!PNG_Load(img, FileStream(imagefile.c_str()))) {
+		FileStream fs(imagefile.c_str());
+		if (!PNG_Load(img, fs)) {
 			LOGW("Load Texture '%s' failed", name.c_str());
 			return NULL;
 		}

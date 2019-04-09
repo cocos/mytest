@@ -1,4 +1,7 @@
 #include "LFX_Thread.h"
+#ifdef __linux__
+#include <unistd.h>
+#endif
 
 namespace LFX {
 
@@ -7,7 +10,7 @@ namespace LFX {
 		if (second > 0)
 		{
 #ifdef _WIN32
-			::Sleep((DWORD)(second * 1000));
+			::Sleep((uint32_t)(second * 1000));
 #else
 			usleep((unsigned long)(second * 1000) * 1000);
 #endif

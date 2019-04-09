@@ -51,7 +51,7 @@ struct PKProgress : public OPacket
 		int Stage;
 		int Progress;
 	} data;
-	
+
 	virtual short Length()
 	{
 		return (short)sizeof(data);
@@ -165,7 +165,7 @@ int main()
 		return 1;
 	}
 
-	// 
+	//
 	printf("LightFX Server running...\n");
 
 	while (!mQuit) {
@@ -210,7 +210,7 @@ int main()
 				}
 
 				// read data
-				BYTE buffer[PACK_MAX_SIZE];
+				uint8_t buffer[PACK_MAX_SIZE];
 				if (cl->IStream()->Read(buffer, head.length) == 0) {
 					cl->IStream()->Skip(-skip);
 					break;
@@ -300,9 +300,9 @@ int main()
 {
 	LFX::Server sv;
 	sv.Run();
-	
+
 	while (sv.GetStatus() != LFX::Thread::STOP) {
-		// 处理消息
+		// handle messages
 		LFX::Server::Mutex.Lock();
 
 		for (int i = 0; i < LFX::Server::MessageQueue.size(); ++i) {
@@ -313,7 +313,7 @@ int main()
 				continue;
 			}
 
-			BYTE buffer[PACK_MAX_SIZE];
+			uint8_t buffer[PACK_MAX_SIZE];
 			if (stream->Read(buffer, head.length) == 0) {
 				continue;
 			}

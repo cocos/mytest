@@ -14,10 +14,13 @@ include_directories(
   ${TBB_INCLUDE_DIR}
   # Embree library
   ${EMBREE_INCLUDE_DIR}
+  # LodePNG library
+  ${LODEPNG_INCLUDE_DIR}
+  # dirent library (on windows)
+  ${DIRENT_INCLUDE_DIR}
 )
 
 add_executable(LightFX
-  include/dirent.h
   include/LFX_Entity.h
   include/LFX_ILBakerRaytrace.h
   include/LFX_Math.h
@@ -53,7 +56,6 @@ add_executable(LightFX
   include/LFX_Mat3.h
   include/LFX_Terrain.h
   include/LFX_Vec2.inl
-  include/lodepng.h
 
   src/LFX_AOBaker.cpp
   src/LFX_Baker.cpp
@@ -76,24 +78,24 @@ add_executable(LightFX
   src/LFX_Rasterizer.cpp
   src/LFX_TextureAtlas.cpp
   src/main2.cpp
-  src/lodepng.cpp
+  ${LODEPNG_INCLUDE_DIR}/lodepng.cpp
 )
 
-# this won't work because FindBoost need everything to be ready before it runs
-# besides, generally we only need to build them once
+# this won't work out of the box because FindBoost need everything to be ready before it runs
+# but when need to do regular rebuilds, this might come in handy
 # if(CMAKE_SIZEOF_VOID_P EQUAL 8)
 #   set(BOOST_ADDRESS_MODE 64)
 # elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
 #   set(BOOST_ADDRESS_MODE 32)
 # endif()
 # add_custom_target(
-#   boost_bootstrap
+#   build_boost
 #   COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR}/ext/boost
-#   COMMAND call bootstrap
-#   COMMAND b2 headers
-#   COMMAND b2 address-model=${BOOST_ADDRESS_MODE} runtime-link=static stage --with-system --with-date_time --with-regex
+#   # COMMAND call bootstrap
+#   # COMMAND b2 headers
+#   COMMAND b2 address-model=${BOOST_ADDRESS_MODE} link=static runtime-link=static stage --with-system --with-date_time --with-regex
 # )
-# add_dependencies(LightFX boost_bootstrap boost_headers boost_build)
+# add_dependencies(LightFX build_boost)
 
 set(BOOST_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/ext/boost)
 set(Boost_USE_MULTITHREAD ON)
@@ -101,6 +103,7 @@ set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_STATIC_RUNTIME ON)
 find_package(Boost COMPONENTS system date_time regex REQUIRED)
 
+add_definitions(-DENABLE_STATIC_LIB) # dirty fix for win32 embree static build bug
 target_link_libraries(LightFX ${Boost_LIBRARIES} embree)
 
 # Force colored output for the ninja generator

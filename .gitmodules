@@ -4,9 +4,16 @@
 [submodule "ext/boost"]
 	path = ext/boost
 	url = https://github.com/boostorg/boost
+	ignore = dirty
 [submodule "ext/embree"]
 	path = ext/embree
 	url = https://github.com/embree/embree
 [submodule "ext/tbb"]
 	path = ext/tbb
 	url = https://github.com/wjakob/tbb
+[submodule "ext/dirent"]
+	path = ext/dirent
+	url = https://github.com/tronkko/dirent
+[submodule "ext/lodepng"]
+	path = ext/lodepng
+	url = https://github.com/lvandeve/lodepng

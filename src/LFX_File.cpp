@@ -1,7 +1,12 @@
 #include "LFX_File.h"
 
 #include "dirent.h"
-#include <io.h>
+#ifdef _WIN32
+	#include <io.h>
+#else
+	#include <unistd.h>
+	#include <sys/stat.h>
+#endif
 
 namespace LFX {
 

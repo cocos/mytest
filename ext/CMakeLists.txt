@@ -100,32 +100,35 @@ elseif(APPLE)
   string(REGEX REPLACE "^.*X([0-9.]*).sdk$" "\\1" CMAKE_OSX_DEPLOYMENT_TARGET "${CMAKE_OSX_SYSROOT}")
 endif()
 
-# Add Boost and Websocket++ (They are headers only)
+#############################
+
+# Add Boost and Websocket++ (headers only)
 set(BOOST_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/boost)
-# system, date_time, regex
 add_subdirectory(websocketpp)
 
 # Build Thread Building Blocks
-set(TBB_BUILD_SHARED          ON   CACHE BOOL " " FORCE)
-set(TBB_BUILD_STATIC          OFF  CACHE BOOL " " FORCE)
+set(TBB_BUILD_SHARED          OFF  CACHE BOOL " " FORCE)
+set(TBB_BUILD_STATIC          ON   CACHE BOOL " " FORCE)
 set(TBB_BUILD_TBBMALLOC       ON   CACHE BOOL " " FORCE)
 set(TBB_BUILD_TBBMALLOC_PROXY OFF  CACHE BOOL " " FORCE)
 set(TBB_BUILD_TESTS           OFF  CACHE BOOL " " FORCE)
 add_subdirectory(tbb)
-set_property(TARGET tbb tbb_def_files tbbmalloc PROPERTY FOLDER "dependencies")
-set_property(TARGET tbb tbb_def_files tbbmalloc PROPERTY RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
+set_property(TARGET tbb_static tbbmalloc_static tbb_def_files PROPERTY FOLDER "dependencies")
+set_property(TARGET tbb_static tbbmalloc_static tbb_def_files PROPERTY RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+set_property(TARGET tbb_static tbbmalloc_static tbb_def_files PROPERTY LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+set_property(TARGET tbb_static tbbmalloc_static tbb_def_files PROPERTY ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 # Build Embree
 set(TBB_ROOT "")
 set(TBB_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tbb/include)
-set(TBB_LIBRARY tbb)
-set(TBB_LIBRARY_MALLOC tbbmalloc)
-set(ENABLE_INSTALLER OFF CACHE BOOL " " FORCE)
+set(TBB_LIBRARY tbb_static)
+set(TBB_LIBRARY_MALLOC tbbmalloc_static)
 set(ENABLE_TUTORIALS OFF CACHE BOOL " " FORCE)
 set(ENABLE_ISPC_SUPPORT OFF CACHE BOOL " " FORCE)
+set(ENABLE_STATIC_LIB ON CACHE BOOL " " FORCE)
+# set(RTCORE_TASKING_SYSTEM INTERNAL)
 add_subdirectory(embree)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/tbb/include)
-add_dependencies(embree tbb tbbmalloc)
+add_dependencies(embree tbb_static tbbmalloc_static)
 set_property(TARGET embree PROPERTY FOLDER "dependencies")
 
 # Expose inlcude directories
@@ -137,6 +140,13 @@ set(TBB_INCLUDE_DIR
   ${CMAKE_CURRENT_SOURCE_DIR}/tbb/include)
 set(EMBREE_INCLUDE_DIR
   ${CMAKE_CURRENT_SOURCE_DIR}/embree/include)
+set(LODEPNG_INCLUDE_DIR
+  ${CMAKE_CURRENT_SOURCE_DIR}/lodepng)
+if(WIN32)
+  set(DIRENT_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/dirent/include)
+endif()
+
+#############################
 
 # Compile remainder of the codebase with compiler warnings turned on
 if(MSVC)
@@ -164,6 +174,7 @@ set(CompilerFlags
       CMAKE_C_FLAGS_RELWITHDEBINFO COMPILE_DEFINITIONS U_CMAKE_BUILD_TYPE
       CMAKE_MACOSX_RPATH
       BOOST_INCLUDE_DIR WEBSOCKETPP_INCLUDE_DIR TBB_INCLUDE_DIR EMBREE_INCLUDE_DIR
+      LODEPNG_INCLUDE_DIR DIRENT_INCLUDE_DIR
 )
 foreach(CompilerFlag ${CompilerFlags})
   set(${CompilerFlag} "${${CompilerFlag}}" PARENT_SCOPE)
