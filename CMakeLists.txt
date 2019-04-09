@@ -103,7 +103,7 @@ set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_STATIC_RUNTIME ON)
 find_package(Boost COMPONENTS system date_time regex REQUIRED)
 
-add_definitions(-DENABLE_STATIC_LIB) # dirty fix for win32 embree static build bug
+add_definitions(-DEMBREE_STATIC_LIB) # dirty fix for win32 embree static build bug
 target_link_libraries(LightFX ${Boost_LIBRARIES} embree)
 
 # Force colored output for the ninja generator
