@@ -152,7 +152,7 @@ namespace LFX {
 		return err == 0;
 	}
 
-	bool PNG_Save(FILE * fp, const Image & image, bool auto_convert)
+	bool PNG_Save(FILE * fp, const Image & image)
 	{
 		LodePNGColorType colortype;
 		switch (image.channels)
@@ -183,7 +183,7 @@ namespace LFX {
 		state.info_raw.bitdepth = 8;
 		state.info_png.color.colortype = colortype;
 		state.info_png.color.bitdepth = 8;
-		state.encoder.auto_convert = auto_convert;
+		state.encoder.auto_convert = LAC_NO;
 		lodepng_encode(&data, &size, image.pixels, image.width, image.height, &state);
   		lodepng_state_cleanup(&state);
 

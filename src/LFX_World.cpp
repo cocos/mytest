@@ -222,7 +222,7 @@ namespace LFX {
 				char filename[256];
 				sprintf(filename, "%s/LFX_Terrain_%04d.png", path.c_str(), i);
 				FILE * tfp = fopen(filename, "wb");
-				LFX::PNG_Save(tfp, image, false);
+				LFX::PNG_Save(tfp, image);
 				fclose(tfp);
 
 				image.pixels = NULL;
@@ -326,7 +326,7 @@ namespace LFX {
 			char filename[256];
 			sprintf(filename, "%s/LFX_Mesh_%04d.png", path.c_str(), i);
 			FILE * tfp = fopen(filename, "wb");
-			LFX::PNG_Save(tfp, image, false);
+			LFX::PNG_Save(tfp, image);
 			fclose(tfp);
 
 			image.pixels = NULL;

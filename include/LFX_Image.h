@@ -39,7 +39,7 @@ namespace LFX {
 	LFX_ENTRY bool
 		PNG_Load(Image & image, Stream & stream);
 	LFX_ENTRY bool
-		PNG_Save(FILE * fp, const Image & image, bool auto_convert = true);
+		PNG_Save(FILE * fp, const Image & image);
 
 }
 
