@@ -106,7 +106,7 @@ namespace LFX {
 		image.width = header.width;
 		image.height = header.height;
 
-		LodePNGColorType colortype;
+		LodePNGColorType colortype = LCT_RGBA;
 		int chanels = 0;
 
 		switch (header.colortype)
@@ -183,7 +183,7 @@ namespace LFX {
 		state.info_raw.bitdepth = 8;
 		state.info_png.color.colortype = colortype;
 		state.info_png.color.bitdepth = 8;
-		state.encoder.auto_convert = LAC_NO;
+		state.encoder.auto_convert = false;
 		lodepng_encode(&data, &size, image.pixels, image.width, image.height, &state);
   		lodepng_state_cleanup(&state);
 
