@@ -93,7 +93,8 @@ export class LFX_Baker {
     // 发送消息
     //
     Send(pid: number, data: ArrayBuffer | null): void {
-        let length = 4; // head
+        // head
+        let length = 4; 
         if (data != null) {
             length += data.byteLength;
         }
@@ -117,12 +118,6 @@ export class LFX_Baker {
 
     // 上传
     //
-    delDir(path: string) {
-        if(fs.existsSync(path)){
-
-        }
-    }
-
     Upload(asset_path: string) {
         let buff = new LFX_Buffer;
 
