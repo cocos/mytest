@@ -1,5 +1,5 @@
 if [ $# -eq 0 ]; then
-    mode=32
+    mode=64
 else
     mode=$1
 fi
