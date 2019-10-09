@@ -17,3 +17,6 @@
 [submodule "ext/lodepng"]
 	path = ext/lodepng
 	url = https://github.com/lvandeve/lodepng
+[submodule "ext/socket.io-client-cpp"]
+	path = ext/socket.io-client-cpp
+	url = https://github.com/socketio/socket.io-client-cpp
