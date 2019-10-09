@@ -1,3 +1,4 @@
+#if 0
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
 #include <iostream>
@@ -7,6 +8,7 @@
 
 #include "LFX_World.h"
 #include "LFX_Stream.h"
+
 
 typedef websocketpp::server<websocketpp::config::asio> server;
 
@@ -364,3 +366,5 @@ int main() {
 		std::cout << e.what() << std::endl;
 	}
 }
+
+#endif

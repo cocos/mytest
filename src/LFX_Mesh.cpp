@@ -6,8 +6,7 @@
 
 namespace LFX {
 
-	Mesh::Mesh(const String & name)
-		: mName(name)
+	Mesh::Mesh()
 	{
 		mUserData = NULL;
 		mCastShadow = true;

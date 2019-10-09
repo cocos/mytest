@@ -16,7 +16,6 @@ namespace LFX {
 
 		struct Desc
 		{
-			String Name;
 			int LMapSize;
 			float GridSize;
 			Float2 Dimension;

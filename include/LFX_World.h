@@ -141,7 +141,7 @@ namespace LFX {
 		int GetLightCount() { return mLights.size(); }
 
 		// Mesh
-		Mesh * CreateMesh(const String & name);
+		Mesh * CreateMesh();
 		Mesh * GetMesh(int i) { return mMeshes[i]; }
 		int GetMeshCount() { return mMeshes.size(); }
 

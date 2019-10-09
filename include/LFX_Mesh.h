@@ -9,13 +9,11 @@ namespace LFX {
 	class LFX_ENTRY Mesh : public Entity
 	{
 	public:
-		Mesh(const String & name);
+		Mesh();
 		virtual ~Mesh();
 
 		virtual int GetType() { return LFX_MESH; }
 
-		const String & GetName() { return mName; }
-		
 		void SetCastShadow(bool b) { mCastShadow = b; }
 		bool GetCastShadow() { return mCastShadow; }
 
@@ -72,7 +70,6 @@ namespace LFX {
 		BSPTree<int> mBSPTree;
 		Float2 mUVMin, mUVMax;
 
-		String mName;
 		void * mUserData;
 		bool mCastShadow;
 		bool mReceiveShadow;

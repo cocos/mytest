@@ -63,11 +63,26 @@ namespace LFX {
 			}
 
 			switch (ckId) {
-			case LFX_FILE_TERRAIN:
-				break;
+			case LFX_FILE_TERRAIN: {
+				Terrain::Desc desc;
+				stream >> desc.GridSize;
+				stream >> desc.BlockCount;
+				stream >> desc.LMapSize;
+				desc.GridCount = desc.BlockCount * 32;
+				desc.VertexCount = desc.GridCount + Int2(1, 1);
+				desc.Dimension.x = desc.GridSize * desc.GridCount.x;
+				desc.Dimension.y = desc.GridSize * desc.GridCount.y;
 
+				std::vector<float> heightfield;
+				heightfield.resize(desc.VertexCount.x * desc.VertexCount.y);
+				stream.Read(&heightfield[0], heightfield.size() * sizeof(float));
+
+				CreateTerrain(&heightfield[0], desc);
+				break;
+			}
+				
 			case LFX_FILE_MESH: {
-				Mesh *m = CreateMesh(stream.ReadString());
+				Mesh *m = CreateMesh();
 				m->SetCastShadow(stream.ReadT<bool>());
 				m->SetRecieveShadow(stream.ReadT<bool>());
 				m->SetLightingMapSize(stream.ReadT<int>());
@@ -157,7 +172,7 @@ namespace LFX {
 			options.Height = mSetting.Size;
 			options.Channels = mSetting.RGBEFormat ? 4 : 3;
 			options.Border = 0;
-			options.Height = 0;
+			options.Space = 0;
 
 			TextureAtlasPacker packer(options);
 			std::vector<TextureAtlasPacker::Item> packed_items;
@@ -261,7 +276,7 @@ namespace LFX {
 		options.Height = mSetting.Size;
 		options.Channels = mSetting.RGBEFormat ? 4 : 3;
 		options.Border = 1;
-		options.Height = 0;
+		options.Space = 0;
 		TextureAtlasPacker packer(options);
 
 		std::vector<TextureAtlasPacker::Item> packed_items;
@@ -490,9 +505,9 @@ namespace LFX {
 		mLights.clear();
 	}
 
-	Mesh * World::CreateMesh(const String & name)
+	Mesh * World::CreateMesh()
 	{
-		Mesh * pMesh = new Mesh(name);
+		Mesh * pMesh = new Mesh();
 
 		mMeshes.push_back(pMesh);
 
@@ -627,12 +642,12 @@ namespace LFX {
 				mEntitys.push_back({ mMeshes[i], (int)i });
 			}
 		}
-		for (int j = 0; j < mTerrains.size(); ++j) {
-			for (int i = 0; i < mTerrains[i]->GetDesc().BlockCount.x * mTerrains[i]->GetDesc().BlockCount.y; ++i)
+		for (auto terrain : mTerrains) {
+			for (int i = 0; i < terrain->GetDesc().BlockCount.x * terrain->GetDesc().BlockCount.y; ++i)
 			{
-				if (mTerrains[i]->_getBlockValids()[i])
+				if (terrain->_getBlockValids()[i])
 				{
-					mEntitys.push_back({ mTerrains[i], i });
+					mEntitys.push_back({ terrain, i });
 				}
 			}
 		}
