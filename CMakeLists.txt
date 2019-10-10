@@ -18,6 +18,8 @@ include_directories(
   ${LODEPNG_INCLUDE_DIR}
   # dirent library (on windows)
   ${DIRENT_INCLUDE_DIR}
+  # socket.io
+  ext/socket.io-client-cpp/src
 )
 
 add_executable(LightFX
@@ -77,8 +79,12 @@ add_executable(LightFX
   src/LFX_ImageBMP.cpp
   src/LFX_Rasterizer.cpp
   src/LFX_TextureAtlas.cpp
-  src/main2.cpp
+  src/main3.cpp
   ${LODEPNG_INCLUDE_DIR}/lodepng.cpp
+  ext/socket.io-ext/internal/sio_client_impl.cpp
+  ext/socket.io-ext/internal/sio_packet.cpp
+  ext/socket.io-client-cpp/src/sio_client.cpp
+  ext/socket.io-client-cpp/src/sio_socket.cpp
 )
 
 # this won't work out of the box because FindBoost need everything to be ready before it runs
