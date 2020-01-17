@@ -4,9 +4,10 @@ import { GFXAttributeName, LightComponent, ModelComponent, Node, Scene, Terrain,
 import exec from 'child_process';
 import ps from 'path';
 import { LFXBaker } from './LFX_Baker';
-import { LFXLight, LFXMaterial, LFXMesh, LFXTerrain, LFXTriangle, LFXVertex } from './LFX_Types';
+import { LFXLight, LFXMaterial, LFXMesh, LFXTerrain, LFXTriangle, LFXVertex, LFXWorld } from './LFX_Types';
 
 export class LFXApp {
+    public World: LFXWorld = new LFXWorld();
     private Baker: LFXBaker = new LFXBaker();
     private Models: ModelComponent[] = [];
     private Lights: LightComponent[] = [];
@@ -17,27 +18,29 @@ export class LFXApp {
 
     public Init () {
         // 场景名字
-        this.Baker.World.Name = 'Test';
+        this.World.Name = 'Test';
         // 服务器地址
-        this.Baker.World.Settings.Server = 'localhost:9002';
+        this.World.Settings.Server = 'localhost:9002';
         // 环境光照
-        this.Baker.World.Settings.Ambient = [0.0, 0.0, 0.0];
+        this.World.Settings.Ambient = [0.0, 0.0, 0.0];
         // 天空辐照度(用于全局光照)
-        this.Baker.World.Settings.SkyRadiance = [0.5, 0.5, 0.5];
+        this.World.Settings.SkyRadiance = [0.5, 0.5, 0.5];
         // 多重采样: 值(1, 2, 4, 8)
-        this.Baker.World.Settings.MSAA = 4;
+        this.World.Settings.MSAA = 4;
         // 烘培贴图大小: 值(128, 256, 512, 1024, 2048)
-        this.Baker.World.Settings.Size = 1024;
+        this.World.Settings.Size = 1024;
         // Gamma值
-        this.Baker.World.Settings.Gamma = 2.2;
+        this.World.Settings.Gamma = 2.2;
         // 全局光照缩放
-        this.Baker.World.Settings.GIScale = 0; // 0: 关闭
+        this.World.Settings.GIScale = 0; // 0: 关闭
         // 全局光照采样数
-        this.Baker.World.Settings.GISamples = 10;
+        this.World.Settings.GISamples = 10;
         // 全局光照光线最大跟踪次数
-        this.Baker.World.Settings.GIPathLength = 4;
+        this.World.Settings.GIPathLength = 4;
         // 线程数量
-        this.Baker.World.Settings.Threads = 1;
+        this.World.Settings.Threads = 1;
+
+        return true；
     }
 
     public Run () {
@@ -60,7 +63,7 @@ export class LFXApp {
             if (!this.Baker.Started) {
                 // 开始烘培
                 if (this.Baker.connected) {
-                    this.Baker.Upload('asset目录');
+                    this.Baker.Upload('asset目录', this.World);
                     this.Baker.Start();
 
                     this.Baker.client.on('Tick', (data: any) => {
@@ -153,7 +156,7 @@ export class LFXApp {
         // @ts-ignore
         fxterrain.HeightField = terrain.getHeightField();
 
-        this.Baker.World.Terrains.push(fxterrain);
+        this.World.Terrains.push(fxterrain);
         this.Terrains.push(terrain);
     }
 
@@ -254,7 +257,7 @@ export class LFXApp {
         mtl.Diffuse[2] = 1;
         fxmesh.MaterialBuffer.push(mtl);
 
-        this.Baker.World.Meshes.push(fxmesh);
+        this.World.Meshes.push(fxmesh);
         this.Models.push(model);
     }
 
@@ -300,7 +303,7 @@ export class LFXApp {
         fxlight.GIEnable = false;
         fxlight.CastShadow = true;
 
-        this.Baker.World.Lights.push(fxlight);
+        this.World.Lights.push(fxlight);
         this.Lights.push(light);
     }
 }

@@ -23,7 +23,6 @@ export const LFX_STAGE_END = 5;
 export class LFXBaker {
     public static Instance: LFXBaker;
 
-    public World: LFXWorld = new LFXWorld();
     public Started: boolean = false;
     public Finished: boolean = false;
 
@@ -87,7 +86,7 @@ export class LFXBaker {
     }
 
     // 上传
-    public Upload (asset_path: string) {
+    public Upload (asset_path: string, scene: LFXWorld) {
         const buff = new LFXBuffer();
 
         const immediatePath = this.lfxpath;
@@ -118,25 +117,25 @@ export class LFXBaker {
 
         // Head
         buff.WriteInt32(LFX_FILE_VERSION);
-        buff.WriteString(this.World.Name);
+        buff.WriteString(scene.Name);
 
         // Setting
-        buff.WriteFloatArray(this.World.Settings.Ambient);
-        buff.WriteFloatArray(this.World.Settings.SkyRadiance);
-        buff.WriteInt32(this.World.Settings.MSAA);
-        buff.WriteInt32(this.World.Settings.Size);
-        buff.WriteFloat(this.World.Settings.Gamma);
-        buff.WriteFloat(this.World.Settings.GIScale);
-        buff.WriteInt32(this.World.Settings.GISamples);
-        buff.WriteInt32(this.World.Settings.GIPathLength);
-        buff.WriteInt32(this.World.Settings.AOLevel);
-        buff.WriteFloat(this.World.Settings.AOStrength);
-        buff.WriteFloat(this.World.Settings.AORadius);
-        buff.WriteFloatArray(this.World.Settings.AOColor);
-        buff.WriteInt32(this.World.Settings.Threads);
+        buff.WriteFloatArray(scene.Settings.Ambient);
+        buff.WriteFloatArray(scene.Settings.SkyRadiance);
+        buff.WriteInt32(scene.Settings.MSAA);
+        buff.WriteInt32(scene.Settings.Size);
+        buff.WriteFloat(scene.Settings.Gamma);
+        buff.WriteFloat(scene.Settings.GIScale);
+        buff.WriteInt32(scene.Settings.GISamples);
+        buff.WriteInt32(scene.Settings.GIPathLength);
+        buff.WriteInt32(scene.Settings.AOLevel);
+        buff.WriteFloat(scene.Settings.AOStrength);
+        buff.WriteFloat(scene.Settings.AORadius);
+        buff.WriteFloatArray(scene.Settings.AOColor);
+        buff.WriteInt32(scene.Settings.Threads);
 
         // Terrains
-        for (const terrain of this.World.Terrains) {
+        for (const terrain of scene.Terrains) {
             buff.WriteInt32(LFX_FILE_TERRAIN);
             buff.WriteFloat(terrain.TileSize);
             buff.WriteIntArray(terrain.BlockCount);
@@ -145,7 +144,7 @@ export class LFXBaker {
         }
 
         // Meshes
-        for (const mesh of this.World.Meshes) {
+        for (const mesh of scene.Meshes) {
             buff.WriteInt32(LFX_FILE_MESH);
             buff.WriteInt8(mesh.CastShadow ? 1 : 0);
             buff.WriteInt8(mesh.RecieveShadow ? 1 : 0);
@@ -173,7 +172,7 @@ export class LFXBaker {
         }
 
         // Lights
-        for (const light of this.World.Lights) {
+        for (const light of scene.Lights) {
             buff.WriteInt32(LFX_FILE_LIGHT);
             buff.WriteInt32(light.Type);
             buff.WriteFloatArray(light.Position);
@@ -198,7 +197,7 @@ export class LFXBaker {
         fs.writeFileSync(immediatePath + '/lfx.i', buff.Buffer);
 
         // Copy Textures
-        for (const tex of this.World.Textures) {
+        for (const tex of scene.Textures) {
             const data = fs.readFileSync(asset_path + '/' + tex);
             const target = tex.replace('/', '$');
 
