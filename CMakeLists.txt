@@ -20,6 +20,9 @@ include_directories(
   ${DIRENT_INCLUDE_DIR}
   # socket.io
   ext/socket.io-client-cpp/src
+  # rapidjson
+  ext/rapidjson/include
+  
 )
 
 add_executable(LightFX

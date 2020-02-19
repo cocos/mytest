@@ -20,3 +20,6 @@
 [submodule "ext/socket.io-client-cpp"]
 	path = ext/socket.io-client-cpp
 	url = https://github.com/socketio/socket.io-client-cpp
+[submodule "ext/rapidjson"]
+	path = ext/rapidjson
+	url = https://github.com/Tencent/rapidjson
