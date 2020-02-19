@@ -4,39 +4,14 @@
 
 #include "sio_client.h"
 
+#include "LFX_Log.h"
 #include "LFX_World.h"
 #include "LFX_Stream.h"
 
 bool GQuit = false;
 int GProgress = 0;
+LFX::Log* GLog = NULL;
 LFX::World* GWorld = NULL;
-
-const char* progress_format(const char* tag, int progress)
-{
-	static char text[256];
-
-	sprintf(text, "%s %d%%\n", tag, progress);
-
-	return text;
-}
-
-void on_start(sio::event &)
-{
-	GProgress = 0;
-	SAFE_DELETE(GWorld);
-
-	GWorld = new LFX::World;
-	GWorld->Load();
-	GWorld->Build();
-
-	GWorld->Start();
-}
-
-void on_stop(sio::event &)
-{
-	SAFE_DELETE(GWorld);
-	GQuit = true;
-}
 
 time_t GetTicks()
 {
@@ -51,16 +26,42 @@ time_t GetTicks()
 #endif
 }
 
-int main()
+const char* progress_format(const char* tag, int progress)
 {
+	static char text[256];
+
+	sprintf(text, "%s %d%%\n", tag, progress);
+
+	return text;
+}
+
+int main(int argc, char* argv[])
+{
+	GLog = new LFX::Log("lfx.log");
+
 	sio::client h;
 	h.connect("http://127.0.0.1:3000");
 	h.socket()->emit("Login");
 
-	h.socket()->on("Start", on_start);
-	h.socket()->on("Stop", on_stop);
-	h.socket()->on("disconnect", [](sio::event &e) {
-		on_stop(e);
+	h.socket()->on("Start", [](sio::event &) {
+		GProgress = 0;
+		SAFE_DELETE(GWorld);
+
+		GWorld = new LFX::World;
+		GWorld->Load();
+		GWorld->Build();
+
+		GWorld->Start();
+	});
+
+	h.socket()->on("Stop", [](sio::event &) {
+		SAFE_DELETE(GWorld);
+		GQuit = true;
+	});
+
+	h.socket()->on("disconnect", [](sio::event &) {
+		SAFE_DELETE(GWorld);
+		GQuit = true;
 	});
 	
 	// waiting for start
@@ -76,7 +77,6 @@ int main()
 	}
 
 	// bake
-	time_t last_tick = GetTickCount();
 	while (!GQuit && GWorld != NULL) {
 		int stage = GWorld->UpdateStage();
 		float kp = (GWorld->GetProgress() + 1) / (float)(GWorld->GetEntityCount() + 1);
@@ -105,10 +105,13 @@ int main()
 			h.socket()->emit("Progress", std::string(text));
 		}
 
+#if 0
+		static time_t last_tick = GetTickCount();
 		time_t current_ticks = GetTicks();
-		if ((current_ticks - last_tick) / 1000000 > 1) {
+		if ((current_ticks - last_tick) / 1000000 > 5) {
 			h.socket()->emit("Tick");
 		}
+#endif
 
 		if (stage == LFX::World::STAGE_END) {
 			GWorld->Save();
@@ -126,6 +129,8 @@ int main()
 		LFX::Thread::Sleep(5);
 		time += 5;
 	}
+
+	SAFE_DELETE(GLog);
 
 	return 0;
 }

@@ -6,12 +6,10 @@
 
 namespace LFX {
 
-	World * World::msInstance = NULL;
+	ImplementSingleton(World);
 
 	World::World()
 	{
-		msInstance = this;
-
 		mEmbreeScene = NULL;
 	}
 
@@ -22,7 +20,7 @@ namespace LFX {
 
 	bool World::Load()
 	{
-		String filename = "lightfx/lfx.i";
+		String filename = "tmp/lfx.i";
 
 		FileStream stream(filename.c_str());
 		if (!stream.IsOpen()) {
@@ -147,7 +145,7 @@ namespace LFX {
 
 	void World::Save()
 	{
-		String path = "lightfx/output";
+		String path = "output";
 		FileUtil::DeleteDir(path);
 		FileUtil::MakeDir(path);
 
@@ -494,15 +492,6 @@ namespace LFX {
 		mLights.push_back(pLight);
 
 		return pLight;
-	}
-
-	void World::ClearLights()
-	{
-		for (size_t i = 0; i < mLights.size(); ++i)
-		{
-			delete mLights[i];
-		}
-		mLights.clear();
 	}
 
 	Mesh * World::CreateMesh()

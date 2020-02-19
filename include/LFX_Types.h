@@ -51,4 +51,30 @@ namespace LFX {
 #define d_assert assert
 #define SAFE_DELETE(p) if (p) { delete p; p = NULL; }
 
+	template <class T>
+	struct Singleton
+	{
+		static T * msInstance;
+
+	public:
+		Singleton()
+		{
+			d_assert(msInstance == NULL);
+
+			msInstance = static_cast<T *>(this);
+		}
+
+		~Singleton()
+		{
+			msInstance = NULL;
+		}
+
+		static T * Instance()
+		{
+			return msInstance;
+		}
+	};
+
+#define ImplementSingleton(classname) \
+	template<> classname* Singleton<classname>::msInstance = NULL;
 }

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "LFX_Types.h"
 #include "LFX_Light.h"
 #include "LFX_Mesh.h"
 #include "LFX_Terrain.h"
@@ -18,7 +17,7 @@ namespace LFX {
 
 	class EmbreeScene;
 
-	class LFX_ENTRY World
+	class LFX_ENTRY World : public Singleton<World>
 	{
 		friend class LFX_Thread;
 
@@ -113,12 +112,6 @@ namespace LFX {
 			STAGE_END,
 		};
 
-	protected:
-		static World * msInstance;
-
-	public:
-		static World * Instance() { return msInstance; }
-
 	public:
 		World();
 		~World();
@@ -136,7 +129,6 @@ namespace LFX {
 
 		// Light
 		Light * CreateLight();
-		void ClearLights();
 		Light * GetLight(int i) { return mLights[i]; }
 		int GetLightCount() { return mLights.size(); }
 
@@ -166,7 +158,7 @@ namespace LFX {
 
 	protected:
 		Settings mSetting;
-		
+
 		std::vector<Texture *> mTextures;
 		std::vector<Light *> mLights;
 		std::vector<Mesh *> mMeshes;
