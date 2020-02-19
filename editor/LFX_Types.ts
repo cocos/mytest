@@ -1,9 +1,7 @@
 
 // Settings 编辑器要提供编辑界面
 //
-export class LFXSettings {
-    public Server: string = 'localhost:9002';
-
+export class LFX_Settings {
     // 环境光照
     public Ambient: number[] = [0, 0, 0];
     // 天空辐照度(用于全局光照)
@@ -32,38 +30,38 @@ export class LFXSettings {
     public Threads = 1;
 }
 
-export class LFXVertex {
+export class LFX_Vertex {
     public Position: number[] = [0, 0, 0];
     public Normal: number[] = [0, 0, 0];
     public  UV: number[] = [0, 0];
     public LUV: number[] = [0, 0];
 }
 
-export class LFXTriangle {
+export class LFX_Triangle {
     public Index: number[] = [0, 0, 0];
     public MaterialId: number = 0;
 }
 
-export class LFXMaterial {
+export class LFX_Material {
     //
     public Diffuse: number[] = [1, 1, 1];
     // 纹理，(所有'/'或者'\\'都必须转换成'$')
-    public Texture: string = '';
+    public Texture: string = "";
 }
 
 // 模型
 //
-export class LFXMesh {
+export class LFX_Mesh {
     public CastShadow: boolean = false;
     public RecieveShadow: boolean = false;
     public LightMapSize: number = 0;
-    public VertexBuffer: LFXVertex[] = new Array<LFXVertex>();
-    public TriangleBuffer: LFXTriangle[] = new Array<LFXTriangle>();
-    public MaterialBuffer: LFXMaterial[] = new Array<LFXMaterial>();
+    public VertexBuffer: LFX_Vertex[] = new Array<LFX_Vertex>();
+    public TriangleBuffer: LFX_Triangle[] = new Array<LFX_Triangle>();
+    public MaterialBuffer: LFX_Material[] = new Array<LFX_Material>();
 }
 
 // 地形
-export class LFXTerrain {
+export class LFX_Terrain {
     public TileSize: number = 0;
     public BlockCount: number[] = [0, 0];
     public HeightField: number[] = [];
@@ -72,13 +70,13 @@ export class LFXTerrain {
 
 // 灯光
 //
-export class LFXLight {
+export class LFX_Light {
     public static POINT = 0;
     public static SPOT = 1;
     public static DIRECTION = 2;
 
     // 类型
-    public Type: number = LFXLight.POINT;
+    public Type: number = LFX_Light.POINT;
     // 位置
     public Position: number[] = [0, 0, 0];
     // 方向
@@ -111,7 +109,8 @@ export class LFXLight {
     public CastShadow: boolean = false;
 }
 
-export class LFXBuffer {
+// tslint:disable-next-line: class-name
+export class LFX_Buffer {
     public Length: number = 0;
     public Buffer: Uint8Array = new Uint8Array(2048);
     private _dview: DataView = new DataView(this.Buffer.buffer);
@@ -251,13 +250,15 @@ export class LFXBuffer {
     }
 }
 
-export class LFXWorld {
+
+// tslint:disable-next-line: class-name
+export class LFX_World {
     public Name: string = '';
-    public Settings: LFXSettings = new LFXSettings();
+    public Settings: LFX_Settings = new LFX_Settings();
     public Textures: string[] = new Array<string>();
-    public Terrains: LFXTerrain[] = new Array<LFXTerrain>();
-    public Meshes: LFXMesh[] = new Array<LFXMesh>();
-    public Lights: LFXLight[] = new Array<LFXLight>();
+    public Terrains: LFX_Terrain[] = new Array<LFX_Terrain>();
+    public Meshes: LFX_Mesh[] = new Array<LFX_Mesh>();
+    public Lights: LFX_Light[] = new Array<LFX_Light>();
 
     public AddUniqueTexture (tex: string) {
         if (tex.length > 0) {
@@ -274,7 +275,8 @@ export class LFXWorld {
     }
 }
 
-export class LFXTerrainLightMapInfo {
+// tslint:disable-next-line: class-name
+export class LFX_TerrainLightMapInfo {
     public Id: number = 0;
     public Index: number = 0;
     public Offset: number[] = [0, 0];
@@ -282,7 +284,7 @@ export class LFXTerrainLightMapInfo {
 }
 
 // tslint:disable-next-line: class-name
-export class LFXMeshLightMapInfo {
+export class LFX_MeshLightMapInfo {
     public Id: number = 0;
     public Index: number = 0;
     public Offset: number[] = [0, 0];
@@ -290,8 +292,8 @@ export class LFXMeshLightMapInfo {
 }
 
 // tslint:disable-next-line: class-name
-export class LFXFile {
+export class LFX_File {
     public Verison: number = 0;
-    public MeshInfos: LFXMeshLightMapInfo[] = new Array<LFXMeshLightMapInfo>();
-    public TerrainInfos: LFXTerrainLightMapInfo[] = new Array<LFXTerrainLightMapInfo>();
+    public MeshInfos: LFX_MeshLightMapInfo[] = new Array<LFX_MeshLightMapInfo>();
+    public TerrainInfos: LFX_TerrainLightMapInfo[] = new Array<LFX_TerrainLightMapInfo>();
 }

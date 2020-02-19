@@ -3,7 +3,7 @@
 import fs from 'fs';
 import ps from 'path';
 const io = require('socket.io');
-import { LFXBuffer, LFXFile, LFXMeshLightMapInfo, LFXTerrainLightMapInfo, LFXWorld } from './LFX_Types';
+import { LFX_Buffer, LFX_File, LFX_MeshLightMapInfo, LFX_TerrainLightMapInfo, LFX_World } from './LFX_Types';
 
 const LFX_FILE_VERSION = 0x2000;
 const LFX_FILE_TERRAIN = 0x01;
@@ -11,19 +11,24 @@ const LFX_FILE_MESH = 0x02;
 const LFX_FILE_LIGHT = 0x03;
 const LFX_FILE_EOF = 0x00;
 
-/*
+const LFX_PK_START = 1;
+const LFX_PK_STOP = 2;
+const LFX_PK_LOG = 777;
+const LFX_PK_PROGRESS = 100;
+
+//
 export const LFX_STAGE_START = 0;
 export const LFX_STAGE_DIRECT_LIGHTING = 1;
 export const LFX_STAGE_INDIRECT_LIGHTING = 2;
 export const LFX_STAGE_AMBIENT_OCCLUSION = 3;
 export const LFX_STAGE_POST_PROCESS = 4;
 export const LFX_STAGE_END = 5;
-*/
 
-export class LFXBaker {
-    public static Instance: LFXBaker;
+// tslint:disable-next-line: class-name
+export class LFX_Baker {
+    public static Instance: LFX_Baker;
 
-    public World: LFXWorld = new LFXWorld();
+    public World: LFX_World = new LFX_World();
     public Started: boolean = false;
     public Finished: boolean = false;
 
@@ -32,7 +37,7 @@ export class LFXBaker {
     private _client: any = null;
 
     constructor () {
-        LFXBaker.Instance = this;
+        LFX_Baker.Instance = this;
     }
 
     get lfxpath () {
@@ -88,9 +93,9 @@ export class LFXBaker {
 
     // 上传
     public Upload (asset_path: string) {
-        const buff = new LFXBuffer();
+        const buff = new LFX_Buffer();
 
-        const immediatePath = this.lfxpath;
+        const immediatePath = this.lfxpath + '/tmp';
         if (fs.existsSync(immediatePath)) {
             // 删除零时文件
             const files = fs.readdirSync(immediatePath);
@@ -208,12 +213,12 @@ export class LFXBaker {
 
     //
     public Download () {
-        const file = new LFXFile();
+        const file = new LFX_File();
         const filename = this.lfxpath + '/output/lfx.o';
 
         const buff = fs.readFileSync(filename);
         if (buff != null) {
-            const stream = new LFXBuffer();
+            const stream = new LFX_Buffer();
             stream.Assign(buff);
 
             file.Verison = stream.ReadInt();
@@ -227,7 +232,7 @@ export class LFXBaker {
                 if (cid === LFX_FILE_TERRAIN) {
                     const count = stream.ReadInt();
                     for (let i = 0; i < count; ++i) {
-                        const info = new LFXTerrainLightMapInfo();
+                        const info = new LFX_TerrainLightMapInfo();
                         info.Id = stream.ReadInt();
                         info.Index = stream.ReadInt();
                         info.Offset[0] = stream.ReadFloat();
@@ -240,7 +245,7 @@ export class LFXBaker {
                 } else if (cid === LFX_FILE_MESH) {
                     const count = stream.ReadInt();
                     for (let i = 0; i < count; ++i) {
-                        const info = new LFXMeshLightMapInfo();
+                        const info = new LFX_MeshLightMapInfo();
 
                         info.Id = stream.ReadInt();
                         info.Index = stream.ReadInt();

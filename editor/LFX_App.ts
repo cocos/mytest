@@ -1,25 +1,32 @@
 'use strict';
 
-import { GFXAttributeName, LightComponent, ModelComponent, Node, Scene, Terrain, Vec3 } from 'cc';
+import { GFXAttributeName, LightComponent, ModelComponent, Node, Scene, Vec3 } from 'cc';
 import exec from 'child_process';
 import ps from 'path';
-import { LFXBaker } from './LFX_Baker';
-import { LFXLight, LFXMaterial, LFXMesh, LFXTerrain, LFXTriangle, LFXVertex } from './LFX_Types';
+import { LFX_Baker, LFX_STAGE_DIRECT_LIGHTING, LFX_STAGE_END, LFX_STAGE_INDIRECT_LIGHTING, LFX_STAGE_POST_PROCESS, LFX_STAGE_START } from './LFX_Baker';
+import { LFX_Light, LFX_Material, LFX_Mesh, LFX_Triangle, LFX_Vertex, LFX_World } from './LFX_Types';
 
-export class LFXApp {
-    private Baker: LFXBaker = new LFXBaker();
+// tslint:disable-next-line: class-name
+export class LFX_App {
+    public Baker: LFX_Baker = new LFX_Baker();
     private Models: ModelComponent[] = [];
     private Lights: LightComponent[] = [];
-    private Terrains: Terrain[] = [];
+    // private Terrains: Terrain[] = [];
 
     private CurrentTicks: number = 0;
     private LastTicks: number = 0;
 
     public Init () {
+        this.Baker.World = new LFX_World();
+        this.Models = [];
+        this.Lights = [];
+        this.CurrentTicks = 0;
+        this.LastTicks = 0;
+
         // 场景名字
         this.Baker.World.Name = 'Test';
         // 服务器地址
-        this.Baker.World.Settings.Server = 'localhost:9002';
+        // this.Baker.World.Settings.Server = 'localhost:9002';
         // 环境光照
         this.Baker.World.Settings.Ambient = [0.0, 0.0, 0.0];
         // 天空辐照度(用于全局光照)
@@ -44,11 +51,12 @@ export class LFXApp {
         // 启动
         this.Baker.Launch(3000);
 
-        /*
         // 启动烘焙程序
-        const LFX_SERVER = ps.resolve(__dirname, '../../../../../../../../../../../lightfx');
-        exec.execFile(LFX_SERVER, { cwd: __dirname });
-        */
+        const lfx_debug = false; // 调试模式从c++启动
+        if (!lfx_debug) {
+            const LFX_SERVER = this.Baker.lfxpath + '/LightFX';
+            const process = exec.execFile(LFX_SERVER, { cwd: this.Baker.lfxpath });
+        }
 
         // 定时器模拟更新
         const timer = setInterval(() => {
@@ -60,10 +68,9 @@ export class LFXApp {
             if (!this.Baker.Started) {
                 // 开始烘培
                 if (this.Baker.connected) {
-                    this.Baker.Upload('asset目录');
                     this.Baker.Start();
 
-                    this.Baker.client.on('Tick', (data: any) => {
+                    this.Baker.client.on('Tick', (data: any)=>{
                         this.LastTicks = this.CurrentTicks;
                     });
                 }
@@ -74,7 +81,6 @@ export class LFXApp {
 
                     const file = this.Baker.Download();
 
-                    /*
                     // 模型的Lightmap信息
                     for (let i = 0; i < file.MeshInfos.length; ++i) {
                         // 对应output/LFX_Mesh_xxxx.png
@@ -85,7 +91,6 @@ export class LFXApp {
                         ' Offset(' + info.Offset[0] + ', ' + info.Offset[1] + ') ' +
                         ' Scale(' + info.Scale[0] + ', ' + info.Scale[1] + ')');
                     }
-                    */
 
                     // 地形的Lightmap信息
                     for (const info of file.TerrainInfos) {
@@ -119,15 +124,98 @@ export class LFXApp {
                 continue;
             }
 
-            this.Export(child);
+            //this.Export(child);
         }
+
+        // test
+        if (1) {
+            // ## 创建平面1 (接受阴影)
+            //  v0-------v1
+            //  |         |
+            //  |         |
+            //  |         |
+            //  v2-------v3
+            //
+            const size = 128;
+
+            const plane = new LFX_Mesh();
+            plane.CastShadow = false;
+            plane.RecieveShadow = true;
+            plane.LightMapSize = 1024;
+
+            // 顶点
+            const v0 = new LFX_Vertex();
+            v0.Position = [0, 0, 0];
+            v0.Normal = [0, 1, 0];
+            v0.UV = [0, 0];
+            v0.LUV = [0, 0]
+            plane.VertexBuffer.push(v0);
+
+            const v1 = new LFX_Vertex();
+            v1.Position = [size, 0, 0];
+            v1.Normal = [0, 1, 0];
+            v1.UV = [1, 0];
+            v1.LUV = [1, 0];
+            plane.VertexBuffer.push(v1);
+
+            const v2 = new LFX_Vertex();
+            v2.Position = [0, 0, size];
+            v2.Normal = [0, 1, 0];
+            v2.UV = [0, 1];
+            v2.LUV = [0, 1];
+            plane.VertexBuffer.push(v2);
+
+            const v3 = new LFX_Vertex();
+            v3.Position = [size, 0, size];
+            v3.Normal = [0, 1, 0];
+            v3.UV = [1, 1];
+            v3.LUV = [1, 1];
+            plane.VertexBuffer.push(v3);
+
+            // 三角形
+            const tri0 = new LFX_Triangle();
+            tri0.Index = [0, 2, 1];
+            tri0.MaterialId = 0;
+            plane.TriangleBuffer.push(tri0);
+
+            const tri1 = new LFX_Triangle();
+            tri1.Index = [1, 2, 3];
+            tri1.MaterialId = 0;
+            plane.TriangleBuffer.push(tri1);
+
+            // 材质
+            const mtl = new LFX_Material();
+            mtl.Diffuse = [1, 1, 1];
+            mtl.Texture = this.Baker.World.AddUniqueTexture(''); // 相对路径
+            plane.MaterialBuffer.push(mtl);
+
+            this.Baker.World.Meshes.push(plane);
+
+            // ##创建灯光
+            //
+            //
+            const light = new LFX_Light();
+            light.Type = LFX_Light.POINT;
+            light.Position = [size / 2, size / 2, size / 2];
+            light.Color = [0, 1, 0];
+            light.CastShadow = true;
+            light.GIEnable = false;
+            light.AttenStart = 0;
+            light.AttenEnd = size;
+
+            this.Baker.World.Lights.push(light);
+        }
+
+        this.Baker.Upload('asset目录');
     }
 
     private _exportNode (node: Node) {
+        /*
         const terrain = node.getComponent(Terrain);
         if (terrain != null && terrain.enabled) {
             this._exportTerrain(terrain);
         }
+        */
 
         const models = node.getComponents(ModelComponent);
         for (const model of models) {
@@ -144,8 +232,9 @@ export class LFXApp {
         }
     }
 
+    /*
     private _exportTerrain (terrain: Terrain) {
-        const fxterrain = new LFXTerrain();
+        const fxterrain = new LFX_Terrain();
         fxterrain.TileSize = terrain.info.tileSize;
         fxterrain.BlockCount[0] = terrain.info.blockCount[0];
         fxterrain.BlockCount[1] = terrain.info.blockCount[1];
@@ -156,6 +245,7 @@ export class LFXApp {
         this.Baker.World.Terrains.push(fxterrain);
         this.Terrains.push(terrain);
     }
+    */
 
     private _exportModel (model: ModelComponent) {
         const mesh = model.mesh;
@@ -163,7 +253,7 @@ export class LFXApp {
             return false;
         }
 
-        const fxmesh = new LFXMesh();
+        const fxmesh = new LFX_Mesh();
         fxmesh.CastShadow = true;
         fxmesh.RecieveShadow = false;
         fxmesh.LightMapSize = 0;
@@ -204,7 +294,7 @@ export class LFXApp {
                 N.z = normals[v * 3 + 2];
                 Vec3.transformMat4Normal(N, N, worldTM);
 
-                const vertex = new LFXVertex();
+                const vertex = new LFX_Vertex();
                 vertex.Position[0] = P.x;
                 vertex.Position[1] = P.y;
                 vertex.Position[2] = P.z;
@@ -224,7 +314,7 @@ export class LFXApp {
 
             // 索引数据
             for (let i = 0; i < indices.length / 3; ++i) {
-                const tri = new LFXTriangle();
+                const tri = new LFX_Triangle();
                 if (indices.length < 256) {
                     tri.Index[0] = (indices as Uint8Array)[i * 3 + 0];
                     tri.Index[1] = (indices as Uint8Array)[i * 3 + 1];
@@ -248,7 +338,7 @@ export class LFXApp {
         }
 
         // Materials
-        const mtl = new LFXMaterial();
+        const mtl = new LFX_Material();
         mtl.Diffuse[0] = 1;
         mtl.Diffuse[1] = 1;
         mtl.Diffuse[2] = 1;
@@ -259,8 +349,8 @@ export class LFXApp {
     }
 
     private _exportLight (light: LightComponent) {
-        const fxlight = new LFXLight();
-        fxlight.Type = LFXLight.DIRECTION;
+        const fxlight = new LFX_Light();
+        fxlight.Type = LFX_Light.DIRECTION;
         fxlight.Position[0] = light.node.getWorldPosition().x;
         fxlight.Position[1] = light.node.getWorldPosition().y;
         fxlight.Position[2] = light.node.getWorldPosition().z;
@@ -304,3 +394,5 @@ export class LFXApp {
         this.Lights.push(light);
     }
 }
+
+export default LFX_App;
