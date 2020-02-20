@@ -2,16 +2,14 @@
 // Settings 编辑器要提供编辑界面
 //
 export class LFX_Settings {
-    // 环境光照
-    public Ambient: number[] = [0, 0, 0];
-    // 天空辐照度(用于全局光照)
-    public SkyRadiance: number[] = [0, 0, 0];
     // 多重采样: 值(1, 2, 4, 8)
     public MSAA = 4;
     // 烘培贴图大小: 值(128, 256, 512, 1024, 2048)
     public Size = 1024;
     // Gamma值
     public Gamma = 2.2;
+    // 天空辐照度(用于全局光照)
+    public SkyRadiance: number[] = [0, 0, 0];
     // 全局光照缩放
     public GIScale = 0.5;
     // 全局光照采样数

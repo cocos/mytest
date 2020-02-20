@@ -27,16 +27,14 @@ export class LFX_App {
         this.Baker.World.Name = 'Test';
         // 服务器地址
         // this.Baker.World.Settings.Server = 'localhost:9002';
-        // 环境光照
-        this.Baker.World.Settings.Ambient = [0.0, 0.0, 0.0];
-        // 天空辐照度(用于全局光照)
-        this.Baker.World.Settings.SkyRadiance = [0.5, 0.5, 0.5];
         // 多重采样: 值(1, 2, 4, 8)
         this.Baker.World.Settings.MSAA = 4;
         // 烘培贴图大小: 值(128, 256, 512, 1024, 2048)
         this.Baker.World.Settings.Size = 1024;
         // Gamma值
         this.Baker.World.Settings.Gamma = 2.2;
+        // 天空辐照度(用于全局光照)
+        this.Baker.World.Settings.SkyRadiance = [0.5, 0.5, 0.5];
         // 全局光照缩放
         this.Baker.World.Settings.GIScale = 0; // 0: 关闭
         // 全局光照采样数

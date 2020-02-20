@@ -126,7 +126,8 @@ export class LFX_Baker {
         buff.WriteString(this.World.Name);
 
         // Setting
-        buff.WriteFloatArray(this.World.Settings.Ambient);
+        const ambient = [0.0, 0.0, 0.0];
+        buff.WriteFloatArray(ambient);
         buff.WriteFloatArray(this.World.Settings.SkyRadiance);
         buff.WriteInt32(this.World.Settings.MSAA);
         buff.WriteInt32(this.World.Settings.Size);
