@@ -53,6 +53,7 @@ add_executable(LightFX
   include/LFX_Color.h
   include/LFX_ILBakerMath.h
   include/LFX_Light.h
+  include/LFX_Log.h
   include/LFX_Stream.h
   include/LFX_Vec2.h
   include/LFX_World.h
@@ -71,6 +72,7 @@ add_executable(LightFX
   src/LFX_EmbreeScene.cpp
   src/LFX_ILBakerRaytrace.cpp
   src/LFX_Light.cpp
+  src/LFX_Log.cpp
   src/LFX_Stream.cpp
   src/LFX_Types.cpp
   src/LFX_Entity.cpp
@@ -110,7 +112,7 @@ set(BOOST_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/ext/boost)
 set(Boost_USE_MULTITHREAD ON)
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_STATIC_RUNTIME ON)
-find_package(Boost COMPONENTS system date_time regex REQUIRED)
+find_package(Boost COMPONENTS system date_time regex random REQUIRED)
 
 add_definitions(-DENABLE_STATIC_LIB) # dirty fix for win32 embree static build bug
 target_link_libraries(LightFX ${Boost_LIBRARIES} embree)
