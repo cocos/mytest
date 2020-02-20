@@ -11,19 +11,6 @@ const LFX_FILE_MESH = 0x02;
 const LFX_FILE_LIGHT = 0x03;
 const LFX_FILE_EOF = 0x00;
 
-const LFX_PK_START = 1;
-const LFX_PK_STOP = 2;
-const LFX_PK_LOG = 777;
-const LFX_PK_PROGRESS = 100;
-
-//
-export const LFX_STAGE_START = 0;
-export const LFX_STAGE_DIRECT_LIGHTING = 1;
-export const LFX_STAGE_INDIRECT_LIGHTING = 2;
-export const LFX_STAGE_AMBIENT_OCCLUSION = 3;
-export const LFX_STAGE_POST_PROCESS = 4;
-export const LFX_STAGE_END = 5;
-
 // tslint:disable-next-line: class-name
 export class LFX_Baker {
     public static Instance: LFX_Baker;
@@ -85,7 +72,7 @@ export class LFX_Baker {
     // 关闭
     public Close (): void {
         if (this._server != null) {
-            this._server.disconnect();
+            this._server.close();
         }
         this._server = null;
         this._client = null;
