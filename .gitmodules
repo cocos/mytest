@@ -22,4 +22,4 @@
 	url = https://github.com/socketio/socket.io-client-cpp
 [submodule "ext/rapidjson"]
 	path = ext/rapidjson
-	url = https://github.com/Tencent/rapidjson
+	url = https://github.com/Tencent/rapidjson.git
