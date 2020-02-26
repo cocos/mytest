@@ -43,11 +43,6 @@ namespace LFX {
 
 #define UNIT_LEN 1.0f
 
-#define LOGI(fmt, ...)
-#define LOGD(fmt, ...)
-#define LOGW(fmt, ...)
-#define LOGE(fmt, ...)
-
 #define d_assert assert
 #define SAFE_DELETE(p) if (p) { delete p; p = NULL; }
 

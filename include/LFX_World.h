@@ -1,5 +1,6 @@
 #pragma once
 
+#include "LFX_Log.h"
 #include "LFX_Light.h"
 #include "LFX_Mesh.h"
 #include "LFX_Terrain.h"

@@ -9,6 +9,11 @@ namespace LFX {
 #define LOGC_WARN 2
 #define LOGC_ERROR 3
 
+#define LOGI(fmt, ...) Log::Instance()->Printf(LOGC_INFO, fmt, ##__VA_ARGS__)
+#define LOGD(fmt, ...) Log::Instance()->Printf(LOGC_DEBUG, fmt, ##__VA_ARGS__)
+#define LOGW(fmt, ...) Log::Instance()->Printf(LOGC_WARN, fmt, ##__VA_ARGS__)
+#define LOGE(fmt, ...) Log::Instance()->Printf(LOGC_ERROR, fmt, ##__VA_ARGS__)
+
 	class Log : public Singleton<Log>
 	{
 	public:
