@@ -240,8 +240,6 @@ namespace LFX {
 		{
 			return World::Instance()->_RayCheckImp(contact, ray, len, LFX_MESH | LFX_TERRAIN);
 		}
-		
-		return false;
 	}
 
 	bool EmbreeScene::Occluded(const Float3& position, const Float3& direction, float len, int mask)

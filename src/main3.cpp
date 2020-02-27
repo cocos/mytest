@@ -48,7 +48,10 @@ int main(int argc, char* argv[])
 		SAFE_DELETE(GWorld);
 
 		GWorld = new LFX::World;
-		GWorld->Load();
+		if (GWorld->Load()) {
+			LOGE("?: Load scene failed");
+		}
+
 		GWorld->Build();
 
 		GWorld->Start();
@@ -72,7 +75,7 @@ int main(int argc, char* argv[])
 	// start
 	if (!GQuit && GWorld != NULL) {
 		const char* text = progress_format("Start", 0);
-		printf(text);
+		LOGI(text);
 		h.socket()->emit("Start", std::string(text));
 	}
 
@@ -101,7 +104,7 @@ int main(int argc, char* argv[])
 			GProgress = progress;
 
 			const char* text = progress_format(tag, progress);
-			printf(text);
+			LOGI(text);
 			h.socket()->emit("Progress", std::string(text));
 		}
 

@@ -560,6 +560,7 @@ namespace LFX {
 
 	void World::Build()
 	{
+		LOGI("-:Building meshes");
 		for (size_t i = 0; i < mMeshes.size(); ++i)
 		{
 			mMeshes[i]->Build();
@@ -595,11 +596,13 @@ namespace LFX {
 			_World_Optimize(mBSPTree.RootNode());
 		}
 
+		LOGI("-:Building terrain");
 		for (int i = 0; i < mTerrains.size(); ++i) {
 			mTerrains[i]->Build();
 		}
 
 		//
+		LOGI("-:Building bv scene");
 		mEmbreeScene = new EmbreeScene;
 		mEmbreeScene->Build();
 

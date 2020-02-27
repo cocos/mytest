@@ -346,8 +346,8 @@ namespace LFX {
 				if (x >= 0 && x < rs->_width &&
 					y >= 0 && y < rs->_height)
 				{
-					const RVertex & v = rs->_rchart[y * rs->_width + x];
-					if (v.MaterialId != -1)
+					const RVertex & p = rs->_rchart[y * rs->_width + x];
+					if (p.MaterialId != -1)
 						++white;
 					else
 						++black;
