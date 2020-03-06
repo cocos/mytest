@@ -131,10 +131,11 @@ export class LFX_Baker {
         // Terrains
         for (const terrain of this.World.Terrains) {
             buff.WriteInt32(LFX_FILE_TERRAIN);
+            buff.WriteFloatArray(terrain.Position);
             buff.WriteFloat(terrain.TileSize);
             buff.WriteIntArray(terrain.BlockCount);
             buff.WriteInt32(terrain.LightMapSize);
-            buff.WriteFloatArray(terrain.HeightField);
+            buff.WriteHeightField(terrain.HeightField);
         }
 
         // Meshes

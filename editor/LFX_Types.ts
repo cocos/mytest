@@ -60,10 +60,11 @@ export class LFX_Mesh {
 
 // 地形
 export class LFX_Terrain {
+    public Position: number[] = [0, 0, 0];
     public TileSize: number = 0;
     public BlockCount: number[] = [0, 0];
-    public HeightField: number[] = [];
-    public  LightMapSize: number = 0;
+    public HeightField: Uint16Array = new Uint16Array();
+    public LightMapSize: number = 0;
 }
 
 // 灯光
@@ -159,6 +160,15 @@ export class LFX_Buffer {
 
         this._dview.setInt32(this.Length, value, true);
         this.Length += 4;
+    }
+
+    public WriteHeightField (value: Uint16Array) {
+        this.Reserve(this.Length + 2 * value.length);
+
+        for (let i = 0; i < value.length; ++i) {
+            this._dview.setUint16(this.Length + i * 2, value[i], true);
+        }
+        this.Length += 2 * value.length;
     }
 
     public WriteIntArray (value: number[]) {
