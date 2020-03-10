@@ -62,7 +62,9 @@ namespace LFX {
 
 			switch (ckId) {
 			case LFX_FILE_TERRAIN: {
+				Float3 pos;
 				Terrain::Desc desc;
+				stream >> pos;
 				stream >> desc.GridSize;
 				stream >> desc.BlockCount;
 				stream >> desc.LMapSize;
@@ -71,11 +73,20 @@ namespace LFX {
 				desc.Dimension.x = desc.GridSize * desc.GridCount.x;
 				desc.Dimension.y = desc.GridSize * desc.GridCount.y;
 
-				std::vector<float> heightfield;
+				std::vector<unsigned short> heightfield;
 				heightfield.resize(desc.VertexCount.x * desc.VertexCount.y);
-				stream.Read(&heightfield[0], heightfield.size() * sizeof(float));
+				stream.Read(&heightfield[0], heightfield.size() * 2);
 
-				CreateTerrain(&heightfield[0], desc);
+				std::vector<float> heights;
+				heights.resize(desc.VertexCount.x * desc.VertexCount.y);
+				for (int i = 0; i < heights.size(); ++i) {
+					const int TERRAIN_HEIGHT_BASE = 32768;
+					const float TERRAIN_HEIGHT_FACTORY = 1.0f / 512.0f;
+
+					heights[i] = (heightfield[i] - TERRAIN_HEIGHT_BASE) * TERRAIN_HEIGHT_FACTORY;
+				}
+
+				CreateTerrain(pos, &heights[0], desc);
 				break;
 			}
 				
@@ -146,7 +157,7 @@ namespace LFX {
 	void World::Save()
 	{
 		String path = "output";
-		FileUtil::DeleteDir(path);
+		//FileUtil::DeleteDir(path);
 		FileUtil::MakeDir(path);
 
 		String lfx_file = path + "/lfx.o";
@@ -503,9 +514,9 @@ namespace LFX {
 		return pMesh;
 	}
 
-	Terrain * World::CreateTerrain(float * heightfield, const Terrain::Desc & desc)
+	Terrain * World::CreateTerrain(const Float3& pos, float* heightfield, const Terrain::Desc & desc)
 	{
-		Terrain* terrain = new Terrain(heightfield, desc);
+		Terrain* terrain = new Terrain(pos, heightfield, desc);
 
 		mTerrains.push_back(terrain);
 

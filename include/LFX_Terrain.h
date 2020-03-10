@@ -31,7 +31,7 @@ namespace LFX {
 		};
 
 	public:
-		Terrain(float * heightfiled, const Desc & desc);
+		Terrain(const Float3& pos, float * heightfiled, const Desc & desc);
 		virtual ~Terrain();
 
 		virtual int GetType() { return LFX_TERRAIN; }

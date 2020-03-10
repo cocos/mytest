@@ -139,7 +139,7 @@ namespace LFX {
 		int GetMeshCount() { return mMeshes.size(); }
 
 		// Terrain
-		Terrain * CreateTerrain(float * heightfield, const Terrain::Desc & desc);
+		Terrain * CreateTerrain(const Float3& pos, float * heightfield, const Terrain::Desc & desc);
 		Terrain * GetTerrain(int i) { return mTerrains[i]; }
 		int GetTerrainCount() { return mTerrains.size(); }
 

@@ -62,12 +62,10 @@ namespace LFX {
 		}
 	};
 
-
-
-	Terrain::Terrain(float * heightfiled, const Desc & desc)
+	//
+	Terrain::Terrain(const Float3& pos, float * heightfiled, const Desc & desc) 
+		: mDesc(desc)
 	{
-		mDesc = desc;
-
 		int xGridCount = mDesc.GridCount.x;
 		int zGridCount = mDesc.GridCount.y;
 
@@ -79,7 +77,7 @@ namespace LFX {
 			for (int i = 0; i < xGridCount + 1; ++i)
 			{
 				Vertex v;
-				v.Position = TerrainUtil::GetPosition(heightfiled, desc, i, j);
+				v.Position = pos + TerrainUtil::GetPosition(heightfiled, desc, i, j);
 				v.Normal = TerrainUtil::GetNormal(heightfiled, desc, i, j);
 				v.Tangent = Float3(1, 0, 0);
 				v.Binormal = Float3(0, 0, 1);

@@ -48,7 +48,7 @@ int main(int argc, char* argv[])
 		SAFE_DELETE(GWorld);
 
 		GWorld = new LFX::World;
-		if (GWorld->Load()) {
+		if (!GWorld->Load()) {
 			LOGE("?: Load scene failed");
 		}
 
