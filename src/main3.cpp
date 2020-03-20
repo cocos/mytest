@@ -123,7 +123,6 @@ int main(int argc, char* argv[])
 			h.socket()->emit("Finished");
 
 			SAFE_DELETE(GWorld);
-			LFX::Thread::Sleep(5);
 		}
 	};
 
