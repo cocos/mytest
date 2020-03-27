@@ -5,6 +5,10 @@ namespace LFX {
 
 	EmbreeScene::EmbreeScene()
 	{
+		rtcDevice = NULL;
+		rtcScene = NULL;
+
+#ifdef _WIN32
 		rtcDevice = rtcNewDevice();
 		RTCError embreeError = rtcDeviceGetError(rtcDevice);
 		if (embreeError == RTC_UNSUPPORTED_CPU)
@@ -14,8 +18,7 @@ namespace LFX {
 		else if (embreeError != RTC_NO_ERROR)
 		{
 		}
-
-		rtcScene = NULL;
+#endif
 	}
 
 	EmbreeScene::~EmbreeScene()

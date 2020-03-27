@@ -62,7 +62,7 @@ namespace LFX {
 
 		return CreateDirectory(dir.c_str(), &attribute) == TRUE;
 #else
-		return mkdir(dir.c_str(), 777) != -1;
+		return mkdir(dir.c_str(), 0777) != -1;
 #endif
 	}
 
