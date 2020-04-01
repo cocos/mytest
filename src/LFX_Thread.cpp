@@ -1,5 +1,5 @@
 #include "LFX_Thread.h"
-#ifdef __linux__
+#ifndef _WIN32
 #include <unistd.h>
 #endif
 
