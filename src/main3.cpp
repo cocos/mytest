@@ -37,10 +37,23 @@ const char* progress_format(const char* tag, int progress)
 
 int main(int argc, char* argv[])
 {
+	const char* url = "http://127.0.0.1:3000";
+	
 	GLog = new LFX::Log("lfx.log");
 
+	std::string commands;
+	for (int i = 0; i < argc; ++i) {
+		commands += argv[i];
+		if (i == 1) {
+			url = argv[i];
+		}
+
+		commands += " ";
+	}
+	LOGI("%s", commands.c_str());
+
 	sio::client h;
-	h.connect("http://127.0.0.1:3000");
+	h.connect(url);
 	h.socket()->emit("Login");
 
 	h.socket()->on("Start", [](sio::event &) {

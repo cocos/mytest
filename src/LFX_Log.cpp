@@ -37,9 +37,7 @@ namespace LFX {
 			PrintTime(mFile, true);
 			fprintf(mFile, text);
 			fprintf(mFile, "\n");
-#ifdef _DEBUG
 			fflush(mFile);
-#endif
 		}
 	}
 
