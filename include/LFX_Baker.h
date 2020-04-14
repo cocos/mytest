@@ -37,6 +37,6 @@ namespace LFX {
 		Entity* mEntity;
 		int mIndex;
 		int mStage;
-		bool mCompeleted;
+		std::atomic_bool mCompeleted;
 	};
 }

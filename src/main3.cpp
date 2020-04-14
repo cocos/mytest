@@ -97,7 +97,7 @@ int main(int argc, char* argv[])
 
 	// bake
 	while (!GQuit && GWorld != NULL) {
-		int stage = GWorld->UpdateStage();
+		int stage = GWorld->GetStage();
 		float kp = (GWorld->GetProgress() + 1) / (float)(GWorld->GetEntityCount() + 1);
 		int progress = (int)(kp * 100);
 
@@ -132,7 +132,7 @@ int main(int argc, char* argv[])
 		}
 #endif
 
-		if (stage == LFX::World::STAGE_END) {
+		if (GWorld->UpdateStage() == LFX::World::STAGE_END) {
 			GWorld->Save();
 			GWorld->Clear();
 

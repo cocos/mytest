@@ -57,7 +57,7 @@ namespace LFX {
 	{
 		assert(mHandle == NULL);
 
-		mStatus = RUN;
+		mStatus = RUNNING;
 #ifdef _WIN32
 		mHandle = CreateThread(NULL, 0, Thread_Shared_Proc, (void *)this, 0, NULL);
 #else

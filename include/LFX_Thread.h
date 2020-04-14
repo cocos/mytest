@@ -4,6 +4,7 @@
 #ifndef _WIN32
 #include <pthread.h>
 #endif
+#include <atomic>
 
 namespace LFX {
 
@@ -71,9 +72,9 @@ namespace LFX {
 #endif
 
 		enum STATUS {
-			RUN,
-			SUSPEND,
 			STOP,
+			RUNNING,
+			SUSPEND,
 		};
 
 	public:
@@ -83,7 +84,7 @@ namespace LFX {
 		Thread();
 		virtual ~Thread();
 
-		STATUS GetStatus() { return mStatus; }
+		STATUS GetStatus() { return (STATUS)mStatus.load(); }
 
 		virtual void Start();
 		virtual void Stop();
@@ -92,7 +93,7 @@ namespace LFX {
 
 	protected:
 		THANDLE mHandle;
-		STATUS mStatus;
+		std::atomic_int mStatus;
 	};
 
 }
