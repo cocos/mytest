@@ -12,6 +12,7 @@
 #include "LFX_Stream.h"
 
 bool GQuit = false;
+int GStage = -1;
 int GProgress = 0;
 LFX::Log* GLog = NULL;
 LFX::World* GWorld = NULL;
@@ -60,6 +61,7 @@ int main(int argc, char* argv[])
 	h.socket()->emit("Login");
 
 	h.socket()->on("Start", [](sio::event &) {
+		GStage = -1;
 		GProgress = 0;
 		SAFE_DELETE(GWorld);
 
@@ -101,7 +103,7 @@ int main(int argc, char* argv[])
 		float kp = (GWorld->GetProgress() + 1) / (float)(GWorld->GetEntityCount() + 1);
 		int progress = (int)(kp * 100);
 
-		if (stage != LFX::World::STAGE_END && GProgress != progress) {
+		if (stage != LFX::World::STAGE_END && (GStage != stage || GProgress != progress)) {
 			const char * tag = "";
 			switch (stage) {
 			case LFX::World::STAGE_DIRECT_LIGHTING:
@@ -117,6 +119,7 @@ int main(int argc, char* argv[])
 				break;
 			}
 
+			GStage = stage;
 			GProgress = progress;
 
 			const char* text = progress_format(tag, progress);
