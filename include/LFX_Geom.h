@@ -8,7 +8,7 @@ namespace LFX {
 
 	struct LightMapInfo
 	{
-		int index;
+		int lmap_index;
 		Float2 offset;
 		Float2 scale;
 	};

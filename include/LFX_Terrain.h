@@ -11,7 +11,7 @@ namespace LFX {
 	{
 	public:
 		enum {
-			kLMapBorder = 2
+			kLMapBorder = 0
 		};
 
 		struct Desc

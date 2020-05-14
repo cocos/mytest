@@ -405,7 +405,7 @@ namespace LFX {
 		if (World::Instance()->GetSetting()->Selected) return;
 
 		int mapSize = mDesc.LMapSize - Terrain::kLMapBorder * 2;
-		int msaa = World::Instance()->GetSetting()->GetBeastMSAA(mapSize, mapSize);
+		int msaa = World::Instance()->GetSetting()->MSAA;
 
 		int sx = mapSize * xblock;
 		int sy = mapSize * yblock;

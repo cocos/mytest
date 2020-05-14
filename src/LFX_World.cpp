@@ -53,6 +53,8 @@ namespace LFX {
 		stream >> mSetting.AORadius;
 		stream >> mSetting.AOColor;
 		stream >> mSetting.Threads;
+		// È¡ÏûGamma
+		mSetting.Gamma = 1;
 
 		int ckId = 0;
 		while (stream.Read(&ckId, sizeof(int))) {
@@ -111,6 +113,8 @@ namespace LFX {
 					stream >> vtx[i].Normal;
 					stream >> vtx[i].UV;
 					stream >> vtx[i].LUV;
+
+					vtx[i].LUV = vtx[i].UV;
 				}
 
 				stream.Read(tri, sizeof(Triangle) * numTris);
@@ -171,110 +175,122 @@ namespace LFX {
 		fwrite(&LFX_FILE_VERSION, 4, 1, fp);
 
 		// Pack and save terrain lightmap
-
 		for (int t = 0; t < mTerrains.size() && !mSetting.Selected; ++t) {
 			Terrain* terrain = mTerrains[t];
-			int LSize = terrain->GetDesc().LMapSize;
+			int lmap_index = 0;
+			int lmap_size = terrain->GetDesc().LMapSize;
+			int ntiles = std::max(1, mSetting.Size / lmap_size);
+			int nblocks = terrain->GetDesc().BlockCount.x * terrain->GetDesc().BlockCount.y;
 
-			TextureAtlasPacker::Options options;
-			options.Width = mSetting.Size;
-			options.Height = mSetting.Size;
-			options.Channels = mSetting.RGBEFormat ? 4 : 3;
-			options.Border = 0;
-			options.Space = 0;
-
-			TextureAtlasPacker packer(options);
-			std::vector<TextureAtlasPacker::Item> packed_items;
-			for (int j = 0; j < terrain->GetDesc().BlockCount.y; ++j)
-			{
-				for (int i = 0; i < terrain->GetDesc().BlockCount.x; ++i)
-				{
-					std::vector<Float3> colors;
-					colors.resize(LSize * LSize);
-
-					terrain->GetLightingMap(i, j, colors);
-					for (int k = 0; k < colors.size(); ++k)
-					{
-						colors[k] = Pow(colors[k], 1.0f / mSetting.Gamma);
-						Saturate(colors[k]);
-					}
-
-					Image image;
-					image.width = LSize;
-					image.height = LSize;
-					if (!mSetting.RGBEFormat) {
-						image.pixels = new uint8_t[LSize * LSize * 3];
-						image.channels = 3;
-						for (int k = 0; k < colors.size(); ++k)
-						{
-							colors[k].saturate();
-
-							image.pixels[k * 3 + 0] = (uint8_t)(colors[k].x * 255);
-							image.pixels[k * 3 + 1] = (uint8_t)(colors[k].y * 255);
-							image.pixels[k * 3 + 2] = (uint8_t)(colors[k].z * 255);
-						}
-					}
-					else {
-						image.pixels = new uint8_t[LSize * LSize * 4];
-						image.channels = 4;
-						for (int k = 0; k < colors.size(); ++k)
-						{
-							RGBE rgbe = RGBE_FROM(colors[k]);
-
-							image.pixels[k * 4 + 0] = rgbe.r;
-							image.pixels[k * 4 + 1] = rgbe.g;
-							image.pixels[k * 4 + 2] = rgbe.b;
-							image.pixels[k * 4 + 3] = rgbe.e;
-						}
-					}
-
-					TextureAtlasPacker::Item item;
-					packer.Insert(image.pixels, image.width, image.height, item);
-					packed_items.push_back(item);
-				}
-			}
-
-			auto atlas = packer.GetAtlasArray();
-			for (int i = 0; i < atlas.size(); ++i)
-			{
-				LFX::Image image;
-				image.pixels = &atlas[i]->Pixels[0];
-				image.width = atlas[i]->Width;
-				image.height = atlas[i]->Height;
-				image.channels = 3;
-
-				char filename[256];
-				sprintf(filename, "%s/LFX_Terrain_%04d.png", path.c_str(), i);
-				FILE * tfp = fopen(filename, "wb");
-				LFX::PNG_Save(tfp, image);
-				fclose(tfp);
-
-				image.pixels = NULL;
-			}
-
-			// chunk
 			fwrite(&LFX_FILE_TERRAIN, 4, 1, fp);
 			fwrite(&t, 4, 1, fp); // index
+			fwrite(&nblocks, 4, 1, fp);
 
-			int numOfBlocks = terrain->GetDesc().BlockCount.x * terrain->GetDesc().BlockCount.y;
-			fwrite(&numOfBlocks, 4, 1, fp);
-
-			int blockIdx = 0;
-			for (int j = 0; j < terrain->GetDesc().BlockCount.y; ++j)
+			for (int y = 0; y < terrain->GetDesc().BlockCount.y; y += ntiles)
 			{
-				for (int i = 0; i < terrain->GetDesc().BlockCount.x; ++i)
+				for (int x = 0; x < terrain->GetDesc().BlockCount.x; x += ntiles)
 				{
-					const auto & item = packed_items[blockIdx++];
-					float offset = Terrain::kLMapBorder / (float)(LSize);
-					float scale = 1 - offset * 2;
+					int w = std::min(ntiles, terrain->GetDesc().BlockCount.x - x);
+					int h = std::min(ntiles, terrain->GetDesc().BlockCount.y - y);
 
-					LightMapInfo remapInfo;
-					remapInfo.index = item.index;
-					remapInfo.offset[0] = item.offsetU + offset * item.scaleU;
-					remapInfo.offset[1] = item.offsetV + offset * item.scaleV;
-					remapInfo.scale[0] = item.scaleU * scale;
-					remapInfo.scale[1] = item.scaleV * scale;
-					fwrite(&remapInfo, sizeof(LightMapInfo), 1, fp);
+					TextureAtlasPacker::Options options;
+					options.Width = w * lmap_size;
+					options.Height = h * lmap_size;
+					options.Channels = mSetting.RGBEFormat ? 4 : 3;
+					options.Border = 0;
+					options.Space = 0;
+
+					LOGD("Pack terrain %d blocks %d %d %d %d", t, x, y, w, h);
+					TextureAtlasPacker packer(options);
+					std::vector<TextureAtlasPacker::Item> packed_items;
+
+					for (int j = 0; j < h; ++j)
+					{
+						for (int i = 0; i < w; ++i)
+						{
+							std::vector<Float3> colors;
+							colors.resize(lmap_size * lmap_size);
+
+							terrain->GetLightingMap(x + i, y + j, colors);
+							for (int k = 0; k < colors.size(); ++k)
+							{
+								colors[k] = Pow(colors[k], 1.0f / mSetting.Gamma);
+								Saturate(colors[k]);
+							}
+
+							Image image;
+							image.width = lmap_size;
+							image.height = lmap_size;
+							if (!mSetting.RGBEFormat) {
+								image.pixels = new uint8_t[lmap_size * lmap_size * 3];
+								image.channels = 3;
+								for (int k = 0; k < colors.size(); ++k)
+								{
+									colors[k].saturate();
+
+									image.pixels[k * 3 + 0] = (uint8_t)(colors[k].x * 255);
+									image.pixels[k * 3 + 1] = (uint8_t)(colors[k].y * 255);
+									image.pixels[k * 3 + 2] = (uint8_t)(colors[k].z * 255);
+								}
+							}
+							else {
+								image.pixels = new uint8_t[lmap_size * lmap_size * 4];
+								image.channels = 4;
+								for (int k = 0; k < colors.size(); ++k)
+								{
+									RGBE rgbe = RGBE_FROM(colors[k]);
+
+									image.pixels[k * 4 + 0] = rgbe.r;
+									image.pixels[k * 4 + 1] = rgbe.g;
+									image.pixels[k * 4 + 2] = rgbe.b;
+									image.pixels[k * 4 + 3] = rgbe.e;
+								}
+							}
+
+							TextureAtlasPacker::Item item;
+							packer.Insert(image.pixels, image.width, image.height, item);
+							packed_items.push_back(item);
+						}
+					}
+
+					auto atlas = packer.GetAtlasArray();
+
+					LFX::Image image;
+					image.pixels = &atlas[0]->Pixels[0];
+					image.width = atlas[0]->Width;
+					image.height = atlas[0]->Height;
+					image.channels = 3;
+
+					char filename[256];
+					sprintf(filename, "%s/LFX_Terrain_%04d.png", path.c_str(), lmap_index);
+					FILE * tfp = fopen(filename, "wb");
+					LFX::PNG_Save(tfp, image);
+					fclose(tfp);
+
+					image.pixels = NULL;
+
+					for (int j = 0; j < h; ++j)
+					{
+						for (int i = 0; i < w; ++i)
+						{
+							int block_index = (y + j) * terrain->GetDesc().BlockCount.x + (x + i);
+
+							const auto& item = packed_items[j * w + i];
+							float offset = Terrain::kLMapBorder / (float)(lmap_size);
+							float scale = 1 - offset * 2;
+
+							LightMapInfo remapInfo;
+							remapInfo.lmap_index = lmap_index;
+							remapInfo.offset[0] = item.offsetU + offset * item.scaleU;
+							remapInfo.offset[1] = item.offsetV + offset * item.scaleV;
+							remapInfo.scale[0] = item.scaleU * scale;
+							remapInfo.scale[1] = item.scaleV * scale;
+							fwrite(&block_index, sizeof(int), 1, fp);
+							fwrite(&remapInfo, sizeof(LightMapInfo), 1, fp);
+						}
+					}
+
+					++lmap_index;
 				}
 			}
 		}
@@ -332,6 +348,13 @@ namespace LFX {
 				}
 			}
 			colors.clear();
+#if 0
+			char filename[256];
+			sprintf(filename, "%s/LFX_Mesh_111.png", path.c_str(), i);
+			FILE* tfp = fopen(filename, "wb");
+			LFX::PNG_Save(tfp, image);
+			fclose(tfp);
+#endif
 
 			TextureAtlasPacker::Item item;
 			packer.Insert(image.pixels, image.width, image.height, item);
@@ -383,7 +406,7 @@ namespace LFX {
 				remapInfo.scale[1] = item.scaleV * scale;
 #else
 				LightMapInfo remapInfo;
-				remapInfo.index = item.index;
+				remapInfo.lmap_index = item.index;
 				remapInfo.offset[0] = item.offsetU;
 				remapInfo.offset[1] = item.offsetV;
 				remapInfo.scale[0] = item.scaleU;

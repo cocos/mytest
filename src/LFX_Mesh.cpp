@@ -400,8 +400,7 @@ namespace LFX {
 	{
 		assert(mLightingMapSize > 0);
 
-		int msaa = World::Instance()->GetSetting()->GetBeastMSAA(mLightingMapSize, mLightingMapSize);
-
+		int msaa = World::Instance()->GetSetting()->MSAA;
 		int width = msaa * mLightingMapSize;
 		int height = msaa * mLightingMapSize;
 
@@ -493,7 +492,7 @@ namespace LFX {
 	{
 		AOBaker baker;
 
-		int msaa = World::Instance()->GetSetting()->GetBeastMSAA(mLightingMapSize, mLightingMapSize);
+		int msaa = World::Instance()->GetSetting()->MSAA;
 		int width = msaa * mLightingMapSize;
 		int height = msaa * mLightingMapSize;
 

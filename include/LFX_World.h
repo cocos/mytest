@@ -72,34 +72,6 @@ namespace LFX {
 
 				Threads = 1;
 			}
-
-			int GetBeastMSAA(int width, int height)
-			{
-				const int Resolution = 1024;
-
-				int n = 1;
-				int w = width, h = height;
-				while (1)
-				{
-					if (w >= Resolution || h >= Resolution)
-						break;
-
-					w *= 2;
-					h *= 2;
-					n *= 2;
-				}
-
-				if (w > Resolution || h > Resolution) {
-					n /= 2;
-				}
-
-				n = std::max(n, 1);
-				if (MSAA > 1) {
-					n = std::min(n, MSAA);
-				}
-
-				return n;
-			}
 		};
 
 	public:
