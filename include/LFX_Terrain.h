@@ -48,8 +48,8 @@ namespace LFX {
 		const Vertex & _getVertex(int i, int j);
 		const Float3 & _getPosition(int i, int j);
 		const Float3 & _getNormal(int i, int j);
-		bool GetHeightAt(float & h, float x, float y);
-		bool GetNormalAt(Float3 & n, float x, float y);
+		bool GetHeightAt(float & h, float x, float y); // local space
+		bool GetNormalAt(Float3 & n, float x, float y); // local space
 
 		void RayCheck(Contact & contract, const Ray & ray, float length);
 		bool Occluded(const Ray & ray, float length);
@@ -77,6 +77,7 @@ namespace LFX {
 
 	protected:
 		Desc mDesc;
+		Float3 mPosition;
 		std::vector<Vertex> mVertexBuffer;
 		std::vector<Triangle> mTriBuffer;
 		BSPTree<int> mBSPTree;
