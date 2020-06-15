@@ -69,6 +69,7 @@ namespace LFX {
 		int xGridCount = mDesc.GridCount.x;
 		int zGridCount = mDesc.GridCount.y;
 
+		mPosition = pos;
 		mVertexBuffer.reserve((xGridCount + 1) * (zGridCount + 1));
 		mTriBuffer.reserve(xGridCount * zGridCount * 2);
 
@@ -77,7 +78,7 @@ namespace LFX {
 			for (int i = 0; i < xGridCount + 1; ++i)
 			{
 				Vertex v;
-				v.Position = pos + TerrainUtil::GetPosition(heightfiled, desc, i, j);
+				v.Position = mPosition + TerrainUtil::GetPosition(heightfiled, desc, i, j);
 				v.Normal = TerrainUtil::GetNormal(heightfiled, desc, i, j);
 				v.Tangent = Float3(1, 0, 0);
 				v.Binormal = Float3(0, 0, 1);
@@ -433,6 +434,7 @@ namespace LFX {
 
 						GetHeightAt(p.Position.y, p.Position.x, p.Position.z);
 						GetNormalAt(p.Normal, p.Position.x, p.Position.z);
+						p.Position += mPosition;
 
 						for (int l = 0; l < lights.size(); ++l)
 						{
@@ -489,6 +491,7 @@ namespace LFX {
 						GetHeightAt(p.Position.y, p.Position.x, p.Position.z);
 						GetNormalAt(p.Normal, p.Position.x, p.Position.z);
 
+						p.Position += mPosition;
 						p.Binormal = Float3::Cross(p.Normal, p.Tangent);
 						p.Tangent = Float3::Cross(p.Binormal, p.Normal);
 
@@ -638,6 +641,9 @@ namespace LFX {
 		bound.maximum.x = xblock * blockSize + blockSize;
 		bound.maximum.y = 10000;
 		bound.maximum.z = yblock * blockSize + blockSize;
+
+		bound.minimum += mPosition;
+		bound.maximum += mPosition;
 
 		for (int j = 0; j < World::Instance()->GetLightCount(); ++j)
 		{
