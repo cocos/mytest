@@ -2,6 +2,42 @@
 
 namespace LFX {
 
+	bool TextureAtlasPacker::Atlas::Extend(int w, int h, int channels)
+	{
+		if (Width > w && Height > h) {
+			return false;
+		}
+		if (Width == w && Height == h) {
+			return true;
+		}
+
+		int ow = Width;
+		int oh = Height;
+
+		// resize texture
+		std::vector<unsigned char> newTex(w * h * channels);
+		memset(&newTex[0], 0, newTex.size());
+		Width = w; 
+		Height = h;
+		
+		for (int y = 0; y < oh; ++y) {
+			memcpy(&newTex[0], &Pixels[0], ow * channels);
+		}
+
+		Pixels = newTex;
+
+		// recalc texcoord
+		float scale = (float)w / (float)ow;
+		for (auto& i : Items) {
+			i.x *= scale;
+			i.y *= scale;
+			i.w *= scale;
+			i.h *= scale;
+		}
+
+		return true;
+	}
+
 	TextureAtlasPacker::TextureAtlasPacker(const Options& ops)
 		: mOptions(ops)
 	{
@@ -36,7 +72,7 @@ namespace LFX {
 		int width = std::max(w, mOptions.Width);
 		int height = std::max(h, mOptions.Height);
 
-		Atlas * pNewAtlas = new Atlas;
+		Atlas* pNewAtlas = new Atlas;
 		pNewAtlas->Width = width;
 		pNewAtlas->Height = height;
 		pNewAtlas->Pixels.resize(pNewAtlas->Width * pNewAtlas->Height * mOptions.Channels);
@@ -132,6 +168,9 @@ namespace LFX {
 				pAtlas->Pixels[dstIndex * channels + 0] = pixels[srcIndex * channels + 0];
 				pAtlas->Pixels[dstIndex * channels + 1] = pixels[srcIndex * channels + 1];
 				pAtlas->Pixels[dstIndex * channels + 2] = pixels[srcIndex * channels + 2];
+				if (channels == 4) {
+					pAtlas->Pixels[dstIndex * channels + 3] = pixels[srcIndex * channels + 3];
+				}
 			}
 		}
 

@@ -22,6 +22,10 @@ namespace LFX {
 		Float2 UV;
 		Float2 LUV;
 
+#ifdef LFX_DEBUG_LUV
+		Float3 Color;
+#endif // _DEBUG
+
 		Vertex()
 		{
 			Position = Float3(0, 0, 0);
@@ -30,6 +34,10 @@ namespace LFX {
 			Binormal = Float3(0, 0, 0);
 			UV = Float2(0, 0);
 			LUV = Float2(0, 0);
+
+#ifdef _DEBUG
+			Color = Float3(0, 0, 0);
+#endif
 		}
 
 		static void Lerp(Vertex & v, const Vertex & a, const Vertex & b, float k)
@@ -40,6 +48,9 @@ namespace LFX {
 			v.Binormal = a.Binormal + (b.Binormal - a.Binormal) * k;
 			v.UV = a.UV + (b.UV - a.UV) * k;
 			v.LUV = a.LUV + (b.LUV - a.LUV) * k;
+#ifdef LFX_DEBUG_LUV
+			v.Color = a.Color + (b.Color - a.Color) * k;
+#endif
 
 			v.Normal.normalize();
 		}
@@ -52,6 +63,9 @@ namespace LFX {
 			v.Binormal = a.Binormal * (1 - tu - tv) + b.Binormal * tu + c.Binormal * tv;
 			v.UV = a.UV * (1 - tu - tv) + b.UV * tu + c.UV * tv;
 			v.LUV = a.LUV * (1 - tu - tv) + b.LUV * tu + c.LUV * tv;
+#ifdef LFX_DEBUG_LUV
+			v.Color = a.Color * (1 - tu - tv) + b.Color * tu + c.Color * tv;
+#endif
 
 			v.Normal.normalize();
 			v.Tangent.normalize();
@@ -60,41 +74,50 @@ namespace LFX {
 
 		Vertex operator +(const Vertex & rk) const
 		{
-			Vertex vtx;
-			vtx.Position = Position + rk.Position;
-			vtx.Normal = Normal + rk.Normal;
-			vtx.Tangent = Tangent + rk.Tangent;
-			vtx.Binormal = Binormal + rk.Binormal;
-			vtx.UV = UV + rk.UV;
-			vtx.LUV = LUV + rk.LUV;
+			Vertex v;
+			v.Position = Position + rk.Position;
+			v.Normal = Normal + rk.Normal;
+			v.Tangent = Tangent + rk.Tangent;
+			v.Binormal = Binormal + rk.Binormal;
+			v.UV = UV + rk.UV;
+			v.LUV = LUV + rk.LUV;
+#ifdef LFX_DEBUG_LUV
+			v.Color = Color + rk.Color;
+#endif
 
-			return vtx;
+			return v;
 		}
 		
 		Vertex operator -(const Vertex & rk) const
 		{
-			Vertex vtx;
-			vtx.Position = Position - rk.Position;
-			vtx.Normal = Normal - rk.Normal;
-			vtx.Tangent = Tangent - rk.Tangent;
-			vtx.Binormal = Binormal - rk.Binormal;
-			vtx.UV = UV - rk.UV;
-			vtx.LUV = LUV - rk.LUV;
+			Vertex v;
+			v.Position = Position - rk.Position;
+			v.Normal = Normal - rk.Normal;
+			v.Tangent = Tangent - rk.Tangent;
+			v.Binormal = Binormal - rk.Binormal;
+			v.UV = UV - rk.UV;
+			v.LUV = LUV - rk.LUV;
+#ifdef LFX_DEBUG_LUV
+			v.Color = Color - rk.Color;
+#endif
 
-			return vtx;
+			return v;
 		}
 
 		Vertex operator *(float rk) const
 		{
-			Vertex vtx;
-			vtx.Position = Position * rk;
-			vtx.Normal = Normal * rk;
-			vtx.Tangent = Tangent * rk;
-			vtx.Binormal = Binormal * rk;
-			vtx.UV = UV * rk;
-			vtx.LUV = LUV * rk;
+			Vertex v;
+			v.Position = Position * rk;
+			v.Normal = Normal * rk;
+			v.Tangent = Tangent * rk;
+			v.Binormal = Binormal * rk;
+			v.UV = UV * rk;
+			v.LUV = LUV * rk;
+#ifdef LFX_DEBUG_LUV
+			v.Color = Color * rk;
+#endif
 
-			return vtx;
+			return v;
 		}
 	};
 

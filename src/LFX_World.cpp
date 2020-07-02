@@ -113,8 +113,6 @@ namespace LFX {
 					stream >> vtx[i].Normal;
 					stream >> vtx[i].UV;
 					stream >> vtx[i].LUV;
-
-					vtx[i].LUV = vtx[i].UV;
 				}
 
 				stream.Read(tri, sizeof(Triangle) * numTris);
@@ -165,11 +163,13 @@ namespace LFX {
 		FileUtil::MakeDir(path);
 
 		String lfx_file = path + "/lfx.o";
-		FILE * fp = fopen(lfx_file.c_str(), "wb");
+		FILE* fp = fopen(lfx_file.c_str(), "wb");
 		if (fp == NULL) {
 			LOGE("Can not open file '%s'", lfx_file.c_str());
 			return;
 		}
+
+		LOGD("Writing lfx file '%s'", lfx_file.c_str());
 
 		//
 		fwrite(&LFX_FILE_VERSION, 4, 1, fp);
@@ -263,7 +263,8 @@ namespace LFX {
 
 					char filename[256];
 					sprintf(filename, "%s/LFX_Terrain_%04d.png", path.c_str(), lmap_index);
-					FILE * tfp = fopen(filename, "wb");
+					LOGD("Save lighting map %s", filename);
+					FILE* tfp = fopen(filename, "wb");
 					LFX::PNG_Save(tfp, image);
 					fclose(tfp);
 
@@ -307,11 +308,13 @@ namespace LFX {
 		std::vector<TextureAtlasPacker::Item> packed_items;
 		for (int i = 0; i < mMeshes.size(); ++i)
 		{
-			LFX::Mesh * mesh = LFX::World::Instance()->GetMesh(i);
+			LFX::Mesh* mesh = LFX::World::Instance()->GetMesh(i);
 			if (mesh->GetLightingMapSize() == 0)
 				continue;
 
-			std::vector<LFX::Float3> & colors = mesh->_getLightingMap();
+			LOGD("Pack mesh %d", i);
+
+			std::vector<LFX::Float3>& colors = mesh->_getLightingMap();
 			for (int k = 0; k < colors.size(); ++k)
 			{
 				colors[k] = Pow(colors[k], 1.0f / World::Instance()->GetSetting()->Gamma);
@@ -348,7 +351,9 @@ namespace LFX {
 				}
 			}
 			colors.clear();
+
 #if 0
+			// test
 			char filename[256];
 			sprintf(filename, "%s/LFX_Mesh_111.png", path.c_str(), i);
 			FILE* tfp = fopen(filename, "wb");
@@ -372,7 +377,8 @@ namespace LFX {
 
 			char filename[256];
 			sprintf(filename, "%s/LFX_Mesh_%04d.png", path.c_str(), i);
-			FILE * tfp = fopen(filename, "wb");
+			LOGD("Save lighting map %s", filename);
+			FILE* tfp = fopen(filename, "wb");
 			LFX::PNG_Save(tfp, image);
 			fclose(tfp);
 
@@ -421,6 +427,8 @@ namespace LFX {
 		fwrite(&LFX_FILE_EOF, 4, 1, fp);
 
 		fclose(fp);
+
+		LOGD("Writing lfx file end.");
 	}
 
 	void World::Clear()

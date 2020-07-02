@@ -39,6 +39,8 @@ namespace LFX {
 			std::vector<unsigned char> Pixels;
 			std::vector<Rectangle<int> > Regions;
 			std::vector<Rectangle<float> > Items;
+
+			bool Extend(int w, int h, int channels);
 		};
 
 	public:

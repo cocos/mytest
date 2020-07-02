@@ -20,7 +20,11 @@ namespace LFX {
 	{
 	}
 
-#define R_OUT_PUT(x, y, v) _rchart[y * _width + x] = v
+#ifndef LFX_DEBUG_LUV
+#define R_OUT_PUT(x, y, v) { _rchart[y * _width + x] = v; }
+#else
+#define R_OUT_PUT(x, y, v) { _rchart[y * _width + x].Color += Float3(0.5f, 0.5f, 0.5f); }
+#endif
 
 	void RasterizerSoft::_DoRasterize(const Vertex & _A, const Vertex & _B, const Vertex & _C, int mtlId, float offset, float scale)
 	{
@@ -402,6 +406,7 @@ namespace LFX {
 				}
 				else
 				{
+#ifndef LFX_DEBUG_LUV 
 					if (bakePoint.MaterialId != -1)
 					{
 						for (size_t j = 0; j < lights.size(); ++j)
@@ -409,6 +414,9 @@ namespace LFX {
 							color += _mesh->_doLighting(bakePoint, bakePoint.MaterialId, lights[j]);
 						}
 					}
+#else
+					color = bakePoint.Color;
+#endif
 				}
 				
 				_rmap[index++] = color;

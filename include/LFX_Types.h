@@ -29,6 +29,9 @@
 //#define LFX_FEATURE_EDGA_AA
 //#define LFX_FEATURE_GI_MSAA
 
+// Debug
+//#define LFX_DEBUG_LUV
+
 namespace LFX {
 
 	typedef std::string String;

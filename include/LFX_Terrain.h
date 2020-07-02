@@ -59,10 +59,9 @@ namespace LFX {
 		void CalcuAmbientOcclusion(int xblock, int yblock);
 		void PostProcess(int xblock, int yblock);
 
-		void GetLightingMap(int xBlock, int zBlock, std::vector<RGBE> & colors);
 		void GetLightingMap(int xBlock, int zBlock, std::vector<Float3> & colors);
 		void GetBlockGeometry(int xBlock, int zBlock, Vertex * vbuff, int * ibuff);
-		Float3 * _getLightingMap(int xBlock, int zBlock);
+		Float3* _getLightingMap(int xBlock, int zBlock);
 		std::vector<Vertex> & _getVertexBuffer() { return mVertexBuffer; }
 		std::vector<Triangle> & _getTriBuffer() { return mTriBuffer; }
 
@@ -84,7 +83,7 @@ namespace LFX {
 
 		int mMapSizeU;
 		int mMapSizeV;
-		std::vector<Float3 *> mLightingMap;
+		std::vector<Float3*> mLightingMap;
 		std::vector<bool> mBlockValid;
 
 		Material mMaterial;

@@ -538,32 +538,10 @@ namespace LFX {
 		delete rasterizer;
 	}
 
-	void Terrain::GetLightingMap(int i, int j, std::vector<RGBE> & colors)
+	void Terrain::GetLightingMap(int i, int j, std::vector<Float3>& colors)
 	{
 		int mapSize = mDesc.LMapSize;
-		Float3 * lmap = mLightingMap[j * mDesc.BlockCount.x + i];
-		int lmapSize = mapSize - Terrain::kLMapBorder * 2;
-
-		int index = 0;
-		for (int y = 0; y < mapSize; ++y)
-		{
-			for (int x = 0; x < mapSize; ++x)
-			{
-				int xIndex = x - Terrain::kLMapBorder;
-				int zIndex = y - Terrain::kLMapBorder;
-
-				xIndex = Clamp<int>(xIndex, 0, lmapSize - 1);
-				zIndex = Clamp<int>(zIndex, 0, lmapSize - 1);
-
-				colors[index++] = RGBE_FROM(lmap[zIndex * lmapSize + xIndex]);
-			}
-		}
-	}
-
-	void Terrain::GetLightingMap(int i, int j, std::vector<Float3> & colors)
-	{
-		int mapSize = mDesc.LMapSize;
-		Float3 * lmap = mLightingMap[j * mDesc.BlockCount.x + i];
+		Float3* lmap = mLightingMap[j * mDesc.BlockCount.x + i];
 		int lmapSize = mapSize - Terrain::kLMapBorder * 2;
 
 		int index = 0;
