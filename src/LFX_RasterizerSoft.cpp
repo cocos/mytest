@@ -275,38 +275,6 @@ namespace LFX {
 
 	void RasterizerSoft::DoRasterize2()
 	{
-#if 0
-		for (int y = 0; y < _height; ++y)
-		{
-			for (int x = 0; x < _width; ++x)
-			{
-				Float2 p;
-				p.x = (x - 0.0f) / (float)(_width - 1);
-				p.y = (y - 0.0f) / (float)(_height - 1);
-
-				for (int t = 0; t < _mesh->NumOfTriangles(); ++t)
-				{
-					const Triangle & tri = _mesh->_getTriangle(t);
-					const Vertex & A = _mesh->_getVertex(tri.Index0);
-					const Vertex & B = _mesh->_getVertex(tri.Index1);
-					const Vertex & C = _mesh->_getVertex(tri.Index2);
-
-					float tu, tv;
-					if (PointInTriangle(p, A.LUV, B.LUV, C.LUV, tu, tv))
-					{
-						Vertex v = A + (B - A) * tu + (C - A) * tv;
-						v.Normal.normalize();
-						v.Tangent.normalize();
-						v.Binormal.normalize();
-						R_OUT_PUT(x, y, v);
-						break;
-					}
-				}
-			}
-		}
-#else
-		// draw normal
-		//
 		for (int i = 0; i < _mesh->NumOfTriangles(); ++i)
 		{
 			const Triangle & tri = _mesh->_getTriangle(i);
@@ -316,24 +284,6 @@ namespace LFX {
 
 			_DoRasterize(A, B, C, tri.MaterialId, 0, 1);
 		}
-
-#if 0
-		// draw scaled
-		//
-		int size = _mesh->GetLightingMapSize();
-		float offset = LFX_LMAP_SPACE / (float)size;
-		float scale = 1 - offset * 2;
-		for (int i = 0; i < _mesh->NumOfTriangles(); ++i)
-		{
-			const Triangle & tri = _mesh->_getTriangle(i);
-			const Vertex & A = _mesh->_getVertex(tri.Index0);
-			const Vertex & B = _mesh->_getVertex(tri.Index1);
-			const Vertex & C = _mesh->_getVertex(tri.Index2);
-
-			_DoRasterize(A, B, C, tri.MaterialId, offset, scale);
-		}
-#endif
-#endif
 	}
 
 	bool RS_IsEdge(Rasterizer * rs, int u, int v, int aa)

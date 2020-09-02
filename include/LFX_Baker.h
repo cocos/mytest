@@ -5,23 +5,23 @@
 
 namespace LFX {
 
-	class LFX_ENTRY LFX_Baker : public Thread
+	class LFX_ENTRY STBaker : public Thread
 	{
 	public:
-		struct Unit
+		struct Task
 		{
-			Entity * entity;
+			Entity* entity;
 			int index;
 		};
 
 	public:
-		LFX_Baker(int id);
-		virtual ~LFX_Baker();
+		STBaker(int id);
+		virtual ~STBaker();
 
 		virtual void Run();
 
 		bool IsCompeleted() { return mCompeleted; }
-		void Enqueue(Entity * entity, int index, int stage);
+		void Enqueue(Entity * entity, int index);
 
 	protected:
 		void _calcuDirectLightingMesh();
@@ -36,7 +36,6 @@ namespace LFX {
 		int mId;
 		Entity* mEntity;
 		int mIndex;
-		int mStage;
 		std::atomic_bool mCompeleted;
 	};
 }

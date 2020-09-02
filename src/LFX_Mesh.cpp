@@ -1,6 +1,8 @@
 #include "LFX_Mesh.h"
 #include "LFX_World.h"
 #include "LFX_AOBaker.h"
+#include "LFX_RasterizerSoft.h"
+#include "LFX_RasterizerZSpan.h"
 #include "LFX_ILBakerRaytrace.h"
 #include "LFX_EmbreeScene.h"
 
@@ -400,40 +402,61 @@ namespace LFX {
 	{
 		assert(mLightingMapSize > 0);
 
+		int width = mLightingMapSize;
+		int height = mLightingMapSize;
 		int msaa = World::Instance()->GetSetting()->MSAA;
-		int width = msaa * mLightingMapSize;
-		int height = msaa * mLightingMapSize;
+		int samples = 16;
+		const int border = LMAP_BORDER * msaa;
 
-		RasterizerSoft * rasterizer = new RasterizerSoft(this, width, height);
+		std::vector<Float4> lmap(width * height);
+		RasterizerZSpan rs(this, width * msaa, height * msaa, samples, border);
+		rs.E = [this, &lmap, width, msaa, &lights](const Float2& texel, const Vertex& v, int mtlId) {
+			int x = static_cast<int>(texel.x) / msaa;
+			int y = static_cast<int>(texel.y) / msaa;
 
-		rasterizer->DoRasterize2();
-
-		rasterizer->DoLighting(lights);
-
-		for (int j = 0; j < mLightingMapSize; ++j)
-		{
-			for (int i = 0; i < mLightingMapSize; ++i)
+			Float3 color = Float3(0, 0, 0);
+			for (auto light : lights)
 			{
-				Float3 color = Float3(0, 0, 0);
+				color += _doLighting(v, mtlId, light);
+				//color += Float3::ONE;
+			}
 
-				for (int n = 0; n < msaa; ++n)
-				{
-					for (int m = 0; m < msaa; ++m)
-					{
-						int x = i * msaa + m;
-						int y = j * msaa + n;
+			lmap[y * width + x] += Float4(color.x, color.y, color.z, 1/*Samples*/);
+		};
 
-						color += rasterizer->_rmap[y * width + x];
-					}
+		rs.Rasterize();
+
+		for (int y = 0; y < height; ++y)
+		{
+			for (int x = 0; x < width; ++x)
+			{
+				Float4 c = lmap[y * width + x];
+				if (c.w > 1) {
+					float invSampels = 1.0f / c.w;
+					c.x *= invSampels;
+					c.y *= invSampels;
+					c.z *= invSampels;
+
+					lmap[y * width + x] = c;
 				}
-
-				color /= (float)msaa * msaa;
-
-				mLightingMap[j * mLightingMapSize + i] = color + World::Instance()->GetSetting()->Ambient;
 			}
 		}
-		
-		delete rasterizer;
+
+		if (LMAP_OPTIMIZE_PX > 0)
+		{
+			Rasterizer::Optimize(&lmap[0], width, height, LMAP_OPTIMIZE_PX);
+		}
+
+		for (int j = 0; j < height; ++j)
+		{
+			for (int i = 0; i < width; ++i)
+			{
+				int index = j * width + i;
+				Float4 color = lmap[index];
+
+				mLightingMap[index] = Float3(color.x, color.y, color.z);
+			}
+		}
 	}
 
 	void Mesh::CalcuIndirectLighting(const std::vector<Light *> & lights)
@@ -524,19 +547,6 @@ namespace LFX {
 		}
 
 		delete rasterizer;
-	}
-
-	void Mesh::PostProcess()
-	{
-#if 1
-		if (mLightingMapSize > 0)
-		{
-			int xMapSize = mLightingMapSize;
-			int zMapSize = mLightingMapSize;
-
-			Rasterizer::DoBlur(&mLightingMap[0], xMapSize, zMapSize, xMapSize);
-		}
-#endif
 	}
 
 	Float3 Mesh::_doLighting(const Vertex & v, int mtlId, Light * pLight)

@@ -35,7 +35,7 @@ namespace LFX {
 			UV = Float2(0, 0);
 			LUV = Float2(0, 0);
 
-#ifdef _DEBUG
+#ifdef LFX_DEBUG_LUV
 			Color = Float3(0, 0, 0);
 #endif
 		}

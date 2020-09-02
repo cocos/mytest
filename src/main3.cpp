@@ -12,7 +12,6 @@
 #include "LFX_Stream.h"
 
 bool GQuit = false;
-int GStage = -1;
 int GProgress = 0;
 LFX::Log* GLog = NULL;
 LFX::World* GWorld = NULL;
@@ -61,7 +60,6 @@ int main(int argc, char* argv[])
 	h.socket()->emit("Login");
 
 	h.socket()->on("Start", [](sio::event &) {
-		GStage = -1;
 		GProgress = 0;
 		SAFE_DELETE(GWorld);
 
@@ -99,30 +97,13 @@ int main(int argc, char* argv[])
 
 	// bake
 	while (!GQuit && GWorld != NULL) {
-		int stage = GWorld->GetStage();
-		float kp = (GWorld->GetProgress() + 1) / (float)(GWorld->GetEntityCount() + 1);
+		float kp = (GWorld->GetProgress() + 1) / (float)(GWorld->GetTaskCount() + 1);
 		int progress = (int)(kp * 100);
 
-		if (stage != LFX::World::STAGE_END && (GStage != stage || GProgress != progress)) {
-			const char * tag = "";
-			switch (stage) {
-			case LFX::World::STAGE_DIRECT_LIGHTING:
-				tag = "DirectLighting";
-				break;
-
-			case LFX::World::STAGE_INDIRECT_LIGHTING:
-				tag = "IndirectLighting";
-				break;
-
-			case LFX::World::STAGE_POST_PROCESS:
-				tag = "Post Process";
-				break;
-			}
-
-			GStage = stage;
+		if (GProgress != progress) {
 			GProgress = progress;
 
-			const char* text = progress_format(tag, progress);
+			const char* text = progress_format("Build lighting", progress);
 			LOGI(text);
 			h.socket()->emit("Progress", std::string(text));
 		}
@@ -135,7 +116,9 @@ int main(int argc, char* argv[])
 		}
 #endif
 
-		if (GWorld->UpdateStage() == LFX::World::STAGE_END) {
+		GWorld->UpdateTask();
+
+		if (GWorld->End()) {
 			GWorld->Save();
 			GWorld->Clear();
 

@@ -3,7 +3,7 @@
 
 namespace LFX {
 
-	LFX_Baker::LFX_Baker(int id)
+	STBaker::STBaker(int id)
 	{
 		mId = id;
 		mEntity = NULL;
@@ -11,11 +11,11 @@ namespace LFX {
 		mCompeleted = true;
 	}
 
-	LFX_Baker::~LFX_Baker()
+	STBaker::~STBaker()
 	{
 	}
 
-	void LFX_Baker::Run()
+	void STBaker::Run()
 	{
 		while (1) {
 			if (mStatus == STOP)
@@ -25,42 +25,16 @@ namespace LFX {
 				continue;
 
 			if (mEntity->GetType() == LFX_TERRAIN) {
-				switch (mStage){
-				case World::STAGE_DIRECT_LIGHTING:
-					_calcuDirectLightingTerrain();
-					break;
-
-				case World::STAGE_INDIRECT_LIGHTING:
-					_calcuIndirectLightingTerrain();
-					break;
-
-				case World::STAGE_AMBIENT_OCCLUSION:
-					_calcuAmbientOcclusionTerrain();
-					break;
-
-				case World::STAGE_POST_PROCESS:
-					_postProcess();
-					break;
-				}
+				_calcuDirectLightingTerrain();
+				_calcuIndirectLightingTerrain();
+				_calcuAmbientOcclusionTerrain();
+				_postProcess();
 			}
 			else {
-				switch (mStage) {
-				case World::STAGE_DIRECT_LIGHTING:
-					_calcuDirectLightingMesh();
-					break;
-
-				case World::STAGE_INDIRECT_LIGHTING:
-					_calcuIndirectLightingMesh();
-					break;
-
-				case World::STAGE_AMBIENT_OCCLUSION:
-					_calcuAmbientOcclusionMesh();
-					break;
-
-				case World::STAGE_POST_PROCESS:
-					_postProcess();
-					break;
-				}
+				_calcuDirectLightingMesh();
+				_calcuIndirectLightingMesh();
+				_calcuAmbientOcclusionMesh();
+				_postProcess();
 			}
 
 			World::Instance()->_onThreadCompeleted();
@@ -69,16 +43,15 @@ namespace LFX {
 		}
 	}
 
-	void LFX_Baker::Enqueue(Entity * entity, int index, int stage)
+	void STBaker::Enqueue(Entity * entity, int index)
 	{
 		mEntity = entity;
 		mIndex = index;
-		mStage = stage;
 
 		mCompeleted = false;
 	}
 
-	void LFX_Baker::_calcuDirectLightingMesh()
+	void STBaker::_calcuDirectLightingMesh()
 	{
 		Mesh * pMesh = (Mesh*)mEntity;
 		if (pMesh->GetLightingMapSize())
@@ -99,7 +72,7 @@ namespace LFX {
 		}
 	}
 
-	void LFX_Baker::_calcuDirectLightingTerrain()
+	void STBaker::_calcuDirectLightingTerrain()
 	{
 		Terrain * pTerrain = (Terrain*)mEntity;
 
@@ -131,7 +104,7 @@ namespace LFX {
 		}
 	}
 
-	void LFX_Baker::_calcuIndirectLightingMesh()
+	void STBaker::_calcuIndirectLightingMesh()
 	{
 		if (World::Instance()->GetSetting()->GIScale > 0) {
 			Mesh * pMesh = World::Instance()->GetMesh(mIndex);
@@ -147,7 +120,7 @@ namespace LFX {
 		}
 	}
 
-	void LFX_Baker::_calcuIndirectLightingTerrain()
+	void STBaker::_calcuIndirectLightingTerrain()
 	{
 		if (World::Instance()->GetSetting()->GIScale > 0) {
 			Terrain * pTerrain = (Terrain*)mEntity;
@@ -174,7 +147,7 @@ namespace LFX {
 		}
 	}
 
-	void LFX_Baker::_calcuAmbientOcclusionMesh()
+	void STBaker::_calcuAmbientOcclusionMesh()
 	{
 		if (World::Instance()->GetSetting()->AOLevel > 0) {
 			Mesh * pMesh = World::Instance()->GetMesh(mIndex);
@@ -185,20 +158,18 @@ namespace LFX {
 		}
 	}
 
-	void LFX_Baker::_calcuAmbientOcclusionTerrain()
+	void STBaker::_calcuAmbientOcclusionTerrain()
 	{
 		if (World::Instance()->GetSetting()->AOLevel > 0) {
 			//...
 		}
 	}
 
-	void LFX_Baker::_postProcess()
+	void STBaker::_postProcess()
 	{
 		if (mEntity->GetType() == LFX_MESH)
 		{
 			Mesh * pMesh = (Mesh*)mEntity;
-
-			pMesh->PostProcess();
 		}
 		else
 		{

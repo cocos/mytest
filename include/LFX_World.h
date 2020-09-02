@@ -6,7 +6,6 @@
 #include "LFX_Terrain.h"
 #include "LFX_Baker.h"
 #include "LFX_Rasterizer.h"
-#include "LFX_RasterizerSoft.h"
 
 namespace LFX {
 
@@ -75,17 +74,6 @@ namespace LFX {
 		};
 
 	public:
-		enum {
-			STAGE_START,
-
-			STAGE_DIRECT_LIGHTING,
-			STAGE_INDIRECT_LIGHTING,
-			STAGE_AMBIENT_OCCLUSION,
-			STAGE_POST_PROCESS,
-			STAGE_END,
-		};
-
-	public:
 		World();
 		~World();
 
@@ -117,17 +105,21 @@ namespace LFX {
 
 		void Build();
 		void Start();
-		int UpdateStage();
-		int GetStage() { return mStage; }
+		bool End();
+		void UpdateTask();
 		int GetProgress() { return mProgress; }
-		int GetEntityCount() { return mEntitys.size(); }
-		LFX_Baker * GetThread(int i) { return mThreads[i]; }
+		int GetTaskCount() { return mTasks.size(); }
+		STBaker* GetThread(int i) { return mThreads[i]; }
 		void _onThreadCompeleted() { mProgress += 1; }
 
 		bool RayCheck(Contact & contract, const Ray & ray, float len, int flags);
 		bool Occluded(const Ray & ray, float len, int flags);
 		bool _RayCheckImp(Contact & contract, const Ray & ray, float len, int flags);
 		bool _OccludedImp(const Ray & ray, float len, int flags);
+
+	protected:
+		bool GetNextTask(STBaker::Task& task);
+		STBaker* GetFreeThread();
 
 	protected:
 		Settings mSetting;
@@ -140,10 +132,9 @@ namespace LFX {
 		BSPTree<Mesh *> mBSPTree;
 		EmbreeScene * mEmbreeScene;
 
-		int mStage;
-		std::vector<LFX_Baker::Unit> mEntitys;
-		int mIndex;
+		std::vector<STBaker::Task> mTasks;
+		int mTaskIndex;
 		int mProgress;
-		std::vector<LFX_Baker *> mThreads;
+		std::vector<STBaker *> mThreads;
 	};
 }

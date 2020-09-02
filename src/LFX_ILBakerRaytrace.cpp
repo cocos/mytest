@@ -374,12 +374,6 @@ namespace LFX {
 
 	void ILBakerRaytrace::Run(Rasterizer * rs)
 	{
-#ifdef LFX_FEATURE_EDGA_AA
-		const int edgeAA = World::Instance()->GetSetting()->EdgeAA;
-#else
-		const int edgeAA = 0;
-#endif
-
 		_ctx.MapWidth = rs->_width;
 		_ctx.MapHeight = rs->_height;
 		_ctx.BakeOutput.resize(rs->_width * rs->_height);
@@ -396,37 +390,11 @@ namespace LFX {
 			for (int u = 0; u < _ctx.MapWidth; ++u)
 			{
 				Float4 color = Float4(0, 0, 0, 0);
-
-				if (edgeAA > 0 && RS_IsEdge(rs, u, v, edgeAA))
+				
+				const RVertex& bakePoint = rs->_rchart[index];
+				if (bakePoint.MaterialId != -1)
 				{
-					for (int ey = -edgeAA; ey <= edgeAA; ++ey)
-					{
-						for (int ex = -edgeAA; ex <= edgeAA; ++ex)
-						{
-							int x = u + ex;
-							int y = v + ey;
-
-							if (x >= 0 && x < _ctx.MapWidth &&
-								y >= 0 && y < _ctx.MapHeight)
-							{
-								const RVertex & rvertex = rs->_rchart[y * _ctx.MapWidth + x];
-								if (rvertex.MaterialId != -1)
-								{
-									color += _doLighting(rvertex, x, y);
-								}
-							}
-						}
-					}
-
-					color /= (float)(edgeAA * 2 + 1) * (edgeAA * 2 + 1);
-				}
-				else
-				{
-					const RVertex & bakePoint = rs->_rchart[index];
-					if (bakePoint.MaterialId != -1)
-					{
-						color = _doLighting(bakePoint, u, v);
-					}
+					color = _doLighting(bakePoint, u, v);
 				}
 
 				_ctx.BakeOutput[index++] = color;

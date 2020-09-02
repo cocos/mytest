@@ -24,6 +24,7 @@ namespace LFX {
 
 		FileStream stream(filename.c_str());
 		if (!stream.IsOpen()) {
+			LOGE("Can not open file '%s'", filename.c_str());
 			return false;
 		}
 
@@ -31,6 +32,7 @@ namespace LFX {
 		int version;
 		stream >> version;
 		if (version != LFX_FILE_VERSION) {
+			LOGE("file head invalid");
 			return false;
 		}
 
@@ -301,7 +303,7 @@ namespace LFX {
 		options.Width = mSetting.Size;
 		options.Height = mSetting.Size;
 		options.Channels = mSetting.RGBEFormat ? 4 : 3;
-		options.Border = 1;
+		options.Border = 0;
 		options.Space = 0;
 		TextureAtlasPacker packer(options);
 
@@ -400,12 +402,12 @@ namespace LFX {
 
 				const TextureAtlasPacker::Item & item = packed_items[packIndex++];
 				int size = mesh->GetLightingMapSize();
-#if 0
-				float offset = LFX_LMAP_SPACE / (float)size;
+#if 1
+				float offset = LMAP_BORDER / (float)size;
 				float scale = 1 - offset * 2;
 
-				OutLightMapInfo remapInfo;
-				remapInfo.index = item.index;
+				LightMapInfo remapInfo;
+				remapInfo.lmap_index = item.index;
 				remapInfo.offset[0] = item.offsetU + offset * item.scaleU;
 				remapInfo.offset[1] = item.offsetV + offset * item.scaleV;
 				remapInfo.scale[0] = item.scaleU * scale;
@@ -647,8 +649,6 @@ namespace LFX {
 		LOGI("-:Building bv scene");
 		mEmbreeScene = new EmbreeScene;
 		mEmbreeScene->Build();
-
-		mStage = STAGE_END;
 	}
 
 	void World::Start()
@@ -659,21 +659,20 @@ namespace LFX {
 		}
 		mThreads.clear();
 
-		mStage = STAGE_DIRECT_LIGHTING;
-		mIndex = 0;
+		mTaskIndex = 0;
 		mProgress = 0;
 
 		for (int i = 0; i < mSetting.Threads; ++i)
 		{
-			mThreads.push_back(new LFX_Baker(i));
+			mThreads.push_back(new STBaker(i));
 		}
 
-		mEntitys.clear();
+		mTasks.clear();
 		for (size_t i = 0; i < mMeshes.size(); ++i)
 		{
 			if (mMeshes[i]->GetLightingMapSize())
 			{
-				mEntitys.push_back({ mMeshes[i], (int)i });
+				mTasks.push_back({ mMeshes[i], (int)i });
 			}
 		}
 		for (auto terrain : mTerrains) {
@@ -681,7 +680,7 @@ namespace LFX {
 			{
 				if (terrain->_getBlockValids()[i])
 				{
-					mEntitys.push_back({ terrain, i });
+					mTasks.push_back({ terrain, i });
 				}
 			}
 		}
@@ -692,53 +691,62 @@ namespace LFX {
 		}
 	}
 
-	int World::UpdateStage()
+	bool World::End()
 	{
-		bool Compeleted = false;
+		return mThreads.empty();
+	}
 
-		if (mStage >= STAGE_DIRECT_LIGHTING || mStage <= STAGE_POST_PROCESS)
-		{
-			if (mIndex == mEntitys.size())
-			{
-				Compeleted = true;
-				for (size_t i = 0; i < mThreads.size(); ++i)
-				{
-					Compeleted &= mThreads[i]->IsCompeleted();
-				}
-			}
-			else
-			{
-				for (size_t i = 0; i < mThreads.size() && mIndex < mEntitys.size(); ++i)
-				{
-					if (mThreads[i]->IsCompeleted())
-					{
-						mThreads[i]->Enqueue(mEntitys[mIndex].entity, mEntitys[mIndex].index, mStage);
-						++mIndex;
-					}
-				}
+	void World::UpdateTask()
+	{
+		STBaker* thread = GetFreeThread();
+		if (thread == nullptr) {
+			return;
+		}
+
+		STBaker::Task task;
+		if (GetNextTask(task)) {
+			thread->Enqueue(task.entity, task.index);
+			return;
+		}
+
+		// ensure all task finished
+		for (size_t i = 0; i < mThreads.size(); ++i) {
+			if (!mThreads[i]->IsCompeleted()) {
+				return;
 			}
 		}
 
-		if (Compeleted)
+		// end
+		for (size_t i = 0; i < mThreads.size(); ++i)
 		{
-			mStage = mStage + 1;
-			mIndex = 0;
-			mProgress = 0;
+			mThreads[i]->Stop();
+			delete mThreads[i];
+		}
+		mThreads.clear();
+
+		mTasks.clear();
+		mTaskIndex = 0;
+	}
+
+	bool World::GetNextTask(STBaker::Task& task)
+	{
+		if (mTaskIndex < mTasks.size()) {
+			task = mTasks[mTaskIndex++];
+			return true;
 		}
 
-		if (mStage == STAGE_END)
-		{
-			for (size_t i = 0; i < mThreads.size(); ++i)
-			{
-				mThreads[i]->Stop();
-				delete mThreads[i];
+		return false;
+	}
+
+	STBaker* World::GetFreeThread()
+	{
+		for (size_t i = 0; i < mThreads.size(); ++i) {
+			if (mThreads[i]->IsCompeleted()) {
+				return mThreads[i];
 			}
-			mThreads.clear();
-
-			mEntitys.clear();
 		}
 
-		return mStage;
+		return nullptr;
 	}
 
 	void _rayCheck(Contact & contract, BSPTree<Mesh *>::Node * node, const Ray & ray, float len)

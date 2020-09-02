@@ -51,9 +51,9 @@ namespace LFX {
 		}
 	}
 
-	int TextureAtlasPacker::Insert(unsigned char * pixels, int w, int h, Item & item)
+	int TextureAtlasPacker::Insert(unsigned char* pixels, int w, int h, Item& item)
 	{
-		const Rectangle<float> * pItem = NULL;
+		const Rectangle<float>* pItem = NULL;
 		for (size_t i = 0; i < mAtlasArray.size(); ++i)
 		{
 			pItem = _AtlasInsert(mAtlasArray[i], pixels, w, h, mOptions.Border, mOptions.Border);

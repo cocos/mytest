@@ -1,6 +1,7 @@
 #include "LFX_World.h"
 #include "LFX_Terrain.h"
 #include "LFX_AOBaker.h"
+#include "LFX_RasterizerSoft.h"
 #include "LFX_ILBakerRaytrace.h"
 #include "LFX_EmbreeScene.h"
 
@@ -732,7 +733,7 @@ namespace LFX {
 		Float3 * lmap = mLightingMap[yblock * mDesc.BlockCount.x + xblock];
 		int mapSize = mDesc.LMapSize - Terrain::kLMapBorder * 2;
 
-		Rasterizer::DoBlur(lmap, mapSize, mapSize, mapSize);
+		Rasterizer::Blur(lmap, mapSize, mapSize, mapSize);
 #endif
 	}
 

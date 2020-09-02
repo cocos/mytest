@@ -18,7 +18,12 @@ namespace LFX {
 	class LFX_ENTRY Rasterizer
 	{
 	public:
-		static void DoBlur(Float3 * data, int xMapSize, int zMapSize, int stride);
+		static Float2 Texel(const Float2& uv, int w, int h, int border);
+		static Float2 Texel(const Float2& uv, int w, int h, int border, const Float2& tm);
+
+		static void Blur(Float3* data, int w, int h, int stride);
+		static void Optimize(Float4* lmap, int w, int h, int border);
+		static bool PointInTriangle(Float2 P, Float2 A, Float2 B, Float2 C, float& tu, float& tv);
 
 	public:
 		int _width, _height;

@@ -14,6 +14,7 @@
 #include <list>
 #include <map>
 #include <algorithm>
+#include <random>
 
 #if 0
 #ifdef LFX_EXPORT
@@ -34,8 +35,6 @@
 
 namespace LFX {
 
-	typedef std::string String;
-
 #ifndef FLT_MIN
 #define FLT_MIN 1.175494351e-38F
 #endif
@@ -45,9 +44,13 @@ namespace LFX {
 #endif
 
 #define UNIT_LEN 1.0f
+#define LMAP_BORDER 1
+#define LMAP_OPTIMIZE_PX 1
 
 #define d_assert assert
 #define SAFE_DELETE(p) if (p) { delete p; p = NULL; }
+
+	typedef std::string String;
 
 	template <class T>
 	struct Singleton
@@ -75,4 +78,21 @@ namespace LFX {
 
 #define ImplementSingleton(classname) \
 	template<> classname* Singleton<classname>::msInstance = NULL;
+
+	/**
+	* @zh Ëæ»úÉú³ÉÆ÷
+	*/
+	struct LFX_ENTRY RandomEngine
+	{
+	public:
+		RandomEngine(unsigned int seed = 0);
+
+		unsigned int RandomUint();
+		float RandomFloat();
+		float UniformDistribution();
+
+	public:
+		std::mt19937 engine;
+		std::uniform_real_distribution<float> distribution;
+	};
 }
