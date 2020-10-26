@@ -39,7 +39,7 @@ namespace LFX {
 		uint8_t a;
 	};
 
-	bool BMP_Test(Image & image, Stream & stream)
+	bool BMP_Test(Stream & stream)
 	{
 		uint16_t type = 0;
 

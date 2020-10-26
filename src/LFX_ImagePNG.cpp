@@ -6,6 +6,47 @@ namespace LFX {
 
 #define PNG_DWORD(c0, c1, c2, c3) ((c0) << 24 | (c1) << 16 | (c2) << 8 | (c3))
 
+	inline bool IS_BIG_ENDIANG()
+	{
+		return ((*(short *)"1") > 0xFF) != 0;
+	}
+
+	inline int ENDIAN_SWAP16(int i)
+	{
+		return (i & 0x00FF) << 8 | (i & 0xFF00) >> 8;
+	}
+
+	inline int ENDIAN_SWAP32(int i)
+	{
+		return (i & 0x000000FF) << 24 | (i & 0x0000FF00) << 8 | (i & 0x00FF0000) >> 8 | (i & 0xFF000000) >> 24;
+	}
+
+	template <class T>
+	inline T ENDIAN_LITTLE_TO_HOST(T i)
+	{
+		if (IS_BIG_ENDIANG())
+		{
+			assert(sizeof(T) == 2 || sizeof(T) == 4);
+
+			return (T)(sizeof(T) == 2 ? ENDIAN_SWAP16(i) : ENDIAN_SWAP32(i));
+		}
+
+		return i;
+	}
+
+	template <class T>
+	inline T ENDIAN_BIG_TO_HOST(T i)
+	{
+		if (!IS_BIG_ENDIANG())
+		{
+			assert(sizeof(T) == 2 || sizeof(T) == 4);
+
+			return (T)(sizeof(T) == 2 ? ENDIAN_SWAP16(i) : ENDIAN_SWAP32(i));
+		}
+
+		return i;
+	}
+
 	union PNG_Chunk
 	{
 		struct {
@@ -36,7 +77,7 @@ namespace LFX {
 	{
 		int nreads = IS.Read(&i16, 2);
 
-		//i16 = ENDIAN_BIG_TO_HOST(i16);
+		i16 = ENDIAN_BIG_TO_HOST(i16);
 
 		return nreads;
 	}
@@ -45,7 +86,7 @@ namespace LFX {
 	{
 		int nreads = IS.Read(&i32, 4);
 
-		//i32 = ENDIAN_BIG_TO_HOST(i32);
+		i32 = ENDIAN_BIG_TO_HOST(i32);
 
 		return nreads;
 	}
@@ -54,8 +95,8 @@ namespace LFX {
 	{
 		int nreads = IS.Read(&ck, 8);
 
-		//ck.id = ENDIAN_BIG_TO_HOST(ck.id);
-		//ck.length = ENDIAN_BIG_TO_HOST(ck.length);
+		ck.id = ENDIAN_BIG_TO_HOST(ck.id);
+		ck.length = ENDIAN_BIG_TO_HOST(ck.length);
 
 		return nreads;
 	}
@@ -107,37 +148,35 @@ namespace LFX {
 		image.height = header.height;
 
 		LodePNGColorType colortype = LCT_RGBA;
-		int chanels = 0;
-
 		switch (header.colortype)
 		{
 		case 0:
 			colortype = LCT_GREY;
-			chanels = 1;
+			image.channels = 1;
 			break;
 
 		case 2:
 			colortype = LCT_RGB;
-			chanels = 3;
+			image.channels = 3;
 			break;
 
 		case 3:
 			colortype = LCT_RGBA;
-			chanels = 4;
+			image.channels = 4;
 			break;
 
 		case 4:
 			colortype = LCT_GREY_ALPHA;
-			chanels = 2;
+			image.channels = 2;
 			break;
 
 		case 6:
 			colortype = LCT_RGBA;
-			chanels = 4;
+			image.channels = 4;
 			break;
 		}
 
-		if (chanels == 0)
+		if (image.channels == 0)
 			return false;
 
 		IS.Seek(-nreads, SEEK_CUR);

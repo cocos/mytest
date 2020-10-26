@@ -84,7 +84,7 @@ namespace LFX {
 		void Clear();
 
 		// Texture
-		Texture * LoadTexture(const String & name);
+		Texture * LoadTexture(const String & filename);
 		Texture * CreateTexture(const String & name, int w, int h, int channels, unsigned char *data);
 		Texture * GetTexture(const String & name);
 

@@ -470,31 +470,32 @@ namespace LFX {
 		mEmbreeScene = NULL;
 	}
 
-	Texture * World::LoadTexture(const String & name)
+	Texture * World::LoadTexture(const String & filename)
 	{
-		Texture* tex = GetTexture(name);
+		Texture* tex = GetTexture(filename);
 		if (tex != NULL) {
 			return tex;
 		}
 
-		char filename[256];
-		for (int i = 0; i < strlen(filename); ++i) {
-			if (filename[i] == '/') {
-				filename[i] = '$';
-			}
+		Image img;
+		FileStream fs(filename.c_str());
+
+		if (PNG_Test(fs)) {
+			PNG_Load(img, fs);
+		}
+		else if (BMP_Test(fs)) {
+			BMP_Load(img, fs);
 		}
 
-		String imagefile = String("lightfx/") + filename;
-
-		Image img;
-		FileStream fs(imagefile.c_str());
-		if (!PNG_Load(img, fs)) {
-			LOGW("Load Texture '%s' failed", name.c_str());
+		if (img.pixels == NULL) {
+			LOGW("Load Texture '%s' failed", filename.c_str());
 			return NULL;
 		}
 
+		LOGW("Texture '%s' loaded", filename.c_str());
+
 		tex = new Texture;
-		tex->name = name;
+		tex->name = filename;
 		tex->width = img.width;
 		tex->height = img.height;
 		tex->channels = img.channels;
