@@ -68,6 +68,7 @@ add_executable(LightFX
   src/LFX_ILBakerRandom.cpp
   src/LFX_ImagePNG.cpp
   src/LFX_RasterizerSoft.cpp
+  src/LFX_RasterizerZSpan.cpp
   src/LFX_Thread.cpp
   src/LFX_EmbreeScene.cpp
   src/LFX_ILBakerRaytrace.cpp
