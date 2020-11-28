@@ -17,7 +17,7 @@ enum {
 	E_STOPPED,
 };
 
-std::atomic<int> GStatus = 0;
+std::atomic<int> GStatus(0);
 int GProgress = 0;
 LFX::Log* GLog = NULL;
 LFX::World* GWorld = NULL;
