@@ -11,7 +11,13 @@
 #include "LFX_World.h"
 #include "LFX_Stream.h"
 
-bool GQuit = false;
+enum {
+	E_STARTING = 1,
+	E_BAKING,
+	E_STOPPED,
+};
+
+std::atomic<int> GStatus = 0;
 int GProgress = 0;
 LFX::Log* GLog = NULL;
 LFX::World* GWorld = NULL;
@@ -60,43 +66,51 @@ int main(int argc, char* argv[])
 	h.socket()->emit("Login");
 
 	h.socket()->on("Start", [](sio::event &) {
+		if (GStatus != 0) {
+			LOGE("?: Start faield, the world is started");
+			return;
+		}
+		
 		GProgress = 0;
-		SAFE_DELETE(GWorld);
 
 		GWorld = new LFX::World;
-		if (!GWorld->Load()) {
+		if (GWorld->Load()) {
+			GWorld->Build();
+			GWorld->Start();
+			GStatus = E_STARTING;
+		}
+		else {
+			GStatus = E_STOPPED;
 			LOGE("?: Load scene failed");
 		}
-
-		GWorld->Build();
-
-		GWorld->Start();
 	});
 
 	h.socket()->on("Stop", [](sio::event &) {
 		SAFE_DELETE(GWorld);
-		GQuit = true;
+		GStatus = E_STOPPED;
 	});
 
 	h.socket()->on("disconnect", [](sio::event &) {
 		SAFE_DELETE(GWorld);
-		GQuit = true;
+		GStatus = E_STOPPED;
 	});
 	
 	// waiting for start
-	while (!GQuit && GWorld == NULL) {
+	while (GStatus == 0) {
 		LFX::Thread::Sleep(1);
 	}
 
 	// start
-	if (!GQuit && GWorld != NULL) {
+	if (GStatus == E_STARTING && GWorld != NULL) {
 		const char* text = progress_format("Start", 0);
 		LOGI(text);
 		h.socket()->emit("Start", std::string(text));
+
+		GStatus = E_BAKING;
 	}
 
 	// bake
-	while (!GQuit && GWorld != NULL) {
+	while (GStatus == E_BAKING && GWorld != NULL) {
 		float kp = (GWorld->GetProgress() + 1) / (float)(GWorld->GetTaskCount() + 1);
 		int progress = (int)(kp * 100);
 
@@ -125,11 +139,12 @@ int main(int argc, char* argv[])
 			h.socket()->emit("Finished");
 
 			SAFE_DELETE(GWorld);
+			GStatus = E_STOPPED;
 		}
 	};
 
 	int time = 0;
-	while (!GQuit && time < 30) {
+	while (GStatus != E_STOPPED && time < 30) {
 		LFX::Thread::Sleep(5);
 		time += 5;
 	}
