@@ -643,7 +643,8 @@ namespace LFX {
 
 		DoLighting(kd, ka, ks, v, pLight);
 
-		if (kd * ka * ks >= 0 && pLight->CastShadow)
+		float kl = kd * ka * ks;
+		if (kl >= 0 && pLight->CastShadow)
 		{
 			float len = 0;
 			Ray ray;
@@ -666,12 +667,20 @@ namespace LFX {
 			{
 				if (World::Instance()->Occluded(ray, len, LFX_MESH))
 				{
-					kd = ka = ks = 0;
+					kl = 0;
 				}
 			}
 		}
 
-		return kd * ka * ks * mMaterial.diffuse * pLight->Color * pLight->DirectScale;
+		Float3 color;
+		if (kl > 0) {
+			color = kl * mMaterial.diffuse * pLight->Color * pLight->DirectScale;
+		}
+		else {
+			color.zero();
+		}
+
+		return color;
 	}
 
 	void Terrain::CalcuAmbientOcclusion(int xblock, int yblock)

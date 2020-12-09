@@ -48,8 +48,7 @@ namespace LFX {
 		Context _ctx;
 
 	public:
-		void 
-			Run(Rasterizer * rasterizer);
+		void Run(Rasterizer * rasterizer);
 
 	protected:
 		Float4 _doLighting(const Vertex & bakerPoint, int texelIdxX, int texelIdxY);

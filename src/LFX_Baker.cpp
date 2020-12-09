@@ -124,10 +124,8 @@ namespace LFX {
 	{
 		if (World::Instance()->GetSetting()->GIScale > 0) {
 			Terrain * pTerrain = (Terrain*)mEntity;
-			int nMapSize = pTerrain->GetDesc().LMapSize - Terrain::kLMapBorder * 2;
 
 			float blockSize = pTerrain->GetDesc().Dimension.x / pTerrain->GetDesc().BlockCount.x;
-
 			int xblock = mIndex % pTerrain->GetDesc().BlockCount.x;
 			int yblock = mIndex / pTerrain->GetDesc().BlockCount.y;
 
@@ -167,11 +165,7 @@ namespace LFX {
 
 	void STBaker::_postProcess()
 	{
-		if (mEntity->GetType() == LFX_MESH)
-		{
-			Mesh * pMesh = (Mesh*)mEntity;
-		}
-		else
+		if (mEntity->GetType() == LFX_TERRAIN)
 		{
 			Terrain * pTerrain = (Terrain*)mEntity;
 			int xblock = mIndex % pTerrain->GetDesc().BlockCount.x;

@@ -2,6 +2,54 @@
 
 namespace LFX {
 
+	Float3 ACESToneMap(const Float3& c)
+	{
+		Float3 color = c;
+		if (color.x > 8.0f) {
+			color.x = 8.0f;
+		}
+		if (color.y > 8.0f) {
+			color.y = 8.0f;
+		}
+		if (color.z > 8.0f) {
+			color.z = 8.0f;
+		}
+
+		const float A = 2.51f;
+		const float B = 0.03f;
+		const float C = 2.43f;
+		const float D = 0.59f;
+		const float E = 0.14f;
+		return (color * (A * color + B)) / (color * (C * color + D) + E);
+	}
+
+	float SmoothDistAtt(float distSqr, float invSqrAttRadius)
+	{
+		float factor = distSqr * invSqrAttRadius;
+		float smoothFactor = Clamp(1.0f - factor * factor, 0.0f, 1.0f);
+		return smoothFactor * smoothFactor;
+	}
+
+	float GetDistAtt(float distSqr, float invSqrAttRadius)
+	{
+		float attenuation = 1.0f / std::max(distSqr, 0.01f * 0.01f);
+		attenuation *= SmoothDistAtt(distSqr, invSqrAttRadius);
+		return attenuation;
+	}
+
+	float CaclLightAtten(float d, float radius, float size)
+	{
+		float distSqr = d * d;
+		float litRadius = radius;
+		float litRadiusSqr = litRadius * litRadius;
+		float illum = Pi * (litRadiusSqr / std::max(litRadiusSqr, distSqr));
+		float attRadiusSqrInv = 1.0 / std::max(size, 0.01f);
+		attRadiusSqrInv *= attRadiusSqrInv;
+		float att = GetDistAtt(distSqr, attRadiusSqrInv);
+
+		return att;
+	}
+
 	void DoLighting(float & kd, float & ka, float & ks, const Vertex & v, Light * pLight)
 	{
 		switch (pLight->Type)
@@ -9,9 +57,10 @@ namespace LFX {
 		case Light::DIRECTION:
 		{
 			kd = v.Normal.dot(-pLight->Direction);
-
 			kd = Clamp<float>(kd, 0, 1);
+
 			ks = 1;
+			
 			ka = 1;
 		}
 		break;
@@ -23,10 +72,13 @@ namespace LFX {
 			lightDir.normalize();
 
 			kd = v.Normal.dot(lightDir);
-			ka = (length - pLight->AttenStart) / (pLight->AttenEnd - pLight->AttenStart);
-
 			kd = Clamp<float>(kd, 0, 1);
+#if 0
+			ka = (length - pLight->AttenStart) / (pLight->AttenEnd - pLight->AttenStart);
 			ka = std::pow(1 - Clamp<float>(ka, 0, 1), pLight->AttenFallOff);
+#else
+			ka = CaclLightAtten(length, pLight->AttenStart, pLight->AttenEnd);
+#endif
 			ks = 1;
 		}
 		break;
@@ -38,15 +90,21 @@ namespace LFX {
 			spotDir.normalize();
 
 			kd = v.Normal.dot(-pLight->Direction);
-			ka = (length - pLight->AttenStart) / (pLight->AttenEnd - pLight->AttenStart);
-			ks = (spotDir.dot(pLight->Direction) - pLight->SpotOuter) / (pLight->SpotInner - pLight->SpotOuter);
-
 			kd = Clamp<float>(kd, 0, 1);
+#if 0
+			ka = (length - pLight->AttenStart) / (pLight->AttenEnd - pLight->AttenStart);
 			ka = std::pow(1 - Clamp<float>(ka, 0, 1), pLight->AttenFallOff);
+#else
+			ka = CaclLightAtten(length, pLight->AttenStart, pLight->AttenEnd);
+#endif
+
+			ks = (spotDir.dot(pLight->Direction) - pLight->SpotOuter) / (pLight->SpotInner - pLight->SpotOuter);
 			ks = std::pow(Clamp<float>(ks, 0, 1), pLight->SpotFallOff);
 		}
 		break;
 		}
+
+		kd /= Pi;
 	}
 
 	bool IsLightVisible(Light * pLight, const Aabb & bound)

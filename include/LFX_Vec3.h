@@ -84,6 +84,16 @@ namespace LFX {
 	template <typename T> Vec3T<T> operator / (const T f, const Vec3T<T> &a);
 	template <typename T> Vec3T<T> operator / (const Vec3T<T> a, const Vec3T<T> &b);
 
+	template <typename T> Vec3T<T> operator + (const Vec3T<T> &v, const T f)
+	{
+		return Vec3T<T>(v.x + f, v.y + f, v.z + f);
+	}
+
+	template <typename T> Vec3T<T> operator - (const Vec3T<T> &v, const T f)
+	{
+		return Vec3T<T>(v.x - f, v.y - f, v.z - f);
+	}
+
 #include "LFX_Vec3.inl"
 
 	typedef Vec3T<int> Int3;

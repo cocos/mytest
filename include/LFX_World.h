@@ -26,6 +26,7 @@ namespace LFX {
 		{
 			bool Selected;
 			bool RGBEFormat;
+			bool Tonemapping;
 
 			Float3 Ambient;
 			Float3 SkyRadiance;
@@ -52,6 +53,7 @@ namespace LFX {
 			{
 				Selected = false;
 				RGBEFormat = false;
+				Tonemapping = false;
 
 				MSAA = 1;
 #ifdef LFX_FEATURE_EDGE_AA

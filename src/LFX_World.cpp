@@ -228,6 +228,10 @@ namespace LFX {
 								image.channels = 3;
 								for (int k = 0; k < colors.size(); ++k)
 								{
+									if (mSetting.Tonemapping) {
+										colors[k] = ACESToneMap(colors[k]);
+									}
+
 									colors[k].saturate();
 
 									image.pixels[k * 3 + 0] = (uint8_t)(colors[k].x * 255);
@@ -332,6 +336,10 @@ namespace LFX {
 				image.channels = 3;
 				for (int k = 0; k < colors.size(); ++k)
 				{
+					if (mSetting.Tonemapping) {
+						colors[k] = ACESToneMap(colors[k]);
+					}
+
 					colors[k].saturate();
 
 					image.pixels[k * 3 + 0] = (uint8_t)(colors[k].x * 255);
