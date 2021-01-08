@@ -2,6 +2,8 @@
 
 namespace LFX {
 
+#define LFX_VERSION 30
+
 	Float3 ACESToneMap(const Float3& c)
 	{
 		Float3 color = c;
@@ -37,6 +39,7 @@ namespace LFX {
 		return attenuation;
 	}
 
+#if LFX_VERSION >= 30
 	float CaclLightAtten(float d, float radius, float size)
 	{
 		float distSqr = d * d;
@@ -49,6 +52,14 @@ namespace LFX {
 
 		return att;
 	}
+#else
+	float CaclLightAtten(float d, float start, float end)
+	{
+		float ka = (d - start) / (end - start);
+		ka = 1 - Clamp<float>(ka, 0, 1);
+		return ka;
+	}
+#endif
 
 	void DoLighting(float & kd, float & ka, float & ks, const Vertex & v, Light * pLight)
 	{
@@ -85,7 +96,7 @@ namespace LFX {
 
 		case Light::SPOT:
 		{
-			Float3 spotDir = pLight->Position - v.Position;
+			Float3 spotDir = v.Position - pLight->Position;
 			float length = spotDir.len();
 			spotDir.normalize();
 

@@ -77,7 +77,7 @@ namespace LFX {
 			while (u < 0)
 				u += 1;
 			while (u > 1)
-				v -= 1;
+				u -= 1;
 			while (v < 0)
 				v += 1;
 			while (v > 1)
