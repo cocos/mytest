@@ -14,6 +14,7 @@
 enum {
 	E_STARTING = 1,
 	E_BAKING,
+	E_FINISHED,
 	E_STOPPED,
 };
 
@@ -133,22 +134,42 @@ int main(int argc, char* argv[])
 		GWorld->UpdateTask();
 
 		if (GWorld->End()) {
-			GWorld->Save();
-			GWorld->Clear();
+			if (GProgress != 100) {
+				const char* text = progress_format("Build lighting", 100);
+				LOGI(text);
+				h.socket()->emit("Progress", std::string(text));
+			}
 
+			LOGI("Save world...");
+			GWorld->Save();
+			LOGI("Save world end.");
+
+			LOGI("Clear world...");
+			GWorld->Clear();
+			LOGI("Clear world end.");
+
+			LOGI("Emit finished");
 			h.socket()->emit("Finished");
 
+			LOGI("Delete world");
 			SAFE_DELETE(GWorld);
-			GStatus = E_STOPPED;
+			GStatus = E_FINISHED;
 		}
 	};
 
+	LOGI("Wait to stop");
 	int time = 0;
-	while (GStatus != E_STOPPED && time < 30) {
+	while (GStatus != E_STOPPED && time < 60/*seconds*/) {
 		LFX::Thread::Sleep(5);
+		LOGI("Wait stop...");
 		time += 5;
 	}
 
+	if (GStatus != E_STOPPED) {
+		LOGI("Wait stop time out...");
+	}
+
+	LOGI("Shutdown");
 	SAFE_DELETE(GLog);
 
 	return 0;
