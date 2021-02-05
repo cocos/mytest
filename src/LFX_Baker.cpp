@@ -79,7 +79,7 @@ namespace LFX {
 		float blockSize = pTerrain->GetDesc().Dimension.x / pTerrain->GetDesc().BlockCount.x;
 
 		int xblock = mIndex % pTerrain->GetDesc().BlockCount.x;
-		int yblock = mIndex / pTerrain->GetDesc().BlockCount.y;
+		int yblock = mIndex / pTerrain->GetDesc().BlockCount.x;
 
 		Aabb bound;
 		bound.minimum.x = xblock * blockSize;
@@ -127,7 +127,7 @@ namespace LFX {
 
 			float blockSize = pTerrain->GetDesc().Dimension.x / pTerrain->GetDesc().BlockCount.x;
 			int xblock = mIndex % pTerrain->GetDesc().BlockCount.x;
-			int yblock = mIndex / pTerrain->GetDesc().BlockCount.y;
+			int yblock = mIndex / pTerrain->GetDesc().BlockCount.x;
 
 			Aabb bound;
 			bound.minimum.x = xblock * blockSize;
@@ -169,7 +169,7 @@ namespace LFX {
 		{
 			Terrain * pTerrain = (Terrain*)mEntity;
 			int xblock = mIndex % pTerrain->GetDesc().BlockCount.x;
-			int yblock = mIndex / pTerrain->GetDesc().BlockCount.y;
+			int yblock = mIndex / pTerrain->GetDesc().BlockCount.x;
 
 			pTerrain->PostProcess(xblock, yblock);
 		}
