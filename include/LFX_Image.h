@@ -22,24 +22,17 @@ namespace LFX {
 
 		~Image()
 		{
-			if (pixels)
-				delete[] pixels;
+			SAFE_DELETE_ARRAY(pixels);
 		}
 	};
 
-	LFX_ENTRY bool
-		BMP_Test(Stream & stream);
-	LFX_ENTRY bool
-		BMP_Load(Image & image, Stream & stream);
-	LFX_ENTRY bool
-		BMP_Save(FILE * fp, const Image & image);
+	LFX_ENTRY bool BMP_Test(Stream & stream);
+	LFX_ENTRY bool BMP_Load(Image & image, Stream & stream);
+	LFX_ENTRY bool BMP_Save(FILE * fp, const Image & image);
 
-	LFX_ENTRY bool
-		PNG_Test(Stream & stream);
-	LFX_ENTRY bool
-		PNG_Load(Image & image, Stream & stream);
-	LFX_ENTRY bool
-		PNG_Save(FILE * fp, const Image & image);
+	LFX_ENTRY bool PNG_Test(Stream & stream);
+	LFX_ENTRY bool PNG_Load(Image & image, Stream & stream);
+	LFX_ENTRY bool PNG_Save(FILE * fp, const Image & image);
 
 }
 

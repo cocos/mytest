@@ -123,12 +123,12 @@ namespace LFX {
 		else
 		{
 			Float3 rk = color / e;
-			e = std::min<float>(e, 3) - 1;
+			e = std::min<float>(e, LMAP_RGBE_EXPONENT_MAX) - 1;
 
 			c.r = (unsigned char)(rk.x * 255);
 			c.g = (unsigned char)(rk.y * 255);
 			c.b = (unsigned char)(rk.z * 255);
-			c.e = (unsigned char)(e / 2.0f * 255);
+			c.e = (unsigned char)(e / (LMAP_RGBE_EXPONENT_MAX - 1) * 255);
 		}
 
 		return c;
@@ -138,7 +138,7 @@ namespace LFX {
 	{
 		Float3 c;
 
-		float e = 1 + color.e / 255.0f * 2.0f;
+		float e = 1 + color.e / 255.0f * (LMAP_RGBE_EXPONENT_MAX - 1);
 		c.x = color.r / 255.0f * e;
 		c.y = color.g / 255.0f * e;
 		c.z = color.b / 255.0f * e;

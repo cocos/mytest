@@ -155,10 +155,8 @@ namespace LFX {
 		{
 			for (int i = 0; i < region.h; ++i)
 			{
-				int su = i - uborder;
-				int sv = j - vborder;
-				su = Clamp<int>(su, 0, width - 1);
-				sv = Clamp<int>(sv, 0, height - 1);
+				int su = Clamp<int>(i - uborder, 0, width - 1);
+				int sv = Clamp<int>(j - vborder, 0, height - 1);
 				int srcIndex = j * width + i;
 
 				int du = region.x + i;

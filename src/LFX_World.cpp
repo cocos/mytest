@@ -39,6 +39,8 @@ namespace LFX {
 		String name = stream.ReadString();
 
 		// Load setting
+		mSetting.RGBEFormat = true;
+
 		stream >> mSetting.Ambient;
 		stream >> mSetting.SkyRadiance;
 		stream >> mSetting.MSAA;
@@ -217,15 +219,14 @@ namespace LFX {
 							for (int k = 0; k < colors.size(); ++k)
 							{
 								colors[k] = Pow(colors[k], 1.0f / mSetting.Gamma);
-								Saturate(colors[k]);
 							}
 
 							Image image;
 							image.width = lmap_size;
 							image.height = lmap_size;
+							image.channels = options.Channels;
 							if (!mSetting.RGBEFormat) {
 								image.pixels = new uint8_t[lmap_size * lmap_size * 3];
-								image.channels = 3;
 								for (int k = 0; k < colors.size(); ++k)
 								{
 									if (mSetting.Tonemapping) {
@@ -233,7 +234,6 @@ namespace LFX {
 									}
 
 									colors[k].saturate();
-
 									image.pixels[k * 3 + 0] = (uint8_t)(colors[k].x * 255);
 									image.pixels[k * 3 + 1] = (uint8_t)(colors[k].y * 255);
 									image.pixels[k * 3 + 2] = (uint8_t)(colors[k].z * 255);
@@ -241,7 +241,6 @@ namespace LFX {
 							}
 							else {
 								image.pixels = new uint8_t[lmap_size * lmap_size * 4];
-								image.channels = 4;
 								for (int k = 0; k < colors.size(); ++k)
 								{
 									RGBE rgbe = RGBE_FROM(colors[k]);
@@ -265,7 +264,7 @@ namespace LFX {
 					image.pixels = &atlas[0]->Pixels[0];
 					image.width = atlas[0]->Width;
 					image.height = atlas[0]->Height;
-					image.channels = 3;
+					image.channels = options.Channels;
 
 					char filename[256];
 					sprintf(filename, "%s/LFX_Terrain_%04d.png", path.c_str(), lmap_index);
@@ -331,9 +330,9 @@ namespace LFX {
 			LFX::Image image;
 			image.width = LSize;
 			image.height = LSize;
+			image.channels = options.Channels;
 			if (!mSetting.RGBEFormat) {
 				image.pixels = new uint8_t[LSize * LSize * 3];
-				image.channels = 3;
 				for (int k = 0; k < colors.size(); ++k)
 				{
 					if (mSetting.Tonemapping) {
@@ -341,7 +340,6 @@ namespace LFX {
 					}
 
 					colors[k].saturate();
-
 					image.pixels[k * 3 + 0] = (uint8_t)(colors[k].x * 255);
 					image.pixels[k * 3 + 1] = (uint8_t)(colors[k].y * 255);
 					image.pixels[k * 3 + 2] = (uint8_t)(colors[k].z * 255);
@@ -349,7 +347,6 @@ namespace LFX {
 			}
 			else {
 				image.pixels = new uint8_t[LSize * LSize * 4];
-				image.channels = 4;
 				for (int k = 0; k < colors.size(); ++k)
 				{
 					RGBE rgbe = RGBE_FROM(colors[k]);
@@ -383,7 +380,7 @@ namespace LFX {
 			image.pixels = &atlas[i]->Pixels[0];
 			image.width = atlas[i]->Width;
 			image.height = atlas[i]->Height;
-			image.channels = 3;
+			image.channels = options.Channels;
 
 			char filename[256];
 			sprintf(filename, "%s/LFX_Mesh_%04d.png", path.c_str(), i);

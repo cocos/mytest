@@ -19,9 +19,21 @@ namespace LFX {
 		Float3 Direction;
 		Float3 Color;
 
-		float AttenStart;
-		float AttenEnd;
-		float AttenFallOff;
+		union {
+			struct
+			{
+				float AttenStart;
+				float AttenEnd;
+				float AttenFallOff;
+			};
+
+			struct
+			{
+				float Radius;
+				float Size;
+				float Luminance;
+			};
+		};
 
 		float SpotInner;
 		float SpotOuter;

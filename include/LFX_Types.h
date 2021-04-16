@@ -26,6 +26,8 @@
 
 #define LFX_ENTRY
 
+#define LFX_VERSION 30
+
 // Features(too slow)
 //#define LFX_FEATURE_EDGA_AA
 //#define LFX_FEATURE_GI_MSAA
@@ -43,12 +45,15 @@ namespace LFX {
 #define FLT_MAX 3.402823466e+38F
 #endif
 
+
 #define UNIT_LEN 1.0f
 #define LMAP_BORDER 1
 #define LMAP_OPTIMIZE_PX 1
+#define LMAP_RGBE_EXPONENT_MAX 8.0f
 
 #define d_assert assert
 #define SAFE_DELETE(p) if (p) { delete p; p = NULL; }
+#define SAFE_DELETE_ARRAY(p) if (p) { delete[] p; p = NULL; }
 
 	typedef std::string String;
 

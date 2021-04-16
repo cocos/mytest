@@ -2,8 +2,6 @@
 
 namespace LFX {
 
-#define LFX_VERSION 30
-
 	Float3 ACESToneMap(const Float3& c)
 	{
 		Float3 color = c;
@@ -40,9 +38,8 @@ namespace LFX {
 	}
 
 #if LFX_VERSION >= 30
-	float CaclLightAtten(float d, float radius, float size)
+	float CalcLightAtten(float distSqr, float radius, float size)
 	{
-		float distSqr = d * d;
 		float litRadius = radius;
 		float litRadiusSqr = litRadius * litRadius;
 		float illum = Pi * (litRadiusSqr / std::max(litRadiusSqr, distSqr));
@@ -50,10 +47,10 @@ namespace LFX {
 		attRadiusSqrInv *= attRadiusSqrInv;
 		float att = GetDistAtt(distSqr, attRadiusSqrInv);
 
-		return att;
+		return illum * att;
 	}
 #else
-	float CaclLightAtten(float d, float start, float end)
+	float CalcLightAtten(float d, float start, float end)
 	{
 		float ka = (d - start) / (end - start);
 		ka = 1 - Clamp<float>(ka, 0, 1);
@@ -79,17 +76,17 @@ namespace LFX {
 		case Light::POINT:
 		{
 			Float3 lightDir = pLight->Position - v.Position;
+#if LFX_VERSION < 30
 			float length = lightDir.len();
-			lightDir.normalize();
-
-			kd = v.Normal.dot(lightDir);
-			kd = Clamp<float>(kd, 0, 1);
-#if 0
 			ka = (length - pLight->AttenStart) / (pLight->AttenEnd - pLight->AttenStart);
 			ka = std::pow(1 - Clamp<float>(ka, 0, 1), pLight->AttenFallOff);
 #else
-			ka = CaclLightAtten(length, pLight->AttenStart, pLight->AttenEnd);
+			ka = CalcLightAtten(lightDir.lenSqr(), pLight->Radius, pLight->Size);
 #endif
+			lightDir.normalize();
+			kd = v.Normal.dot(lightDir);
+			kd = Clamp<float>(kd, 0, 1);
+
 			ks = 1;
 		}
 		break;
@@ -102,11 +99,11 @@ namespace LFX {
 
 			kd = v.Normal.dot(-pLight->Direction);
 			kd = Clamp<float>(kd, 0, 1);
-#if 0
+#if LFX_VERSION >= 30
 			ka = (length - pLight->AttenStart) / (pLight->AttenEnd - pLight->AttenStart);
 			ka = std::pow(1 - Clamp<float>(ka, 0, 1), pLight->AttenFallOff);
 #else
-			ka = CaclLightAtten(length, pLight->AttenStart, pLight->AttenEnd);
+			ka = CaclLightAtten(length, pLight->Radius, pLight->Size);
 #endif
 
 			ks = (spotDir.dot(pLight->Direction) - pLight->SpotOuter) / (pLight->SpotInner - pLight->SpotOuter);
