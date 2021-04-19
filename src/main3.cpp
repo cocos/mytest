@@ -51,6 +51,8 @@ int main(int argc, char* argv[])
 	
 	GLog = new LFX::Log("lfx.log");
 
+	LOGI("Version %d", LFX_VERSION);
+
 	std::string commands;
 	for (int i = 0; i < argc; ++i) {
 		commands += argv[i];
