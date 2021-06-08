@@ -58,6 +58,12 @@ namespace LFX {
 	}
 #endif
 
+	float GetAngleAtt(const Float3& L, const Float3& litDir, float litAngleScale, float litAngleOffset) {
+		float cd = litDir.dot(L);
+		float attenuation = Clamp(cd * litAngleScale + litAngleOffset, 0.0f, 1.0f);
+		return (attenuation * attenuation);
+	}
+
 	void DoLighting(float & kd, float & ka, float & ks, const Vertex & v, Light * pLight)
 	{
 		switch (pLight->Type)
@@ -93,21 +99,29 @@ namespace LFX {
 
 		case Light::SPOT:
 		{
-			Float3 spotDir = v.Position - pLight->Position;
-			float length = spotDir.len();
-			spotDir.normalize();
+			Float3 spotDir = pLight->Position - v.Position;
 
 			kd = v.Normal.dot(-pLight->Direction);
 			kd = Clamp<float>(kd, 0, 1);
-#if LFX_VERSION >= 30
+#if LFX_VERSION < 30
+			float length = spotDir.len();
 			ka = (length - pLight->AttenStart) / (pLight->AttenEnd - pLight->AttenStart);
 			ka = std::pow(1 - Clamp<float>(ka, 0, 1), pLight->AttenFallOff);
 #else
-			ka = CaclLightAtten(length, pLight->Radius, pLight->Size);
+			ka = CalcLightAtten(spotDir.lenSqr(), pLight->Radius, pLight->Size);
 #endif
 
-			ks = (spotDir.dot(pLight->Direction) - pLight->SpotOuter) / (pLight->SpotInner - pLight->SpotOuter);
+			spotDir.normalize();
+#if LFX_VERSION < 30
+			ks = (spotDir.dot(-pLight->Direction) - pLight->SpotOuter) / (pLight->SpotInner - pLight->SpotOuter);
 			ks = std::pow(Clamp<float>(ks, 0, 1), pLight->SpotFallOff);
+#else
+			float cosInner = std::max(spotDir.dot(-pLight->Direction), 0.01f);
+			float cosOuter = pLight->SpotOuter;
+			float litAngleScale = 1.0f / std::max(0.001f, cosInner - cosOuter);
+			float litAngleOffset = -cosOuter * litAngleScale;
+			ks = GetAngleAtt(spotDir, -pLight->Direction, litAngleScale, litAngleOffset);
+#endif
 		}
 		break;
 		}

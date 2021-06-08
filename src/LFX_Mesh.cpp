@@ -576,7 +576,7 @@ namespace LFX {
 
 			if (len > 0.01f * UNIT_LEN)
 			{
-				if (World::Instance()->Occluded(ray, len, LFX_MESH | LFX_TERRAIN))
+				if (World::Instance()->GetScene()->Occluded(ray, len, LFX_MESH | LFX_TERRAIN))
 				{
 					kd = ka = ks = 0;
 				}

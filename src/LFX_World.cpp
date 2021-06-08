@@ -1,8 +1,8 @@
 #include "LFX_World.h"
-#include "LFX_EmbreeScene.h"
 #include "LFX_Stream.h"
 #include "LFX_Image.h"
 #include "LFX_TextureAtlas.h"
+#include "LFX_EmbreeScene.h"
 
 namespace LFX {
 
@@ -10,7 +10,7 @@ namespace LFX {
 
 	World::World()
 	{
-		mEmbreeScene = NULL;
+		mScene = NULL;
 	}
 
 	World::~World()
@@ -470,9 +470,7 @@ namespace LFX {
 		}
 		mTerrains.clear();
 
-		if (mEmbreeScene)
-			delete mEmbreeScene;
-		mEmbreeScene = NULL;
+		SAFE_DELETE(mScene);
 	}
 
 	Texture * World::LoadTexture(const String & filename)
@@ -625,36 +623,20 @@ namespace LFX {
 			}
 		}
 
-		Aabb worldBound;
-		worldBound.Invalid();
-
-		for (size_t i = 0; i < mMeshes.size(); ++i)
-		{
-			Aabb bound = mMeshes[i]->GetBound();
-
-			worldBound.Merge(bound);
-		}
-
-		if (worldBound.Valid())
-		{
-			mBSPTree.Build(worldBound, 8);
-			for (size_t i = 0; i < mMeshes.size(); ++i)
-			{
-				_World_AttachMesh(mBSPTree.RootNode(), mMeshes[i]);
-			}
-
-			_World_Optimize(mBSPTree.RootNode());
-		}
-
 		LOGI("-:Building terrain");
 		for (int i = 0; i < mTerrains.size(); ++i) {
 			mTerrains[i]->Build();
 		}
 
 		//
-		LOGI("-:Building bv scene");
-		mEmbreeScene = new EmbreeScene;
-		mEmbreeScene->Build();
+#ifdef LFX_USE_EMBREE_SCENE
+		LOGI("-:Building embree scene");
+		mScene = new EmbreeScene;
+#else
+		LOGI("-:Building scene");
+		mScene = new Scene;
+#endif
+		mScene->Build();
 	}
 
 	void World::Start()
@@ -753,131 +735,6 @@ namespace LFX {
 		}
 
 		return nullptr;
-	}
-
-	void _rayCheck(Contact & contract, BSPTree<Mesh *>::Node * node, const Ray & ray, float len)
-	{
-		float dist = 0;
-
-		if (!Intersect(ray, &dist, node->aabb) || contract.td < dist)
-			return;
-
-		for (size_t i = 0; i < node->elems.size(); ++i)
-		{
-			node->elems[i]->RayCheck(contract, ray, len);
-		}
-
-		if (node->child[0] != NULL)
-		{
-			_rayCheck(contract, node->child[0], ray, len);
-		}
-
-		if (node->child[1] != NULL)
-		{
-			_rayCheck(contract, node->child[1], ray, len);
-		}
-	}
-
-	bool World::RayCheck(Contact & contract, const Ray & ray, float len, int flags)
-	{
-		return mEmbreeScene->RayCheck(contract, ray, len, flags);
-	}
-
-	bool World::_RayCheckImp(Contact & contract, const Ray & ray, float len, int flags)
-	{
-		contract.td = FLT_MAX;
-		contract.tu = 0;
-		contract.tv = 0;
-		contract.triIndex = -1;
-		contract.entity = NULL;
-		contract.backFacing = false;
-
-		if ((flags & LFX_MESH) && mBSPTree.RootNode() != NULL)
-			_rayCheck(contract, mBSPTree.RootNode(), ray, len);
-		if ((flags & LFX_TERRAIN) && mTerrains.size() > 0) {
-			for (int i = 0; i < mTerrains.size(); ++i) {
-				mTerrains[i]->RayCheck(contract, ray, len);
-			}
-		}
-
-		if (contract.entity != NULL)
-		{
-			Vertex a, b, c;
-			if (contract.entity->GetType() == LFX_TERRAIN)
-			{
-				Terrain* terrain = (Terrain*)contract.entity;
-
-				Triangle tri = terrain->_getTriangle(contract.triIndex);
-				a = terrain->_getVertex(tri.Index0);
-				b = terrain->_getVertex(tri.Index1);
-				c = terrain->_getVertex(tri.Index2);
-			}
-			else
-			{
-				Mesh * mesh = (Mesh *)contract.entity;
-
-				Triangle tri = mesh->_getTriangle(contract.triIndex);
-				a = mesh->_getVertex(tri.Index0);
-				b = mesh->_getVertex(tri.Index1);
-				c = mesh->_getVertex(tri.Index2);
-			}
-
-			Float3 triNml = Float3::Normalize(Float3::Cross(c.Position - a.Position, b.Position - a.Position));
-			contract.backFacing = Float3::Dot(triNml, ray.dir) >= 0.0f;
-		}
-
-		return contract.entity != NULL;
-	}
-
-	bool _occluded(BSPTree<Mesh *>::Node * node, const Ray & ray, float len)
-	{
-		float dist = 0;
-
-		if (!Intersect(ray, &dist, node->aabb))
-			return false;
-
-		for (size_t i = 0; i < node->elems.size(); ++i)
-		{
-			if (node->elems[i]->Occluded(ray, len))
-				return true;
-		}
-
-		if (node->child[0] != NULL)
-		{
-			if (_occluded(node->child[0], ray, len))
-				return true;
-		}
-
-		if (node->child[1] != NULL)
-		{
-			if (_occluded(node->child[1], ray, len))
-				return true;
-		}
-
-		return false;
-	}
-
-	bool World::Occluded(const Ray & ray, float len, int flags)
-	{
-		return mEmbreeScene->Occluded(ray.orig, ray.dir, len, flags);
-	}
-
-	bool World::_OccludedImp(const Ray & ray, float len, int flags)
-	{
-		if ((flags & LFX_MESH) && mBSPTree.RootNode() != NULL) {
-			if (_occluded(mBSPTree.RootNode(), ray, len)) {
-				return true;
-			}
-		}
-		if ((flags & LFX_TERRAIN)) {
-			for (int i = 0; i < mTerrains.size(); ++i) {
-				if (mTerrains[i]->Occluded(ray, len)) {
-					return true;
-				}
-			}
-		}
-
-		return false;
 	}
 
 }

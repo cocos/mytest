@@ -104,7 +104,7 @@ namespace LFX {
 				Mat3::Transform(ray.dir, form);
 
 				Contact contact;
-				if (World::Instance()->RayCheck(contact, ray, radius, flags) && contact.entity != entity)
+				if (World::Instance()->GetScene()->RayCheck(contact, ray, radius, flags) && contact.entity != entity)
 				{
 					float ka = Clamp(contact.vhit.Normal.dot(-v.Normal), -1.0f, 1.0f);
 					ka = RadianToDegree(acos(ka));
@@ -131,7 +131,7 @@ namespace LFX {
 				Mat3::Transform(ray.dir, form);
 
 				Contact contact;
-				if (World::Instance()->RayCheck(contact, ray, radius, flags) && contact.entity != entity)
+				if (World::Instance()->GetScene()->RayCheck(contact, ray, radius, flags) && contact.entity != entity)
 				{
 					float ka = Clamp(contact.vhit.Normal.dot(-v.Normal), -1.0f, 1.0f);
 					ka = RadianToDegree(acos(ka));

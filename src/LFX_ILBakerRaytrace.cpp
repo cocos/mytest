@@ -149,7 +149,7 @@ namespace LFX {
 			if (len > 0.01f * UNIT_LEN)
 			{
 				Contact contract;
-				if (World::Instance()->Occluded(ray, len, LFX_TERRAIN | LFX_MESH))
+				if (World::Instance()->GetScene()->Occluded(ray, len, LFX_TERRAIN | LFX_MESH))
 				{
 					kd = ka = ks = 0;
 				}
@@ -214,12 +214,12 @@ namespace LFX {
 			float sceneDistance = FLT_MAX;
 			Contact contact;
 #if 0
-			if (World::Instance()->RayCheck(contact, ray, params.RayLen, eFlag::MESH | eFlag::TERRAIN))
+			if (World::Instance()->GetScene()->RayCheck(contact, ray, params.RayLen, eFlag::MESH | eFlag::TERRAIN))
 			{
 				sceneDistance = contact.td;
 			}
 #else
-			if (World::Instance()->RayCheck(contact, ray, params.RayLen, LFX_TERRAIN | LFX_MESH))
+			if (World::Instance()->GetScene()->RayCheck(contact, ray, params.RayLen, LFX_TERRAIN | LFX_MESH))
 			{
 				sceneDistance = contact.td;
 			}

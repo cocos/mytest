@@ -4,6 +4,7 @@
 #include "LFX_Light.h"
 #include "LFX_Mesh.h"
 #include "LFX_Terrain.h"
+#include "LFX_Scene.h"
 #include "LFX_Baker.h"
 #include "LFX_Rasterizer.h"
 
@@ -85,25 +86,31 @@ namespace LFX {
 		void Save();
 		void Clear();
 
-		// Texture
+		/// Scene
+		Scene* GetScene() { return mScene; }
+
+		/// Texture
 		Texture * LoadTexture(const String & filename);
 		Texture * CreateTexture(const String & name, int w, int h, int channels, unsigned char *data);
 		Texture * GetTexture(const String & name);
 
-		// Light
+		/// Light
 		Light * CreateLight();
 		Light * GetLight(int i) { return mLights[i]; }
 		int GetLightCount() { return mLights.size(); }
+		const std::vector<Light*>& GetLights() const { return mLights; }
 
-		// Mesh
+		/// Mesh
 		Mesh * CreateMesh();
 		Mesh * GetMesh(int i) { return mMeshes[i]; }
 		int GetMeshCount() { return mMeshes.size(); }
+		const std::vector<Mesh*>& GetMeshes() const { return mMeshes; }
 
-		// Terrain
+		/// Terrain
 		Terrain * CreateTerrain(const Float3& pos, float * heightfield, const Terrain::Desc & desc);
 		Terrain * GetTerrain(int i) { return mTerrains[i]; }
 		int GetTerrainCount() { return mTerrains.size(); }
+		const std::vector<Terrain*>& GetTerrains() const { return mTerrains; }
 
 		void Build();
 		void Start();
@@ -114,11 +121,6 @@ namespace LFX {
 		STBaker* GetThread(int i) { return mThreads[i]; }
 		void _onThreadCompeleted() { mProgress += 1; }
 
-		bool RayCheck(Contact & contract, const Ray & ray, float len, int flags);
-		bool Occluded(const Ray & ray, float len, int flags);
-		bool _RayCheckImp(Contact & contract, const Ray & ray, float len, int flags);
-		bool _OccludedImp(const Ray & ray, float len, int flags);
-
 	protected:
 		bool GetNextTask(STBaker::Task& task);
 		STBaker* GetFreeThread();
@@ -126,13 +128,11 @@ namespace LFX {
 	protected:
 		Settings mSetting;
 
+		Scene* mScene;
 		std::vector<Texture *> mTextures;
 		std::vector<Light *> mLights;
 		std::vector<Mesh *> mMeshes;
 		std::vector<Terrain *> mTerrains;
-
-		BSPTree<Mesh *> mBSPTree;
-		EmbreeScene * mEmbreeScene;
 
 		std::vector<STBaker::Task> mTasks;
 		int mTaskIndex;

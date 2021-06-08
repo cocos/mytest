@@ -1,6 +1,9 @@
 #pragma once
 
-#include "LFX_Types.h"
+#include "LFX_Scene.h"
+
+#ifdef LFX_USE_EMBREE_SCENE
+
 #include "embree2/rtcore.h"
 #include "embree2/rtcore_ray.h"
 
@@ -44,25 +47,27 @@ namespace LFX {
 #define StaticAssert_(x) static_assert(x, #x);
 	StaticAssert_(sizeof(EmbreeRay) == sizeof(RTCRay));
 
-	class EmbreeScene
+	class EmbreeScene : public Scene
 	{
 	public:
 		EmbreeScene();
 		~EmbreeScene();
 
-		bool Build();
+		void Build();
 
-		bool RayCheck(Contact & contact, const Ray & ray, float len, int mask);
-		bool Occluded(const Float3& position, const Float3& direction, float len, int mask);
+		bool RayCheck(Contact& contact, const Ray& ray, float len, int mask) override;
+		bool Occluded(const Ray& ray, float len, int mask) override;
 
 	protected:
-		void TriangleLerp(Vertex & vout, Entity * pEntity, int triIndex, float u, float v);
-		Material * GetMaterial(Entity * pEntity, int triIndex);
+		void TriangleLerp(Vertex& vout, Entity* pEntity, int triIndex, float u, float v);
+		Material* GetMaterial(Entity* pEntity, int triIndex);
 
 	protected:
 		RTCDevice rtcDevice;
 		RTCScene rtcScene;
-		std::vector<Entity *> mEntityMap;
+		std::vector<Entity*> mEntityMap;
 	};
 
 }
+
+#endif

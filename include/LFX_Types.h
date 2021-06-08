@@ -45,6 +45,7 @@ namespace LFX {
 #define FLT_MAX 3.402823466e+38F
 #endif
 
+#define LFX_BVH_LEVELS 8
 
 #define UNIT_LEN 1.0f
 #define LMAP_BORDER 1
@@ -54,6 +55,10 @@ namespace LFX {
 #define d_assert assert
 #define SAFE_DELETE(p) if (p) { delete p; p = NULL; }
 #define SAFE_DELETE_ARRAY(p) if (p) { delete[] p; p = NULL; }
+
+#ifdef _WIN32
+#define LFX_USE_EMBREE_SCENE
+#endif
 
 	typedef std::string String;
 

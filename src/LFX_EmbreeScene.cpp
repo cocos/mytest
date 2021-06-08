@@ -1,5 +1,7 @@
-#include "LFX_World.h"
 #include "LFX_EmbreeScene.h"
+#include "LFX_World.h"
+
+#ifdef LFX_USE_EMBREE_SCENE
 
 namespace LFX {
 
@@ -30,10 +32,12 @@ namespace LFX {
 			rtcDeleteDevice(rtcDevice);
 	}
 
-	bool EmbreeScene::Build()
+	void EmbreeScene::Build()
 	{
+		Scene::Build();
+
 		if (rtcDevice == NULL)
-			return false;
+			return;
 
 		rtcScene = rtcDeviceNewScene(rtcDevice, RTC_SCENE_DYNAMIC, RTC_INTERSECT1);
 
@@ -148,10 +152,8 @@ namespace LFX {
 		assert(embreeError == RTC_NO_ERROR);
 		if (embreeError != RTC_NO_ERROR)
 		{
-			return false;
+			LOGE("Build embree scene failed [%d]", embreeError);
 		}
-
-		return true;
 	}
 
 
@@ -241,20 +243,20 @@ namespace LFX {
 		}
 		else
 		{
-			return World::Instance()->_RayCheckImp(contact, ray, len, LFX_MESH | LFX_TERRAIN);
+			return _RayCheckImp(contact, ray, len, LFX_MESH | LFX_TERRAIN);
 		}
 	}
 
-	bool EmbreeScene::Occluded(const Float3& position, const Float3& direction, float len, int mask)
+	bool EmbreeScene::Occluded(const Ray& ray, float len, int mask)
 	{
 		if (rtcDevice != NULL)
 		{
-			Float3 orig = position;
+			Float3 orig = ray.orig;
 
 			int count = 0;
 			while (count++ < 4)
 			{
-				EmbreeRay r(orig, direction, len, mask);
+				EmbreeRay r(orig, ray.dir, len, mask);
 				rtcIntersect(rtcScene, r);
 
 				if (!r.Hit())
@@ -277,7 +279,7 @@ namespace LFX {
 						Float4 color = m->texture->SampleColor(uv.x, uv.y);
 						if (color.w < 0.5f)
 						{
-							orig += (r.tfar + 0.01f) * direction;
+							orig += (r.tfar + 0.01f) * ray.dir;
 							len -= r.tfar;
 							continue;
 						}
@@ -291,10 +293,7 @@ namespace LFX {
 		}
 		else
 		{
-			Ray ray;
-			ray.orig = position;
-			ray.dir = direction;
-			return World::Instance()->_OccludedImp(ray, len, LFX_MESH | LFX_TERRAIN);
+			return _OccludedImp(ray, len, LFX_MESH | LFX_TERRAIN);
 		}
 	}
 
@@ -364,3 +363,5 @@ namespace LFX {
 		}
 	}
 }
+
+#endif

@@ -435,7 +435,7 @@ namespace LFX {
 
 						GetHeightAt(p.Position.y, p.Position.x, p.Position.z);
 						GetNormalAt(p.Normal, p.Position.x, p.Position.z);
-						p.Position += mPosition;
+						p.Position += Float3(mPosition.x, 0, mPosition.z);
 
 						for (int l = 0; l < lights.size(); ++l)
 						{
@@ -492,7 +492,7 @@ namespace LFX {
 						GetHeightAt(p.Position.y, p.Position.x, p.Position.z);
 						GetNormalAt(p.Normal, p.Position.x, p.Position.z);
 
-						p.Position += mPosition;
+						p.Position += Float3(mPosition.x, 0, mPosition.z);
 						p.Binormal = Float3::Cross(p.Normal, p.Tangent);
 						p.Tangent = Float3::Cross(p.Binormal, p.Normal);
 
@@ -665,7 +665,7 @@ namespace LFX {
 
 			if (len > 0.01f * UNIT_LEN)
 			{
-				if (World::Instance()->Occluded(ray, len, LFX_MESH))
+				if (World::Instance()->GetScene()->Occluded(ray, len, LFX_MESH))
 				{
 					kl = 0;
 				}
@@ -722,6 +722,7 @@ namespace LFX {
 						GetHeightAt(p.Position.y, p.Position.x, p.Position.z);
 						GetNormalAt(p.Normal, p.Position.x, p.Position.z);
 
+						p.Position += Float3(mPosition.x, 0, mPosition.z);
 						p.Binormal = Float3::Cross(p.Normal, p.Tangent);
 						p.Tangent = Float3::Cross(p.Binormal, p.Normal);
 
