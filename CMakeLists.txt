@@ -56,6 +56,7 @@ add_executable(LightFX
   include/LFX_Log.h
   include/LFX_Stream.h
   include/LFX_Vec2.h
+  include/LFX_Scece.h
   include/LFX_World.h
   include/LFX_EmbreeScene.h
   include/LFX_ILBakerRandom.h
@@ -80,6 +81,7 @@ add_executable(LightFX
   src/LFX_ILBakerSamples.cpp
   src/LFX_Mesh.cpp
   src/LFX_Terrain.cpp
+  src/LFX_Scece.cpp
   src/LFX_World.cpp
   src/LFX_File.cpp
   src/LFX_ImageBMP.cpp
