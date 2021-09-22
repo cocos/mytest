@@ -213,17 +213,10 @@ namespace LFX {
 
 			float sceneDistance = FLT_MAX;
 			Contact contact;
-#if 0
-			if (World::Instance()->GetScene()->RayCheck(contact, ray, params.RayLen, eFlag::MESH | eFlag::TERRAIN))
-			{
-				sceneDistance = contact.td;
-			}
-#else
 			if (World::Instance()->GetScene()->RayCheck(contact, ray, params.RayLen, LFX_TERRAIN | LFX_MESH))
 			{
 				sceneDistance = contact.td;
 			}
-#endif
 
 			Float3 rayOrigin = ray.orig;
 			Float3 rayDir = ray.dir;
