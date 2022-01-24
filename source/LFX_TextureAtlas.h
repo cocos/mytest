@@ -31,6 +31,7 @@ namespace LFX {
 			float offsetV;
 			float scaleU;
 			float scaleV;
+			float lum;
 		};
 
 		struct Atlas

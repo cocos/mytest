@@ -10,7 +10,8 @@ namespace LFX {
 	{
 		int lmap_index;
 		Float2 offset;
-		Float2 scale;
+		float scale;
+		float lum;
 	};
 
 	struct Vertex

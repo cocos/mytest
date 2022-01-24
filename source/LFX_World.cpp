@@ -39,7 +39,9 @@ namespace LFX {
 		String name = stream.ReadString();
 
 		// Load setting
+#ifdef LFX_FORCE_RGBE
 		mSetting.RGBEFormat = true;
+#endif
 
 		stream >> mSetting.Ambient;
 		stream >> mSetting.SkyRadiance;
@@ -160,6 +162,53 @@ namespace LFX {
 		return true;
 	}
 
+	void ConvertColor(Image& image, float& lum, std::vector<Float3>& colors, const World::Settings& settings)
+	{
+		if (settings.Gamma != 1.0f) {
+			for (int k = 0; k < colors.size(); ++k)
+			{
+				colors[k] = Pow(colors[k], 1.0f / settings.Gamma);
+			}
+		}
+
+		if (!settings.RGBEFormat) {
+			image.pixels = new uint8_t[image.width * image.height * 3];
+			for (int k = 0; k < colors.size(); ++k)
+			{
+				if (settings.Tonemapping) {
+					colors[k] = ACESToneMap(colors[k]);
+				}
+
+				lum = std::max(colors[k].x, lum);
+				lum = std::max(colors[k].y, lum);
+				lum = std::max(colors[k].z, lum);
+			}
+
+			for (int k = 0; k < colors.size(); ++k)
+			{
+				Float3 color = colors[k];
+
+				color /= lum;
+				color.saturate();
+				image.pixels[k * 3 + 0] = (uint8_t)(colors[k].x * 255);
+				image.pixels[k * 3 + 1] = (uint8_t)(colors[k].y * 255);
+				image.pixels[k * 3 + 2] = (uint8_t)(colors[k].z * 255);
+			}
+		}
+		else {
+			image.pixels = new uint8_t[image.width * image.height * 3];
+			for (int k = 0; k < colors.size(); ++k)
+			{
+				RGBE rgbe = RGBE_FROM(colors[k]);
+
+				image.pixels[k * 4 + 0] = rgbe.r;
+				image.pixels[k * 4 + 1] = rgbe.g;
+				image.pixels[k * 4 + 2] = rgbe.b;
+				image.pixels[k * 4 + 3] = rgbe.e;
+			}
+		}
+	}
+
 	void World::Save()
 	{
 		String path = "output";
@@ -194,12 +243,13 @@ namespace LFX {
 			{
 				for (int x = 0; x < terrain->GetDesc().BlockCount.x; x += ntiles)
 				{
-					int w = std::min(ntiles, terrain->GetDesc().BlockCount.x - x);
-					int h = std::min(ntiles, terrain->GetDesc().BlockCount.y - y);
+					const int w = std::min(ntiles, terrain->GetDesc().BlockCount.x - x);
+					const int h = std::min(ntiles, terrain->GetDesc().BlockCount.y - y);
+					const int dims = std::max(w * lmap_size, h * lmap_size);
 
 					TextureAtlasPacker::Options options;
-					options.Width = w * lmap_size;
-					options.Height = h * lmap_size;
+					options.Width = dims;
+					options.Height = dims;
 					options.Channels = mSetting.RGBEFormat ? 4 : 3;
 					options.Border = 0;
 					options.Space = 0;
@@ -214,45 +264,17 @@ namespace LFX {
 						{
 							std::vector<Float3> colors;
 							colors.resize(lmap_size * lmap_size);
-
 							terrain->GetLightingMap(x + i, y + j, colors);
-							for (int k = 0; k < colors.size(); ++k)
-							{
-								colors[k] = Pow(colors[k], 1.0f / mSetting.Gamma);
-							}
 
+							float lum = 1.0f;
 							Image image;
 							image.width = lmap_size;
 							image.height = lmap_size;
 							image.channels = options.Channels;
-							if (!mSetting.RGBEFormat) {
-								image.pixels = new uint8_t[lmap_size * lmap_size * 3];
-								for (int k = 0; k < colors.size(); ++k)
-								{
-									if (mSetting.Tonemapping) {
-										colors[k] = ACESToneMap(colors[k]);
-									}
-
-									colors[k].saturate();
-									image.pixels[k * 3 + 0] = (uint8_t)(colors[k].x * 255);
-									image.pixels[k * 3 + 1] = (uint8_t)(colors[k].y * 255);
-									image.pixels[k * 3 + 2] = (uint8_t)(colors[k].z * 255);
-								}
-							}
-							else {
-								image.pixels = new uint8_t[lmap_size * lmap_size * 4];
-								for (int k = 0; k < colors.size(); ++k)
-								{
-									RGBE rgbe = RGBE_FROM(colors[k]);
-
-									image.pixels[k * 4 + 0] = rgbe.r;
-									image.pixels[k * 4 + 1] = rgbe.g;
-									image.pixels[k * 4 + 2] = rgbe.b;
-									image.pixels[k * 4 + 3] = rgbe.e;
-								}
-							}
+							ConvertColor(image, lum, colors, mSetting);
 
 							TextureAtlasPacker::Item item;
+							item.lum = lum;
 							packer.Insert(image.pixels, image.width, image.height, item);
 							packed_items.push_back(item);
 						}
@@ -289,8 +311,8 @@ namespace LFX {
 							remapInfo.lmap_index = lmap_index;
 							remapInfo.offset[0] = item.offsetU + offset * item.scaleU;
 							remapInfo.offset[1] = item.offsetV + offset * item.scaleV;
-							remapInfo.scale[0] = item.scaleU * scale;
-							remapInfo.scale[1] = item.scaleV * scale;
+							remapInfo.scale = item.scaleU * scale;
+							remapInfo.lum = item.lum;
 							fwrite(&block_index, sizeof(int), 1, fp);
 							fwrite(&remapInfo, sizeof(LightMapInfo), 1, fp);
 						}
@@ -319,46 +341,16 @@ namespace LFX {
 
 			LOGD("Pack mesh %d", i);
 
+			const int dims = mesh->GetLightingMapSize();
 			std::vector<LFX::Float3>& colors = mesh->_getLightingMap();
-			for (int k = 0; k < colors.size(); ++k)
-			{
-				colors[k] = Pow(colors[k], 1.0f / World::Instance()->GetSetting()->Gamma);
-			}
 
-			int LSize = mesh->GetLightingMapSize();
-
+			float lum = 1.0f;
 			LFX::Image image;
-			image.width = LSize;
-			image.height = LSize;
+			image.width = dims;
+			image.height = dims;
 			image.channels = options.Channels;
-			if (!mSetting.RGBEFormat) {
-				image.pixels = new uint8_t[LSize * LSize * 3];
-				for (int k = 0; k < colors.size(); ++k)
-				{
-					if (mSetting.Tonemapping) {
-						colors[k] = ACESToneMap(colors[k]);
-					}
-
-					colors[k].saturate();
-					image.pixels[k * 3 + 0] = (uint8_t)(colors[k].x * 255);
-					image.pixels[k * 3 + 1] = (uint8_t)(colors[k].y * 255);
-					image.pixels[k * 3 + 2] = (uint8_t)(colors[k].z * 255);
-				}
-			}
-			else {
-				image.pixels = new uint8_t[LSize * LSize * 4];
-				for (int k = 0; k < colors.size(); ++k)
-				{
-					RGBE rgbe = RGBE_FROM(colors[k]);
-
-					image.pixels[k * 4 + 0] = rgbe.r;
-					image.pixels[k * 4 + 1] = rgbe.g;
-					image.pixels[k * 4 + 2] = rgbe.b;
-					image.pixels[k * 4 + 3] = rgbe.e;
-				}
-			}
+			ConvertColor(image, lum, colors, mSetting);
 			colors.clear();
-
 #if 0
 			// test
 			char filename[256];
@@ -367,8 +359,8 @@ namespace LFX {
 			LFX::PNG_Save(tfp, image);
 			fclose(tfp);
 #endif
-
 			TextureAtlasPacker::Item item;
+			item.lum = lum;
 			packer.Insert(image.pixels, image.width, image.height, item);
 			packed_items.push_back(item);
 		}
@@ -407,7 +399,6 @@ namespace LFX {
 
 				const TextureAtlasPacker::Item & item = packed_items[packIndex++];
 				int size = mesh->GetLightingMapSize();
-#if 1
 				float offset = LMAP_BORDER / (float)size;
 				float scale = 1 - offset * 2;
 
@@ -415,16 +406,9 @@ namespace LFX {
 				remapInfo.lmap_index = item.index;
 				remapInfo.offset[0] = item.offsetU + offset * item.scaleU;
 				remapInfo.offset[1] = item.offsetV + offset * item.scaleV;
-				remapInfo.scale[0] = item.scaleU * scale;
-				remapInfo.scale[1] = item.scaleV * scale;
-#else
-				LightMapInfo remapInfo;
-				remapInfo.lmap_index = item.index;
-				remapInfo.offset[0] = item.offsetU;
-				remapInfo.offset[1] = item.offsetV;
-				remapInfo.scale[0] = item.scaleU;
-				remapInfo.scale[1] = item.scaleV;
-#endif
+				remapInfo.scale = item.scaleU * scale;
+				remapInfo.lum = item.lum * scale;
+
 				fwrite(&i, sizeof(int), 1, fp);
 				fwrite(&remapInfo, sizeof(LightMapInfo), 1, fp);
 			}
