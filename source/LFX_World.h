@@ -5,6 +5,7 @@
 #include "LFX_Mesh.h"
 #include "LFX_Terrain.h"
 #include "LFX_Scene.h"
+#include "LFX_Shader.h"
 #include "LFX_Baker.h"
 #include "LFX_Rasterizer.h"
 
@@ -89,6 +90,9 @@ namespace LFX {
 		/// Scene
 		Scene* GetScene() { return mScene; }
 
+		/// Shader
+		Shader* GetShader() { return mShader; }
+
 		/// Texture
 		Texture * LoadTexture(const String & filename);
 		Texture * CreateTexture(const String & name, int w, int h, int channels, unsigned char *data);
@@ -129,6 +133,7 @@ namespace LFX {
 		Settings mSetting;
 
 		Scene* mScene;
+		Shader* mShader;
 		std::vector<Texture *> mTextures;
 		std::vector<Light *> mLights;
 		std::vector<Mesh *> mMeshes;

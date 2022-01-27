@@ -123,7 +123,7 @@ namespace LFX {
 			float tu, tv;
 			if (Intersect(ray, &dist, tu, tv, a, b, c) && dist < contract.td && dist <= length)
 			{
-				if (m.texture != NULL)
+				if (m.Maps[0] != NULL)
 				{
 					const Float2 & uv0 = mVertexBuffer[triangle.Index0].UV;
 					const Float2 & uv1 = mVertexBuffer[triangle.Index1].UV;
@@ -131,7 +131,7 @@ namespace LFX {
 
 					Float2 uv = uv0 * (1 - tu - tv) + uv1 * tu + uv2 * tv;
 
-					Float4 color = m.texture->SampleColor(uv.x, uv.y);
+					Float4 color = m.Maps[0]->SampleColor(uv.x, uv.y);
 					if (color.w < 0.5f)
 						continue;
 				}
@@ -177,7 +177,7 @@ namespace LFX {
 			float tu, tv;
 			if (Intersect(ray, &dist, tu, tv, a, b, c) && dist <= length)
 			{
-				if (m.texture != NULL)
+				if (m.Maps[0] != NULL)
 				{
 					const Float2 & uv0 = mVertexBuffer[triangle.Index0].UV;
 					const Float2 & uv1 = mVertexBuffer[triangle.Index1].UV;
@@ -185,7 +185,7 @@ namespace LFX {
 
 					Float2 uv = uv0 * (1 - tu - tv) + uv1 * tu + uv2 * tv;
 
-					Float4 color = m.texture->SampleColor(uv.x, uv.y);
+					Float4 color = m.Maps[0]->SampleColor(uv.x, uv.y);
 					if (color.w < 0.5f)
 						continue;
 
@@ -551,11 +551,11 @@ namespace LFX {
 
 	Float3 Mesh::_doLighting(const Vertex & v, int mtlId, Light * pLight)
 	{
-		float kd = 0, ka = 0, ks = 0;
+		float kl = 0;
+		Float3 color;
 
-		DoLighting(kd, ka, ks, v, pLight);
-
-		if (kd * ka * ks >= 0 && pLight->CastShadow && mReceiveShadow)
+		World::Instance()->GetShader()->DoLighting(color, kl, v, pLight, &mMtlBuffer[mtlId]);
+		if (kl >= 0 && pLight->CastShadow && mReceiveShadow)
 		{
 			float len = 0;
 			Ray ray;
@@ -578,14 +578,12 @@ namespace LFX {
 			{
 				if (World::Instance()->GetScene()->Occluded(ray, len, LFX_MESH | LFX_TERRAIN))
 				{
-					kd = ka = ks = 0;
+					kl = 0;
 				}
 			}
 		}
 
-		Material * mtl = &mMtlBuffer[mtlId];
-
-		return kd * ka * ks * mtl->diffuse * pLight->Color * pLight->DirectScale;
+		return kl > 0 ?  color * pLight->DirectScale : Float3(0, 0, 0);
 	}
 
 	void Mesh::GetLightingMap(std::vector<RGBE> & colors)

@@ -639,11 +639,10 @@ namespace LFX {
 
 	Float3 Terrain::_doLighting(const Vertex & v, Light * pLight)
 	{
-		float kd = 0, ka = 0, ks = 0;
+		float kl = 0;
+		Float3 color;
 
-		DoLighting(kd, ka, ks, v, pLight);
-
-		float kl = kd * ka * ks;
+		World::Instance()->GetShader()->DoLighting(color, kl, v, pLight, &mMaterial);
 		if (kl >= 0 && pLight->CastShadow)
 		{
 			float len = 0;
@@ -672,15 +671,7 @@ namespace LFX {
 			}
 		}
 
-		Float3 color;
-		if (kl > 0) {
-			color = kl * mMaterial.diffuse * pLight->Color * pLight->DirectScale;
-		}
-		else {
-			color.zero();
-		}
-
-		return color;
+		return kl > 0 ? color * pLight->DirectScale : Float3(0, 0, 0);
 	}
 
 	void Terrain::CalcuAmbientOcclusion(int xblock, int yblock)

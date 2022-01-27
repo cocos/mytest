@@ -184,7 +184,7 @@ namespace LFX {
 				{
 					Mesh * mesh = (Mesh *)entity;
 					Material * m = GetMaterial(entity, r.primID);
-					if (m->texture != NULL)
+					if (m->Maps[0] != NULL)
 					{
 						const Triangle & triangle = mesh->_getTriangle(r.primID);
 						const Float2 & uv0 = mesh->_getVertex(triangle.Index0).UV;
@@ -193,7 +193,7 @@ namespace LFX {
 
 						Float2 uv = uv0 * (1 - r.u - r.v) + uv1 * r.u + uv2 * r.v;
 
-						Float4 color = m->texture->SampleColor(uv.x, uv.y);
+						Float4 color = m->Maps[0]->SampleColor(uv.x, uv.y);
 						if (color.w < 0.5f)
 						{
 							orig += (r.tfar + 0.01f) * ray.dir;
@@ -267,7 +267,7 @@ namespace LFX {
 				{
 					Mesh * mesh = (Mesh *)entity;
 					Material * m = GetMaterial(entity, r.primID);
-					if (m->texture != NULL)
+					if (m->Maps[0] != NULL)
 					{
 						const Triangle & triangle = mesh->_getTriangle(r.primID);
 						const Float2 & uv0 = mesh->_getVertex(triangle.Index0).UV;
@@ -276,7 +276,7 @@ namespace LFX {
 
 						Float2 uv = uv0 * (1 - r.u - r.v) + uv1 * r.u + uv2 * r.v;
 
-						Float4 color = m->texture->SampleColor(uv.x, uv.y);
+						Float4 color = m->Maps[0]->SampleColor(uv.x, uv.y);
 						if (color.w < 0.5f)
 						{
 							orig += (r.tfar + 0.01f) * ray.dir;

@@ -68,8 +68,6 @@ namespace LFX {
 		}
 	};
 
-	LFX_ENTRY Float3 ACESToneMap(const Float3& color);
-	LFX_ENTRY void DoLighting(float & kd, float & ka, float & ks, const Vertex & v, Light * pLight);
 	LFX_ENTRY bool IsLightVisible(Light * pLight, const Aabb & bound);
 	LFX_ENTRY bool IsLightVisible(Light * pLight, const Float3 & point);
 }

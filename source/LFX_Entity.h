@@ -11,13 +11,13 @@ namespace LFX {
 
 	struct LFX_ENTRY Material
 	{
-		Float3 diffuse;
-		Texture* texture;
+		Float3 Diffuse;
+		Texture* Maps[1];
 
 		Material()
 		{
-			diffuse = Float3(1, 1, 1);
-			texture = NULL;
+			Diffuse = Float3(1, 1, 1);
+			Maps[0] = NULL;
 		}
 	};
 

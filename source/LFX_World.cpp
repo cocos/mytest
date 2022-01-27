@@ -11,11 +11,13 @@ namespace LFX {
 	World::World()
 	{
 		mScene = NULL;
+		mShader = new Shader;
 	}
 
 	World::~World()
 	{
 		Clear();
+		delete mShader;
 	}
 
 	bool World::Load()
@@ -124,10 +126,10 @@ namespace LFX {
 				stream.Read(tri, sizeof(Triangle) * numTris);
 
 				for (auto i = 0; i < numMtls; ++i) {
-					stream >> mtl[i].diffuse;
+					stream >> mtl[i].Diffuse;
 					String tex = stream.ReadString();
 					if (tex != "") {
-						mtl[i].texture = LoadTexture(tex);
+						mtl[i].Maps[0] = LoadTexture(tex);
 					}
 				}
 				m->Unlock();
@@ -176,7 +178,7 @@ namespace LFX {
 			for (int k = 0; k < colors.size(); ++k)
 			{
 				if (settings.Tonemapping) {
-					colors[k] = ACESToneMap(colors[k]);
+					colors[k] = Shader::ACESToneMap(colors[k]);
 				}
 
 				lum = std::max(colors[k].x, lum);

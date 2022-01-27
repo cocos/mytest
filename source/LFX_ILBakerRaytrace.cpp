@@ -119,15 +119,15 @@ namespace LFX {
 	};
 
 	//
-	void RT_CalcuLighting(const Float3 & P, const Vertex & V, Light * L, Float3 & diffuse, Float3 & irradiance)
+	void RT_CalcuLighting(Float3& diffuse, Float3& irradiance, const Float3 & P, const Vertex & V, Light * L, Material * M)
 	{
 		Float3 PS = V.Position - P;
 		float lenSq = PS.lenSqr();
 
-		float kd = 0, ka = 0, ks = 0;
-		DoLighting(kd, ka, ks, V, L);
-
-		if (kd * ka * ks >= 0)
+		float kl = 0;
+		Float3 color;
+		World::Instance()->GetShader()->DoLighting(color, kl, V, L, M);
+		if (kl >= 0)
 		{
 			float len = 0;
 			Ray ray;
@@ -149,15 +149,13 @@ namespace LFX {
 			if (len > 0.01f * UNIT_LEN) {
 				Contact contract;
 				if (World::Instance()->GetScene()->Occluded(ray, len, LFX_TERRAIN | LFX_MESH)) {
-					kd = ka = ks = 0;
+					kl = 0;
 				}
 			}
 		}
 
-		float invRSqr = 1.0f / (lenSq * lenSq);
-
-		diffuse += kd * ka * ks * L->Color * L->IndirectScale;
-		irradiance += diffuse * invRSqr;
+		diffuse += kl > 0 ? color * L->IndirectScale : Float3(0, 0, 0);
+		irradiance += diffuse / (lenSq * lenSq);
 	}
 
 	void GetLightList(std::vector<Light*>& lights, const Float3& point)
@@ -203,12 +201,9 @@ namespace LFX {
 			}
 #endif
 
-			// Set this to true to keep the loop going
 			bool continueTracing = false;
-
-			// Check for intersection with the scene
-
 			float sceneDistance = FLT_MAX;
+
 			Contact contact;
 			if (World::Instance()->GetScene()->RayCheck(contact, ray, params.RayLen, LFX_TERRAIN | LFX_MESH))
 			{
@@ -217,16 +212,10 @@ namespace LFX {
 
 			Float3 rayOrigin = ray.orig;
 			Float3 rayDir = ray.dir;
-
 			if (sceneDistance < FLT_MAX)
 			{
-				// We hit a triangle in the scene
 				if (pathLength == maxPathLength)
-				{
-					// There's no point in continuing anymore, since none of our scene surfaces are emissive.
 					break;
-				}
-
 				if (contact.backFacing)
 					break;
 
@@ -236,7 +225,7 @@ namespace LFX {
 				tangentToWorld.SetYBasis(hitSurface.Binormal);
 				tangentToWorld.SetZBasis(hitSurface.Normal);
 
-				Float3 material = ((Material *)contact.mtl)->diffuse * params.DiffuseScale;
+				Float3 material = ((Material *)contact.mtl)->Diffuse * params.DiffuseScale;
 				if (1)
 				{
 					// Compute direct lighting from the sun
@@ -252,7 +241,7 @@ namespace LFX {
 						
 						for (size_t i = 0; i < lights.size(); ++i)
 						{
-							RT_CalcuLighting(ray.orig, hitSurface, lights[i], diffuse, irradiance);
+							RT_CalcuLighting(diffuse, irradiance, ray.orig, hitSurface, lights[i], (Material*)contact.mtl);
 						}
 
 						directLighting = diffuse;
@@ -266,14 +255,10 @@ namespace LFX {
 				// Pick a new path, using MIS to sample both our diffuse and specular BRDF's
 				if (1)
 				{
-					// Randomly select if we should sample our diffuse BRDF, or our specular BRDF
 					Float2 brdfSample = params.SampleSet->BRDF();
 					if (pathLength > 1)
 						brdfSample = randomGenerator.RandomFloat2();
 
-					//Float3 v = Float3::Normalize(rayOrigin - hitSurface.Position);
-
-					// We're sampling the diffuse BRDF, so sample a cosine-weighted hemisphere
 					Float3 sampleDir;
 					sampleDir = ILBaker::SampleCosineHemisphere(brdfSample.x, brdfSample.y);
 					sampleDir = Float3::Normalize(Mat3::Transform(sampleDir, tangentToWorld));
