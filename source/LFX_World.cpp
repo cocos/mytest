@@ -164,7 +164,7 @@ namespace LFX {
 		return true;
 	}
 
-	void ConvertColor(Image& image, float& lum, std::vector<Float3>& colors, const World::Settings& settings)
+	void ConvertColor(Image& image, float& factor, std::vector<Float3>& colors, const World::Settings& settings)
 	{
 		if (settings.Gamma != 1.0f) {
 			for (int k = 0; k < colors.size(); ++k)
@@ -181,16 +181,16 @@ namespace LFX {
 					colors[k] = Shader::ACESToneMap(colors[k]);
 				}
 
-				lum = std::max(colors[k].x, lum);
-				lum = std::max(colors[k].y, lum);
-				lum = std::max(colors[k].z, lum);
+				factor = std::max(colors[k].x, factor);
+				factor = std::max(colors[k].y, factor);
+				factor = std::max(colors[k].z, factor);
 			}
 
 			for (int k = 0; k < colors.size(); ++k)
 			{
 				Float3 color = colors[k];
 
-				color /= lum;
+				color /= factor;
 				color.saturate();
 				image.pixels[k * 3 + 0] = (uint8_t)(colors[k].x * 255);
 				image.pixels[k * 3 + 1] = (uint8_t)(colors[k].y * 255);
@@ -268,15 +268,15 @@ namespace LFX {
 							colors.resize(lmap_size * lmap_size);
 							terrain->GetLightingMap(x + i, y + j, colors);
 
-							float lum = 1.0f;
+							float factor = 1.0f;
 							Image image;
 							image.width = lmap_size;
 							image.height = lmap_size;
 							image.channels = options.Channels;
-							ConvertColor(image, lum, colors, mSetting);
+							ConvertColor(image, factor, colors, mSetting);
 
 							TextureAtlasPacker::Item item;
-							item.lum = lum;
+							item.Factor = factor;
 							packer.Insert(image.pixels, image.width, image.height, item);
 							packed_items.push_back(item);
 						}
@@ -310,11 +310,11 @@ namespace LFX {
 							float scale = 1 - offset * 2;
 
 							LightMapInfo remapInfo;
-							remapInfo.lmap_index = lmap_index;
-							remapInfo.offset[0] = item.offsetU + offset * item.scaleU;
-							remapInfo.offset[1] = item.offsetV + offset * item.scaleV;
-							remapInfo.scale = item.scaleU * scale;
-							remapInfo.lum = item.lum;
+							remapInfo.MapIndex = lmap_index;
+							remapInfo.Offset[0] = item.OffsetU + offset * item.ScaleU;
+							remapInfo.Offset[1] = item.OffsetV + offset * item.ScaleV;
+							remapInfo.Scale = item.ScaleU * scale;
+							remapInfo.Factor = item.Factor;
 							fwrite(&block_index, sizeof(int), 1, fp);
 							fwrite(&remapInfo, sizeof(LightMapInfo), 1, fp);
 						}
@@ -346,12 +346,12 @@ namespace LFX {
 			const int dims = mesh->GetLightingMapSize();
 			std::vector<LFX::Float3>& colors = mesh->_getLightingMap();
 
-			float lum = 1.0f;
+			float factor = 1.0f;
 			LFX::Image image;
 			image.width = dims;
 			image.height = dims;
 			image.channels = options.Channels;
-			ConvertColor(image, lum, colors, mSetting);
+			ConvertColor(image, factor, colors, mSetting);
 			colors.clear();
 #if 0
 			// test
@@ -362,7 +362,7 @@ namespace LFX {
 			fclose(tfp);
 #endif
 			TextureAtlasPacker::Item item;
-			item.lum = lum;
+			item.Factor = factor;
 			packer.Insert(image.pixels, image.width, image.height, item);
 			packed_items.push_back(item);
 		}
@@ -405,11 +405,11 @@ namespace LFX {
 				float scale = 1 - offset * 2;
 
 				LightMapInfo remapInfo;
-				remapInfo.lmap_index = item.index;
-				remapInfo.offset[0] = item.offsetU + offset * item.scaleU;
-				remapInfo.offset[1] = item.offsetV + offset * item.scaleV;
-				remapInfo.scale = item.scaleU * scale;
-				remapInfo.lum = item.lum * scale;
+				remapInfo.MapIndex = item.Index;
+				remapInfo.Offset[0] = item.OffsetU + offset * item.ScaleU;
+				remapInfo.Offset[1] = item.OffsetV + offset * item.ScaleV;
+				remapInfo.Scale = item.ScaleU * scale;
+				remapInfo.Factor = item.Factor * scale;
 
 				fwrite(&i, sizeof(int), 1, fp);
 				fwrite(&remapInfo, sizeof(LightMapInfo), 1, fp);

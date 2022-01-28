@@ -8,10 +8,10 @@ namespace LFX {
 
 	struct LightMapInfo
 	{
-		int lmap_index;
-		Float2 offset;
-		float scale;
-		float lum;
+		int MapIndex;
+		Float2 Offset;
+		float Scale;
+		float Factor;
 	};
 
 	struct Vertex

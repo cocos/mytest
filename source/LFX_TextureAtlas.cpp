@@ -59,11 +59,11 @@ namespace LFX {
 			pItem = _AtlasInsert(mAtlasArray[i], pixels, w, h, mOptions.Border, mOptions.Border);
 			if (pItem != NULL)
 			{
-				item.index = i;
-				item.offsetU = pItem->x;
-				item.offsetV = pItem->y;
-				item.scaleU = pItem->w;
-				item.scaleV = pItem->h;
+				item.Index = i;
+				item.OffsetU = pItem->x;
+				item.OffsetV = pItem->y;
+				item.ScaleU = pItem->w;
+				item.ScaleV = pItem->h;
 				return i;
 			}
 		}
@@ -89,11 +89,11 @@ namespace LFX {
 
 		pItem = _AtlasInsert(pNewAtlas, pixels, w, h, uborder, vborder);
 
-		item.index = mAtlasArray.size() - 1;
-		item.offsetU = pItem->x;
-		item.offsetV = pItem->y;
-		item.scaleU = pItem->w;
-		item.scaleV = pItem->h;
+		item.Index = mAtlasArray.size() - 1;
+		item.OffsetU = pItem->x;
+		item.OffsetV = pItem->y;
+		item.ScaleU = pItem->w;
+		item.ScaleV = pItem->h;
 
 		return mAtlasArray.size() - 1;
 	}

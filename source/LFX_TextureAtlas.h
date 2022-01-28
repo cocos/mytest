@@ -26,12 +26,12 @@ namespace LFX {
 
 		struct Item
 		{
-			int index;
-			float offsetU;
-			float offsetV;
-			float scaleU;
-			float scaleV;
-			float lum;
+			int Index;
+			float OffsetU;
+			float OffsetV;
+			float ScaleU;
+			float ScaleV;
+			float Factor;
 		};
 
 		struct Atlas
@@ -48,19 +48,14 @@ namespace LFX {
 		TextureAtlasPacker(const Options& ops);
 		~TextureAtlasPacker();
 
-		int
-			Insert(unsigned char * pixels, int w, int h, Item & item);
+		int Insert(unsigned char * pixels, int w, int h, Item & item);
 
-		std::vector<Atlas *> &
-			GetAtlasArray();
+		std::vector<Atlas *> & GetAtlasArray();
 
 	protected:
-		const Rectangle<float> *
-			_AtlasInsert(Atlas * pAtlas, unsigned char * pixels, int w, int h, int uborder, int vborder);
-		const Rectangle<int> *
-			_AtlasIntersect(Atlas * pAtlas, const Rectangle<int> & region);
-		const Rectangle<float> *
-			_AtlasAppend(Atlas * pAtlas, unsigned char * pixels, const Rectangle<int> & region, int uborder, int vborder);
+		const Rectangle<float> * _AtlasInsert(Atlas * pAtlas, unsigned char * pixels, int w, int h, int uborder, int vborder);
+		const Rectangle<int> * _AtlasIntersect(Atlas * pAtlas, const Rectangle<int> & region);
+		const Rectangle<float> * _AtlasAppend(Atlas * pAtlas, unsigned char * pixels, const Rectangle<int> & region, int uborder, int vborder);
 
 	protected:
 		Options mOptions;
