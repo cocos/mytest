@@ -1,6 +1,14 @@
 project "LightFX"
 	kind "ConsoleApp"
 
+	disablewarnings {
+		"4100", -- unreferenced formal parameter
+		"4201", -- use nameless struct/union
+		"4267", -- convert size_t to int
+		"4505", -- unreferenced local function
+		"4996", -- deprecation function
+	}
+
 	defines { "EMBREE_STATIC_LIB", }
 	includedirs {
 		"../3rd/src/lodepng",
