@@ -79,27 +79,18 @@ namespace LFX {
 		FileStream(FILE * fp, bool managed);
 		virtual ~FileStream();
 
-		virtual bool
-			IsOpen();
-		virtual bool
-			IsEOF() const;
-		virtual void
-			Close();
+		virtual bool IsOpen();
+		virtual bool IsEOF() const;
+		virtual void Close();
 
-		virtual int
-			Read(void * data, int size);
+		virtual int Read(void * data, int size);
 
-		virtual int
-			Load();
-		virtual int
-			Seek(int off, int orig);
-		virtual int
-			Tell();
-		virtual int
-			Size() const;
+		virtual int Load();
+		virtual int Seek(int off, int orig);
+		virtual int Tell();
+		virtual int Size() const;
 
-		virtual void *
-			GetData();
+		virtual void * GetData();
 
 	protected:
 		FILE * mFileHandle;

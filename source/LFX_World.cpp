@@ -172,15 +172,17 @@ namespace LFX {
 				colors[k] = Pow(colors[k], 1.0f / settings.Gamma);
 			}
 		}
+		if (settings.Tonemapping ) {
+			for (int k = 0; k < colors.size(); ++k)
+			{
+				colors[k] = Shader::ACESToneMap(colors[k]);
+			}
+		}
 
 		if (!settings.RGBEFormat) {
 			image.pixels = new uint8_t[image.width * image.height * 3];
 			for (int k = 0; k < colors.size(); ++k)
 			{
-				if (settings.Tonemapping) {
-					colors[k] = Shader::ACESToneMap(colors[k]);
-				}
-
 				factor = std::max(colors[k].x, factor);
 				factor = std::max(colors[k].y, factor);
 				factor = std::max(colors[k].z, factor);
@@ -189,12 +191,12 @@ namespace LFX {
 			for (int k = 0; k < colors.size(); ++k)
 			{
 				Float3 color = colors[k];
-
 				color /= factor;
 				color.saturate();
-				image.pixels[k * 3 + 0] = (uint8_t)(colors[k].x * 255);
-				image.pixels[k * 3 + 1] = (uint8_t)(colors[k].y * 255);
-				image.pixels[k * 3 + 2] = (uint8_t)(colors[k].z * 255);
+
+				image.pixels[k * 3 + 0] = (uint8_t)std::min(int(color.x * 255), 255);
+				image.pixels[k * 3 + 1] = (uint8_t)std::min(int(color.y * 255), 255);
+				image.pixels[k * 3 + 2] = (uint8_t)std::min(int(color.z * 255), 255);
 			}
 		}
 		else {
@@ -409,7 +411,7 @@ namespace LFX {
 				remapInfo.Offset[0] = item.OffsetU + offset * item.ScaleU;
 				remapInfo.Offset[1] = item.OffsetV + offset * item.ScaleV;
 				remapInfo.Scale = item.ScaleU * scale;
-				remapInfo.Factor = item.Factor * scale;
+				remapInfo.Factor = item.Factor;
 
 				fwrite(&i, sizeof(int), 1, fp);
 				fwrite(&remapInfo, sizeof(LightMapInfo), 1, fp);
