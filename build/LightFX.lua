@@ -10,12 +10,13 @@ project "LightFX"
 	}
 
 	defines { "EMBREE_STATIC_LIB", }
+	sysincludedirs {
+		"../3rd/src/rapidjson/include",
+		"../3rd/src/websocketpp-0.8.2",
+	}
 	includedirs {
 		"../3rd/src/lodepng",
-		"../3rd/src/dirent/include",
-		"../3rd/src/rapidjson/include",
 		"../3rd/src/socket.io-client-cpp/src",
-		"../3rd/src/websocketpp-0.8.2",
 		"../source",
 	}
 	files {
@@ -28,6 +29,9 @@ project "LightFX"
 	}
 	
 	filter { "platforms:Win64" }
+		includedirs {
+			"../3rd/src/dirent/include",
+		}
 		-- embree
 		links { "embree", "embree_avx", "embree_avx2", "embree_sse42", "simd", "lexers", "tasking", "sys.lib", "math.lib" }
 	filter { "platforms:Win64", "configurations:Debug"  }

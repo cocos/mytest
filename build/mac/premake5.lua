@@ -3,6 +3,7 @@ solution "LightFX"
 	configurations { "Debug", "Release" }
 	system "macosx"
 	language "C++"
+	flags { "C++11" }
 	architecture "x64"
 	characterset "MBCS"
 	location "bin"
@@ -12,7 +13,7 @@ solution "LightFX"
 		targetdir "bin/Debug"
 		debugdir "bin/Debug"
 		defines { "DEBUG", "_DEBUG" }
-		includedirs {
+		sysincludedirs {
 			"../../3rd/x64-osx/include",
 		}
 		libdirs {
@@ -24,7 +25,7 @@ solution "LightFX"
 		debugdir "bin/Release"
 		targetdir "bin/Release"
 		defines { "NDEBUG" }
-		includedirs {
+		sysincludedirs {
 			"../../3rd/x64-osx/include",
 		}
 		libdirs {
