@@ -27,11 +27,13 @@ project "LightFX"
 		"../source/**.*",
 	}
 	
-	-- embree
-	links { "embree", "embree_avx", "embree_avx2", "embree_sse42", "simd", "lexers", "tasking", "sys.lib", "math.lib" }
-	-- tbb
-	filter { "configurations:Debug"  }
+	filter { "platforms:Win64" }
+		-- embree
+		links { "embree", "embree_avx", "embree_avx2", "embree_sse42", "simd", "lexers", "tasking", "sys.lib", "math.lib" }
+	filter { "platforms:Win64", "configurations:Debug"  }
+		-- tbb debug
 		links { "tbb_debug", "tbbmalloc_debug", "tbbmalloc_proxy_debug" }
-	filter { "configurations:Release"  }
+	filter { "platforms:Win64", "configurations:Release"  }
+		-- tbb release
 		links { "tbb", "tbbmalloc", "tbbmalloc_proxy" }
 	filter{}
