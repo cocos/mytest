@@ -17,6 +17,7 @@ solution "LightFX"
 		}
 		libdirs {
 			"../../3rd/x64-win/debug/lib",
+			"../../3rd/embree/debug/lib",
 		}
 		
 	filter { "configurations:Release" }
@@ -29,6 +30,7 @@ solution "LightFX"
 		}
 		libdirs {
 			"../../3rd/x64-win/lib",
+			"../../3rd/embree/lib",
 		}
 		
 	filter {}

@@ -1,5 +1,5 @@
 3rd:
-	
+	Windows平台需要解压3rd/embree目录下的lib(由于github限制，无法上传大文件)
 	
 make: 
 	执行build对应平台的make命令，打开工程文件编译即可
