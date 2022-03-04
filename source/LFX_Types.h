@@ -35,6 +35,9 @@
 // Debug
 //#define LFX_DEBUG_LUV
 
+// Enable/Disable multi-thread
+#define LFX_MULTI_THREAD 1
+
 namespace LFX {
 
 #ifndef FLT_MIN
@@ -105,4 +108,5 @@ namespace LFX {
 		std::mt19937 engine;
 		std::uniform_real_distribution<float> distribution;
 	};
+
 }

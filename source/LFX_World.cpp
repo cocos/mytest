@@ -2,6 +2,7 @@
 #include "LFX_Stream.h"
 #include "LFX_Image.h"
 #include "LFX_TextureAtlas.h"
+#include "LFX_DeviceStats.h"
 #include "LFX_EmbreeScene.h"
 
 namespace LFX {
@@ -638,6 +639,10 @@ namespace LFX {
 		mTaskIndex = 0;
 		mProgress = 0;
 
+#if LFX_MULTI_THREAD
+		DeviceStats stats = DeviceStats::GetStats();
+		mSetting.Threads = std::max(1, stats.Processors - 2);
+#endif
 		for (int i = 0; i < mSetting.Threads; ++i)
 		{
 			mThreads.push_back(new STBaker(i));
@@ -651,7 +656,8 @@ namespace LFX {
 				mTasks.push_back({ mMeshes[i], (int)i });
 			}
 		}
-		for (auto terrain : mTerrains) {
+		for (auto terrain : mTerrains)
+		{
 			for (int i = 0; i < terrain->GetDesc().BlockCount.x * terrain->GetDesc().BlockCount.y; ++i)
 			{
 				if (terrain->_getBlockValids()[i])
@@ -663,6 +669,7 @@ namespace LFX {
 
 		for (size_t i = 0; i < mThreads.size(); ++i)
 		{
+			LOGI("-: Starting thread %d", i);
 			mThreads[i]->Start();
 		}
 	}
