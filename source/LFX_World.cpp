@@ -73,9 +73,8 @@ namespace LFX {
 
 			switch (ckId) {
 			case LFX_FILE_TERRAIN: {
-				Float3 pos;
 				Terrain::Desc desc;
-				stream >> pos;
+				stream >> desc.Position;
 				stream >> desc.GridSize;
 				stream >> desc.BlockCount;
 				stream >> desc.LMapSize;
@@ -93,11 +92,10 @@ namespace LFX {
 				for (int i = 0; i < heights.size(); ++i) {
 					const int TERRAIN_HEIGHT_BASE = 32768;
 					const float TERRAIN_HEIGHT_FACTORY = 1.0f / 512.0f;
-
 					heights[i] = (heightfield[i] - TERRAIN_HEIGHT_BASE) * TERRAIN_HEIGHT_FACTORY;
 				}
 
-				CreateTerrain(pos, &heights[0], desc);
+				CreateTerrain(&heights[0], desc);
 				break;
 			}
 				
@@ -173,7 +171,7 @@ namespace LFX {
 				colors[k] = Pow(colors[k], 1.0f / settings.Gamma);
 			}
 		}
-		if (settings.Tonemapping ) {
+		if (settings.Tonemapping) {
 			for (int k = 0; k < colors.size(); ++k)
 			{
 				colors[k] = Shader::ACESToneMap(colors[k]);
@@ -210,6 +208,25 @@ namespace LFX {
 				image.pixels[k * 4 + 1] = rgbe.g;
 				image.pixels[k * 4 + 2] = rgbe.b;
 				image.pixels[k * 4 + 3] = rgbe.e;
+			}
+		}
+	}
+
+	void CopyImage(Image& dst, const Image& src, int x, int y)
+	{
+		for (int j = 0; j < src.height; ++j)
+		{
+			for (int i = 0; i < src.width; ++i)
+			{
+				const int dstIndex = (y + j) * dst.width + x + i;
+				const int srcIndex = j * src.width + i;
+
+				dst.pixels[dstIndex * dst.channels + 0] = src.pixels[srcIndex * src.channels + 0];
+				dst.pixels[dstIndex * dst.channels + 1] = src.pixels[srcIndex * src.channels + 1];
+				dst.pixels[dstIndex * dst.channels + 2] = src.pixels[srcIndex * src.channels + 2];
+				if (dst.channels > 3 && src.channels > 3) {
+					dst.pixels[dstIndex * dst.channels + 3] = src.pixels[srcIndex * src.channels + 3];
+				}
 			}
 		}
 	}
@@ -251,11 +268,13 @@ namespace LFX {
 					const int w = std::min(ntiles, terrain->GetDesc().BlockCount.x - x);
 					const int h = std::min(ntiles, terrain->GetDesc().BlockCount.y - y);
 					const int dims = std::max(w * lmap_size, h * lmap_size);
+					const int channels = mSetting.RGBEFormat ? 4 : 3;
 
+#if 0
 					TextureAtlasPacker::Options options;
 					options.Width = dims;
 					options.Height = dims;
-					options.Channels = mSetting.RGBEFormat ? 4 : 3;
+					options.Channels = channels;
 					options.Border = 0;
 					options.Space = 0;
 
@@ -292,6 +311,42 @@ namespace LFX {
 					image.width = atlas[0]->Width;
 					image.height = atlas[0]->Height;
 					image.channels = options.Channels;
+#endif
+
+					LFX::Image image;
+					image.pixels = new uint8_t[dims * dims * channels];
+					image.width = dims;
+					image.height = dims;
+					image.channels = channels;
+					memset(image.pixels, 0, dims * dims * channels);
+
+					LOGD("Pack terrain %d blocks %d %d %d %d", t, x, y, w, h);
+					std::vector<TextureAtlasPacker::Item> packed_items;
+					for (int j = 0; j < h; ++j)
+					{
+						for (int i = 0; i < w; ++i)
+						{
+							std::vector<Float3> colors;
+							colors.resize(lmap_size * lmap_size);
+							terrain->GetLightingMap(x + i, y + j, colors);
+
+							float factor = 1.0f;
+							Image temp;
+							temp.width = lmap_size;
+							temp.height = lmap_size;
+							temp.channels = channels;
+							ConvertColor(temp, factor, colors, mSetting);
+
+							TextureAtlasPacker::Item item;
+							item.Factor = factor;
+							item.OffsetU = i * lmap_size / (float)dims;
+							item.OffsetV = j * lmap_size / (float)dims;
+							item.ScaleU = lmap_size / (float)dims;
+							item.ScaleV = lmap_size / (float)dims;
+							CopyImage(image, temp, i * lmap_size, j * lmap_size);
+							packed_items.push_back(item);
+						}
+					}
 
 					char filename[256];
 					sprintf(filename, "%s/LFX_Terrain_%04d.png", path.c_str(), lmap_index);
@@ -299,8 +354,6 @@ namespace LFX {
 					FILE* tfp = fopen(filename, "wb");
 					LFX::PNG_Save(tfp, image);
 					fclose(tfp);
-
-					image.pixels = NULL;
 
 					for (int j = 0; j < h; ++j)
 					{
@@ -540,9 +593,9 @@ namespace LFX {
 		return pMesh;
 	}
 
-	Terrain * World::CreateTerrain(const Float3& pos, float* heightfield, const Terrain::Desc & desc)
+	Terrain * World::CreateTerrain(float* heightfield, const Terrain::Desc & desc)
 	{
-		Terrain* terrain = new Terrain(pos, heightfield, desc);
+		Terrain* terrain = new Terrain(heightfield, desc);
 
 		mTerrains.push_back(terrain);
 
@@ -639,7 +692,9 @@ namespace LFX {
 		mTaskIndex = 0;
 		mProgress = 0;
 
-#if LFX_MULTI_THREAD
+#ifdef _DEBUG
+		mSetting.Threads = 1;
+#elif LFX_MULTI_THREAD
 		DeviceStats stats = DeviceStats::GetStats();
 		mSetting.Threads = std::max(1, stats.Processors - 2);
 #endif

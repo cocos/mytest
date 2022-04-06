@@ -26,7 +26,9 @@
 
 #define LFX_ENTRY
 
-#define LFX_VERSION 32
+//#define LFX_VERSION 30
+//#define LFX_VERSION 32
+#define LFX_VERSION 35
 
 // Features(too slow)
 //#define LFX_FEATURE_EDGA_AA

@@ -111,7 +111,7 @@ namespace LFX {
 		const std::vector<Mesh*>& GetMeshes() const { return mMeshes; }
 
 		/// Terrain
-		Terrain * CreateTerrain(const Float3& pos, float * heightfield, const Terrain::Desc & desc);
+		Terrain * CreateTerrain(float * heightfield, const Terrain::Desc & desc);
 		Terrain * GetTerrain(int i) { return mTerrains[i]; }
 		int GetTerrainCount() { return mTerrains.size(); }
 		const std::vector<Terrain*>& GetTerrains() const { return mTerrains; }

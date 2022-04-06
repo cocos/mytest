@@ -42,7 +42,11 @@ namespace LFX {
 	{
 		float litRadius = radius;
 		float litRadiusSqr = litRadius * litRadius;
+#if LFX_VERSION >= 35
+		float illum = (litRadiusSqr / std::max(litRadiusSqr, distSqr));
+#else
 		float illum = Pi * (litRadiusSqr / std::max(litRadiusSqr, distSqr));
+#endif
 		float attRadiusSqrInv = 1.0f / std::max(size, 0.01f);
 		attRadiusSqrInv *= attRadiusSqrInv;
 		float att = GetDistAtt(distSqr, attRadiusSqrInv);

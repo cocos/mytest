@@ -88,6 +88,8 @@ namespace LFX {
 		bound.maximum.x = xblock * blockSize + blockSize;
 		bound.maximum.y = 10000;
 		bound.maximum.z = yblock * blockSize + blockSize;
+		bound.minimum += pTerrain->GetDesc().Position;
+		bound.maximum += pTerrain->GetDesc().Position;
 
 		std::vector<Light *> lights;
 		for (int j = 0; j < World::Instance()->GetLightCount(); ++j)

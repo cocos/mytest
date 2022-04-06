@@ -16,6 +16,7 @@ namespace LFX {
 
 		struct Desc
 		{
+			Float3 Position;
 			int LMapSize;
 			float GridSize;
 			Float2 Dimension;
@@ -31,7 +32,7 @@ namespace LFX {
 		};
 
 	public:
-		Terrain(const Float3& pos, float * heightfiled, const Desc & desc);
+		Terrain(float * heightfiled, const Desc & desc);
 		virtual ~Terrain();
 
 		virtual int GetType() { return LFX_TERRAIN; }
@@ -76,7 +77,6 @@ namespace LFX {
 
 	protected:
 		Desc mDesc;
-		Float3 mPosition;
 		std::vector<Vertex> mVertexBuffer;
 		std::vector<Triangle> mTriBuffer;
 		BSPTree<int> mBSPTree;
