@@ -4,7 +4,7 @@
 	打开build/win/bin下的vs工程
 # macosx平台
 	打开终端cd到build/mac
-	执行sudo bask ./make.sh
+	执行sudo bash ./make.sh
 	打开build/mac/bin下的xcode工程
 	
 # debug
