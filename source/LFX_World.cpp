@@ -261,6 +261,26 @@ namespace LFX {
 			fwrite(&t, 4, 1, fp); // index
 			fwrite(&nblocks, 4, 1, fp);
 
+			float lmap_factor = 1;
+			for (int y = 0; y < terrain->GetDesc().BlockCount.y; ++y)
+			{
+				for (int x = 0; x < terrain->GetDesc().BlockCount.x; ++x)
+				{
+					std::vector<Float3> colors;
+					colors.resize(lmap_size * lmap_size);
+					terrain->GetLightingMap(x, y, colors);
+					if (!mSetting.RGBEFormat)
+					{
+						for (int k = 0; k < colors.size(); ++k)
+						{
+							lmap_factor = std::max(colors[k].x, lmap_factor);
+							lmap_factor = std::max(colors[k].y, lmap_factor);
+							lmap_factor = std::max(colors[k].z, lmap_factor);
+						}
+					}
+				}
+			}
+
 			for (int y = 0; y < terrain->GetDesc().BlockCount.y; y += ntiles)
 			{
 				for (int x = 0; x < terrain->GetDesc().BlockCount.x; x += ntiles)
@@ -295,7 +315,7 @@ namespace LFX {
 							image.width = lmap_size;
 							image.height = lmap_size;
 							image.channels = options.Channels;
-							ConvertColor(image, factor, colors, mSetting);
+							ConvertColor(image, lmap_factor, colors, mSetting);
 
 							TextureAtlasPacker::Item item;
 							item.Factor = factor;
@@ -330,7 +350,7 @@ namespace LFX {
 							colors.resize(lmap_size * lmap_size);
 							terrain->GetLightingMap(x + i, y + j, colors);
 
-							float factor = 1.0f;
+							float factor = lmap_factor;
 							Image temp;
 							temp.width = lmap_size;
 							temp.height = lmap_size;
