@@ -15,6 +15,7 @@
 #include <map>
 #include <algorithm>
 #include <random>
+#include <float.h>
 
 #if 0
 #ifdef LFX_EXPORT
