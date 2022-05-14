@@ -3,21 +3,14 @@
 namespace LFX {
 
 	Rasterizer::Rasterizer(int width, int height)
-		: _width(width)
-		, _height(height)
 	{
 		assert(width > 16 && height > 16);
-
 		_rmap.resize(width * height);
-	}
-
-	Rasterizer::~Rasterizer()
-	{
 	}
 
 	Float2 Rasterizer::Texel(const Float2& uv, int w, int h, int border)
 	{
-		return Texel(uv, w, h, border, Float2(-1, 0.5f));
+		return Texel(uv, w, h, border, Float2(1, 0.5f));
 	}
 
 	Float2 Rasterizer::Texel(const Float2& uv, int w, int h, int border, const Float2& tm)
@@ -107,6 +100,18 @@ namespace LFX {
 				}
 			}
 		}
+	}
+
+	bool Rasterizer::TexelIsOut(const Float2& texel, int w, int h)
+	{
+		if (texel.x < 0 || texel.x > w - 1) {
+			return true;
+		}
+		if (texel.y < 0 || texel.y > h - 1) {
+			return true;
+		}
+
+		return false;
 	}
 
 	bool Rasterizer::PointInTriangle(Float2 P, Float2 A, Float2 B, Float2 C, float& u, float& v)

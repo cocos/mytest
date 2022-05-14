@@ -48,7 +48,7 @@ namespace LFX {
 		Context _ctx;
 
 	public:
-		void Run(Rasterizer * rasterizer);
+		void Run(int w, int h, const std::vector<RVertex>& rchart);
 
 	protected:
 		Float4 _doLighting(const Vertex & bakerPoint, int texelIdxX, int texelIdxY);

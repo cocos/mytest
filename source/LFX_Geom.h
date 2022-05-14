@@ -11,7 +11,11 @@ namespace LFX {
 		int MapIndex;
 		Float2 Offset;
 		float Scale;
+#if LFX_VERSION >= 35
 		float Factor;
+#else
+		float ScaleV;
+#endif
 	};
 
 	struct Vertex

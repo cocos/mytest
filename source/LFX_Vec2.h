@@ -37,6 +37,18 @@ namespace LFX {
 		bool operator > (const Vec2T &rhs) const;
 		bool operator >= (const Vec2T &rhs) const;
 
+		inline Vec2T& operator=(const Vec2T& v2)
+		{
+			x = v2.x;
+			y = v2.y;
+			return *this;
+		}
+
+		inline bool operator==(const Vec2T& v2) const
+		{
+			return x == v2.x && y == v2.y;
+		}
+
 	public:
 		T				dot(const Vec2T &rhs) const;
 		T				cross(const Vec2T &rhs) const;

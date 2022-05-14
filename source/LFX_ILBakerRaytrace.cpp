@@ -347,13 +347,12 @@ namespace LFX {
 		return texelResults[0];
 	}
 
-	void ILBakerRaytrace::Run(Rasterizer * rs)
+	void ILBakerRaytrace::Run(int w, int h, const std::vector<RVertex>& rchart)
 	{
-		_ctx.MapWidth = rs->_width;
-		_ctx.MapHeight = rs->_height;
-		_ctx.BakeOutput.resize(rs->_width * rs->_height);
-		for (size_t i = 0; i < _ctx.BakeOutput.size(); ++i)
-		{
+		_ctx.MapWidth = w;
+		_ctx.MapHeight = h;
+		_ctx.BakeOutput.resize(w * h);
+		for (size_t i = 0; i < _ctx.BakeOutput.size(); ++i) {
 			_ctx.BakeOutput[i] = Float4(0, 0, 0, 0);
 		}
 
@@ -366,7 +365,7 @@ namespace LFX {
 			{
 				Float4 color = Float4(0, 0, 0, 0);
 				
-				const RVertex& bakePoint = rs->_rchart[index];
+				const RVertex& bakePoint = rchart[index];
 				if (bakePoint.MaterialId != -1)
 				{
 					color = _doLighting(bakePoint, u, v);

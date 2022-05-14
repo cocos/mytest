@@ -132,10 +132,8 @@ namespace LFX {
 		break;
 		}
 
-		kd /= Pi;
-
 		kl = kd * ks * ka;
-		color = kl* mtl->Diffuse * light->Color;
+		color = kl * mtl->Diffuse / Pi * light->Color;
 	}
 
 }

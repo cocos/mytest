@@ -1,7 +1,6 @@
 #include "LFX_World.h"
 #include "LFX_Terrain.h"
 #include "LFX_AOBaker.h"
-#include "LFX_RasterizerSoft.h"
 #include "LFX_ILBakerRaytrace.h"
 #include "LFX_EmbreeScene.h"
 
@@ -463,8 +462,7 @@ namespace LFX {
 
 		int sx = mapSize * xblock;
 		int sy = mapSize * yblock;
-
-		RasterizerSoft * rasterizer = new RasterizerSoft(NULL, mapSize * msaa, mapSize * msaa);
+		std::vector<RVertex> rchart(mapSize * msaa * mapSize * msaa);
 
 		int index = 0;
 		for (int l = 0; l < mapSize; ++l)
@@ -495,7 +493,7 @@ namespace LFX {
 						p.Binormal = Float3::Cross(p.Normal, p.Tangent);
 						p.Tangent = Float3::Cross(p.Binormal, p.Normal);
 
-						rasterizer->_rchart[index++] = p;
+						rchart[index++] = p;
 					}
 				}
 			}
@@ -509,7 +507,7 @@ namespace LFX {
 		baker._cfg.MaxPathLength = World::Instance()->GetSetting()->GIPathLength;
 		baker._cfg.RussianRouletteDepth = -1;
 
-		baker.Run(rasterizer);
+		baker.Run(mapSize * msaa, mapSize * msaa, rchart);
 
 		Float3 * lmap = mLightingMap[yblock * mDesc.BlockCount.x + xblock];
 		for (int j = 0; j < mapSize; ++j)
@@ -534,8 +532,6 @@ namespace LFX {
 				lmap[(j - 0) * mapSize + (i - 0)] += color;
 			}
 		}
-
-		delete rasterizer;
 	}
 
 	void Terrain::GetLightingMap(int i, int j, std::vector<Float3>& colors)

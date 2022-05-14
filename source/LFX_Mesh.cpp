@@ -2,7 +2,8 @@
 #include "LFX_World.h"
 #include "LFX_AOBaker.h"
 #include "LFX_RasterizerSoft.h"
-#include "LFX_RasterizerZSpan.h"
+#include "LFX_RasterizerScan2.h"
+//#include "LFX_RasterizerZSpan.h"
 #include "LFX_ILBakerRaytrace.h"
 #include "LFX_EmbreeScene.h"
 
@@ -402,29 +403,34 @@ namespace LFX {
 	{
 		assert(mLightingMapSize > 0);
 
-		int width = mLightingMapSize;
-		int height = mLightingMapSize;
-		int msaa = World::Instance()->GetSetting()->MSAA;
-		int samples = 16;
-		const int border = LMAP_BORDER * msaa;
+		const int width = mLightingMapSize;
+		const int height = mLightingMapSize;
+		const int msaa = World::Instance()->GetSetting()->MSAA;
+		const int border = LMAP_BORDER;
 
 		std::vector<Float4> lmap(width * height);
-		RasterizerZSpan rs(this, width * msaa, height * msaa, samples, border);
-		rs.E = [this, &lmap, width, msaa, &lights](const Float2& texel, const Vertex& v, int mtlId) {
-			int x = static_cast<int>(texel.x) / msaa;
-			int y = static_cast<int>(texel.y) / msaa;
+		RasterizerScan2 rs(this, width, height, msaa, border);
+		rs.F = [this, &lmap, width, msaa, &lights](const Float2& texel, const Vertex& v, int mtlId) {
+			int x = static_cast<int>(texel.x);
+			int y = static_cast<int>(texel.y);
 
 			Float3 color = Float3(0, 0, 0);
 			for (auto light : lights)
 			{
+#ifndef LFX_DEBUG_LUV
 				color += _doLighting(v, mtlId, light);
+#else
+				color += Float3(0.5f, 0.5f, 0.5f);
+#endif
 				//color += Float3::ONE;
 			}
 
 			lmap[y * width + x] += Float4(color.x, color.y, color.z, 1/*Samples*/);
+#ifdef LFX_DEBUG_LUV
+			lmap[y * width + x].w = 1;
+#endif
 		};
-
-		rs.Rasterize();
+		rs.DoRasterize();
 
 		for (int y = 0; y < height; ++y)
 		{
@@ -471,8 +477,8 @@ namespace LFX {
 		int width = msaa * mLightingMapSize;
 		int height = msaa * mLightingMapSize;
 
-		RasterizerSoft * rasterizer = new RasterizerSoft(this, width, height);
-		rasterizer->DoRasterize2();
+		RasterizerSoft* rasterizer = new RasterizerSoft(this, width, height);
+		rasterizer->DoRasterize();
 
 		ILBakerRaytrace baker;
 		baker._cfg.SkyRadiance = World::Instance()->GetSetting()->SkyRadiance;
@@ -480,7 +486,7 @@ namespace LFX {
 		baker._cfg.SqrtNumSamples = World::Instance()->GetSetting()->GISamples;
 		baker._cfg.MaxPathLength = World::Instance()->GetSetting()->GIPathLength;
 		baker._cfg.RussianRouletteDepth = -1;
-		baker.Run(rasterizer);
+		baker.Run(rasterizer->_width, rasterizer->_height, rasterizer->_rchart);
 
 		int index = 0;
 		std::vector<LFX::Float3> & ilm = this->_getLightingMap();
@@ -520,7 +526,8 @@ namespace LFX {
 		int height = msaa * mLightingMapSize;
 
 		RasterizerSoft* rasterizer = new RasterizerSoft(this, width, height);
-		rasterizer->DoRasterize2();
+
+		rasterizer->DoRasterize();
 
 		for (int j = 0; j < mLightingMapSize; ++j)
 		{

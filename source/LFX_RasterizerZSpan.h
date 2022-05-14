@@ -50,7 +50,7 @@ namespace LFX {
 		};
 
 	public:
-		std::function<void(const Float2& texel, const Vertex& v, int mtlId)> E;
+		std::function<void(const Float2& texel, const Vertex& v, int mtlId)> F;
 
 		Mesh* _entity;
 		int _width, _height;

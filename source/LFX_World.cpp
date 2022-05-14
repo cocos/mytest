@@ -64,6 +64,9 @@ namespace LFX {
 		stream >> mSetting.Threads;
 		// È¡ÏûGamma
 		mSetting.Gamma = 1;
+		// 
+		mSetting.GIScale = 0.0f;
+		mSetting.AOLevel = 0;
 
 		int ckId = 0;
 		while (stream.Read(&ckId, sizeof(int))) {
@@ -290,49 +293,6 @@ namespace LFX {
 					const int dims = std::max(w * lmap_size, h * lmap_size);
 					const int channels = mSetting.RGBEFormat ? 4 : 3;
 
-#if 0
-					TextureAtlasPacker::Options options;
-					options.Width = dims;
-					options.Height = dims;
-					options.Channels = channels;
-					options.Border = 0;
-					options.Space = 0;
-
-					LOGD("Pack terrain %d blocks %d %d %d %d", t, x, y, w, h);
-					TextureAtlasPacker packer(options);
-					std::vector<TextureAtlasPacker::Item> packed_items;
-
-					for (int j = 0; j < h; ++j)
-					{
-						for (int i = 0; i < w; ++i)
-						{
-							std::vector<Float3> colors;
-							colors.resize(lmap_size * lmap_size);
-							terrain->GetLightingMap(x + i, y + j, colors);
-
-							float factor = 1.0f;
-							Image image;
-							image.width = lmap_size;
-							image.height = lmap_size;
-							image.channels = options.Channels;
-							ConvertColor(image, lmap_factor, colors, mSetting);
-
-							TextureAtlasPacker::Item item;
-							item.Factor = factor;
-							packer.Insert(image.pixels, image.width, image.height, item);
-							packed_items.push_back(item);
-						}
-					}
-
-					auto atlas = packer.GetAtlasArray();
-
-					LFX::Image image;
-					image.pixels = &atlas[0]->Pixels[0];
-					image.width = atlas[0]->Width;
-					image.height = atlas[0]->Height;
-					image.channels = options.Channels;
-#endif
-
 					LFX::Image image;
 					image.pixels = new uint8_t[dims * dims * channels];
 					image.width = dims;
@@ -390,7 +350,11 @@ namespace LFX {
 							remapInfo.Offset[0] = item.OffsetU + offset * item.ScaleU;
 							remapInfo.Offset[1] = item.OffsetV + offset * item.ScaleV;
 							remapInfo.Scale = item.ScaleU * scale;
+#if LFX_VERSION >= 35
 							remapInfo.Factor = item.Factor;
+#else
+							remapInfo.ScaleV = item.ScaleV * scale;
+#endif
 							fwrite(&block_index, sizeof(int), 1, fp);
 							fwrite(&remapInfo, sizeof(LightMapInfo), 1, fp);
 						}
@@ -485,8 +449,11 @@ namespace LFX {
 				remapInfo.Offset[0] = item.OffsetU + offset * item.ScaleU;
 				remapInfo.Offset[1] = item.OffsetV + offset * item.ScaleV;
 				remapInfo.Scale = item.ScaleU * scale;
+#if LFX_VERSION >= 35
 				remapInfo.Factor = item.Factor;
-
+#else
+				remapInfo.ScaleV = item.ScaleV * scale;
+#endif
 				fwrite(&i, sizeof(int), 1, fp);
 				fwrite(&remapInfo, sizeof(LightMapInfo), 1, fp);
 			}

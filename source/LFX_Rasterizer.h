@@ -23,21 +23,17 @@ namespace LFX {
 
 		static void Blur(Float3* data, int w, int h, int stride);
 		static void Optimize(Float4* lmap, int w, int h, int border);
+		static bool TexelIsOut(const Float2& texel, int w, int h);
 		static bool PointInTriangle(Float2 P, Float2 A, Float2 B, Float2 C, float& tu, float& tv);
 
 	public:
-		int _width, _height;
 		std::vector<Float3> _rmap;
-		std::vector<RVertex> _rchart;
 
 	public:
 		Rasterizer(int width, int height);
-		~Rasterizer();
+		virtual ~Rasterizer() {}
 
-		virtual void DoRasterize2() = 0;
-
-		virtual void DoLighting(const std::vector<Light *> & lights) = 0;
+		virtual void DoRasterize() = 0;
 	};
-
 
 }

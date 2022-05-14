@@ -119,7 +119,7 @@ namespace LFX {
 					v.Normal.Normalize();
 					v.Tangent.Normalize();
 					v.Binormal.Normalize();
-					E(this, texel, RVertex(v, tri.MaterialId));
+					F(this, texel, RVertex(v, tri.MaterialId));
 				}
 			}
 		}
@@ -148,7 +148,7 @@ namespace LFX {
 				v.Normal.normalize();
 				v.Tangent.normalize();
 				v.Binormal.normalize();
-				E(ftexel, v, mtlId);
+				F(ftexel, v, mtlId);
 			}
 		}
 		else {
@@ -164,7 +164,7 @@ namespace LFX {
 			v.Normal.normalize();
 			v.Tangent.normalize();
 			v.Binormal.normalize();
-			E(ftexel, v, mtlId);
+			F(ftexel, v, mtlId);
 		}
 	}
 

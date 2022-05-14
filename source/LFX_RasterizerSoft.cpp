@@ -9,6 +9,8 @@ namespace LFX {
 		: Rasterizer(width, height)
 	{
 		_mesh = mesh;
+		_width = width;
+		_height = height;
 		_rchart.resize(width * height);
 		for (size_t i = 0; i < _rchart.size(); ++i)
 		{
@@ -26,7 +28,7 @@ namespace LFX {
 #define R_OUT_PUT(x, y, v) { _rchart[y * _width + x].Color += Float3(0.5f, 0.5f, 0.5f); }
 #endif
 
-	void RasterizerSoft::_DoRasterize(const Vertex & _A, const Vertex & _B, const Vertex & _C, int mtlId, float offset, float scale)
+	void RasterizerSoft::_rasterize(const Vertex & _A, const Vertex & _B, const Vertex & _C, int mtlId, float offset, float scale)
 	{
 		Vertex ta = _A, tb = _B, tc = _C;
 
@@ -273,7 +275,7 @@ namespace LFX {
 		return u + v <= 1;
 	}
 
-	void RasterizerSoft::DoRasterize2()
+	void RasterizerSoft::DoRasterize()
 	{
 		for (int i = 0; i < _mesh->NumOfTriangles(); ++i)
 		{
@@ -282,11 +284,11 @@ namespace LFX {
 			const Vertex & B = _mesh->_getVertex(tri.Index1);
 			const Vertex & C = _mesh->_getVertex(tri.Index2);
 
-			_DoRasterize(A, B, C, tri.MaterialId, 0, 1);
+			_rasterize(A, B, C, tri.MaterialId, 0, 1);
 		}
 	}
 
-	bool RS_IsEdge(Rasterizer * rs, int u, int v, int aa)
+	bool RS_IsEdge(RasterizerSoft* rs, int u, int v, int aa)
 	{
 		int white = 0, black = 0;
 
@@ -310,68 +312,6 @@ namespace LFX {
 		}
 
 		return white != 0 && black != 0;
-	}
-
-	void RasterizerSoft::DoLighting(const std::vector<Light *> & lights)
-	{
-#ifdef LFX_FEATURE_EDGA_AA
-		const int edgeAA = World::Instance()->GetSetting()->EdgeAA;
-#else
-		const int edgeAA = 0;
-#endif
-
-		int index = 0;
-		for (int v = 0; v < _height; ++v)
-		{
-			for (int u = 0; u < _width; ++u)
-			{
-				Float3 color = Float3(0, 0, 0);
-				const RVertex & bakePoint = _rchart[index];
-
-				if (edgeAA > 0 && RS_IsEdge(this, u, v, edgeAA))
-				{
-					for (int ey = -edgeAA; ey <= edgeAA; ++ey)
-					{
-						for (int ex = -edgeAA; ex <= edgeAA; ++ex)
-						{
-							int x = u + ex;
-							int y = v + ey;
-
-							if (x >= 0 && x < _width &&
-								y >= 0 && y < _height)
-							{
-								const RVertex & rvertex = _rchart[y * _width + x];
-								if (rvertex.MaterialId != -1)
-								{
-									for (size_t j = 0; j < lights.size(); ++j)
-									{
-										color += _mesh->_doLighting(rvertex, rvertex.MaterialId, lights[j]);
-									}
-								}
-							}
-						}
-					}
-
-					color /= (float)(edgeAA * 2 + 1) * (edgeAA * 2 + 1);
-				}
-				else
-				{
-#ifndef LFX_DEBUG_LUV 
-					if (bakePoint.MaterialId != -1)
-					{
-						for (size_t j = 0; j < lights.size(); ++j)
-						{
-							color += _mesh->_doLighting(bakePoint, bakePoint.MaterialId, lights[j]);
-						}
-					}
-#else
-					color = bakePoint.Color;
-#endif
-				}
-				
-				_rmap[index++] = color;
-			}
-		}
 	}
 
 }

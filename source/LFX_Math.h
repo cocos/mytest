@@ -58,6 +58,18 @@ namespace LFX {
 		return a < b ? b : a;
 	}
 
+	template <class T>
+	inline T Min(const T a, const T b, const T c)
+	{
+		return a < b ? (a < c ? a : c) : (b < c ? b : c);
+	}
+
+	template <class T>
+	inline T Max(const T a, const T b, const T c)
+	{
+		return a > b ? (a > c ? a : c) : (b > c ? b : c);
+	}
+
 	inline float Round(float r)
 	{
 		return (r > 0.0f) ? std::floor(r + 0.5f) : std::ceil(r - 0.5f);

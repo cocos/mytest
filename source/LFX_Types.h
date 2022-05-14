@@ -31,6 +31,10 @@
 //#define LFX_VERSION 32
 #define LFX_VERSION 35
 
+#if LFX_VERSION < 35
+#define LFX_FORCE_RGBE 1
+#endif
+
 // Features(too slow)
 //#define LFX_FEATURE_EDGA_AA
 //#define LFX_FEATURE_GI_MSAA
