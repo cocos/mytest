@@ -72,21 +72,27 @@ namespace LFX {
 			return false;
 		}
 
-		Float4 SampleColor(float u, float v)
+		Float4 SampleColor(float u, float v, bool repeat = true)
 		{
-#if 0
-			while (u < 0)
-				u += 1;
-			while (u > 1)
-				u -= 1;
-			while (v < 0)
-				v += 1;
-			while (v > 1)
-				v -= 1;
-#else
-			u = Clamp(u, 0.0f, 1.0f);
-			v = Clamp(v, 0.0f, 1.0f);
-#endif
+			if (repeat) {
+				if (u < 0.0f || u > 1.0f) {
+					u = fmodf(u, 1.0f);
+					if (u < 0.0f) {
+						u += 1;
+					}
+				}
+
+				if (v < 0.0f || v > 1.0f) {
+					v = fmodf(v, 1.0f);
+					if (v < 0.0f) {
+						v += 1;
+					}
+				}
+			}
+			else {
+				u = Clamp(u, 0.0f, 1.0f);
+				v = Clamp(v, 0.0f, 1.0f);
+			}
 
 			float fu = u * (width - 1);
 			float fv = v * (height- 1);
