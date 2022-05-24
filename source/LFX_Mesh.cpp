@@ -425,7 +425,7 @@ namespace LFX {
 				//color += Float3::ONE;
 			}
 
-			lmap[y * width + x] += Float4(color.x, color.y, color.z, 1/*Samples*/);
+			lmap[y * width + x] += Float4(color.x, color.y, color.z, 1/*samples*/);
 #ifdef LFX_DEBUG_LUV
 			lmap[y * width + x].w = 1;
 #endif

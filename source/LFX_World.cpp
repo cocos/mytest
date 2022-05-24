@@ -657,7 +657,7 @@ namespace LFX {
 			mTerrains[i]->Build();
 		}
 
-		//
+//#undef LFX_USE_EMBREE_SCENE
 #ifdef LFX_USE_EMBREE_SCENE
 		LOGI("-:Building embree scene");
 		mScene = new EmbreeScene;

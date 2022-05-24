@@ -80,7 +80,7 @@ namespace LFX {
 	void RasterizerScan2::_vout(const Float2& texel, const Vertex& A, const Vertex& B, const Vertex& C, int mtlId)
 	{
 		if (_samples > 1) {
-			const int sq = (int)sqrt(_samples);
+			const int sq = _samples;
 			for (int j = 0; j < sq; ++j) {
 				for (int i = 0; i < sq; ++i) {
 					Float2 ftexel;
