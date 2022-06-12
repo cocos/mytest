@@ -41,3 +41,23 @@ project "LightFX"
 		-- tbb release
 		links { "tbb", "tbbmalloc", "tbbmalloc_proxy" }
 	filter{}
+	
+project "uvunwrap"
+	kind "StaticLib"
+	
+	disablewarnings {
+		"4100", -- unreferenced formal parameter
+		"4201", -- use nameless struct/union
+		"4267", -- convert size_t to int
+		"4505", -- unreferenced local function
+		"4996", -- deprecation function
+	}
+
+	includedirs {
+		"../uvunwrap",
+	}
+	files {
+		
+		"../uvunwrap/**.*",
+	}
+	
