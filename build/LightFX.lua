@@ -1,3 +1,11 @@
+group "3rd"
+	project "opennl"
+		kind "StaticLib"
+		files {
+			"../3rd/src/opennl/**.c",
+		}
+group ""
+
 project "LightFX"
 	kind "ConsoleApp"
 
@@ -59,5 +67,4 @@ project "uvunwrap"
 	files {
 		
 		"../uvunwrap/**.*",
-	}
-	
+	}	
