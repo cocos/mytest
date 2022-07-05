@@ -230,11 +230,13 @@ int local_main(int argc, char* argv[])
 
 #ifdef _DEBUG
 #define LFX_REMOTE_MODE 0
+#else
+#define LFX_REMOTE_MODE 1
 #endif
 
 int main(int argc, char* argv[])
 {
-#if LFX_REMOTE_MODE
+#if !LFX_REMOTE_MODE
 	return remote_main(argc, argv);
 #else
 	return local_main(argc, argv);
