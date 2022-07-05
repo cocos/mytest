@@ -236,7 +236,7 @@ int local_main(int argc, char* argv[])
 
 int main(int argc, char* argv[])
 {
-#if !LFX_REMOTE_MODE
+#if LFX_REMOTE_MODE
 	return remote_main(argc, argv);
 #else
 	return local_main(argc, argv);
