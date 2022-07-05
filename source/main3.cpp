@@ -45,7 +45,7 @@ const char* progress_format(const char* tag, int progress)
 	return text;
 }
 
-int main(int argc, char* argv[])
+int remote_main(int argc, char* argv[])
 {
 	const char* url = "http://127.0.0.1:3000";
 	
@@ -175,4 +175,66 @@ int main(int argc, char* argv[])
 	SAFE_DELETE(GLog);
 
 	return 0;
+}
+
+int local_main(int argc, char* argv[])
+{
+	GLog = new LFX::Log("lfx.log");
+
+	GWorld = new LFX::World;
+	if (GWorld->Load()) {
+		GWorld->Build();
+		GWorld->Start();
+		GStatus = E_STARTING;
+	}
+	else {
+		GStatus = E_STOPPED;
+		LOGE("?: Load scene failed");
+	}
+
+	while (GWorld != NULL) {
+		float kp = (GWorld->GetProgress() + 1) / (float)(GWorld->GetTaskCount() + 1);
+		int progress = (int)(kp * 100);
+
+		if (GProgress != progress) {
+			GProgress = progress;
+
+			const char* text = progress_format("Build lighting", progress);
+			LOGI(text);
+		}
+
+		GWorld->UpdateTask();
+
+		if (GWorld->End()) {
+			if (GProgress != 100) {
+				const char* text = progress_format("Build lighting", 100);
+				LOGI(text);
+			}
+
+			LOGI("Save world...");
+			GWorld->Save();
+			LOGI("Save world end.");
+
+			LOGI("Clear world...");
+			GWorld->Clear();
+			LOGI("Clear world end.");
+
+			LOGI("Delete world");
+			SAFE_DELETE(GWorld);
+			GStatus = E_FINISHED;
+		}
+	}
+
+	return 0;
+}
+
+#define LFX_REMOTE_MODE 0
+
+int main(int argc, char* argv[])
+{
+#if LFX_REMOTE_MODE
+	return remote_main(argc, argv);
+#else
+	return local_main(argc, argv);
+#endif
 }

@@ -31,7 +31,9 @@ namespace LFX {
 			float OffsetV;
 			float ScaleU;
 			float ScaleV;
+#if LFX_VERSION >= 35
 			float Factor;
+#endif
 		};
 
 		struct Atlas

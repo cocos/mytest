@@ -10,14 +10,13 @@ namespace LFX {
 		int width;
 		int height;
 		int channels;
-		unsigned char * data;
+		std::vector<uint8_t> data;
 
 		Texture()
 		{
 			channels = 0;
 			width = 0;
 			height = 0;
-			data = NULL;
 		}
 
 		~Texture()

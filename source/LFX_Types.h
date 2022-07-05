@@ -29,7 +29,9 @@
 
 //#define LFX_VERSION 30
 //#define LFX_VERSION 32
-#define LFX_VERSION 35
+//#define LFX_VERSION 34
+//#define LFX_VERSION 35
+#define LFX_VERSION 36
 
 #if LFX_VERSION < 35
 #define LFX_FORCE_RGBE 1

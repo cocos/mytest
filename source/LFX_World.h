@@ -95,7 +95,7 @@ namespace LFX {
 
 		/// Texture
 		Texture * LoadTexture(const String & filename);
-		Texture * CreateTexture(const String & name, int w, int h, int channels, unsigned char *data);
+		Texture * CreateTexture(const String & name, int w, int h, int channels);
 		Texture * GetTexture(const String & name);
 
 		/// Light

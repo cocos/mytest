@@ -182,7 +182,7 @@ namespace LFX {
 		}
 
 		if (!settings.RGBEFormat) {
-			image.pixels = new uint8_t[image.width * image.height * 3];
+			image.pixels.resize(image.width * image.height * 3);
 			for (int k = 0; k < colors.size(); ++k)
 			{
 				factor = std::max(colors[k].x, factor);
@@ -202,7 +202,7 @@ namespace LFX {
 			}
 		}
 		else {
-			image.pixels = new uint8_t[image.width * image.height * 3];
+			image.pixels.resize(image.width * image.height * 4);
 			for (int k = 0; k < colors.size(); ++k)
 			{
 				RGBE rgbe = RGBE_FROM(colors[k]);
@@ -294,11 +294,11 @@ namespace LFX {
 					const int channels = mSetting.RGBEFormat ? 4 : 3;
 
 					LFX::Image image;
-					image.pixels = new uint8_t[dims * dims * channels];
+					image.pixels.resize(dims * dims * channels);
 					image.width = dims;
 					image.height = dims;
 					image.channels = channels;
-					memset(image.pixels, 0, dims * dims * channels);
+					memset(image.pixels.data(), 0, dims * dims * channels);
 
 					LOGD("Pack terrain %d blocks %d %d %d %d", t, x, y, w, h);
 					std::vector<TextureAtlasPacker::Item> packed_items;
@@ -318,7 +318,9 @@ namespace LFX {
 							ConvertColor(temp, factor, colors, mSetting);
 
 							TextureAtlasPacker::Item item;
+#if LFX_VERSION >= 35
 							item.Factor = factor;
+#endif
 							item.OffsetU = i * lmap_size / (float)dims;
 							item.OffsetV = j * lmap_size / (float)dims;
 							item.ScaleU = lmap_size / (float)dims;
@@ -402,8 +404,10 @@ namespace LFX {
 			fclose(tfp);
 #endif
 			TextureAtlasPacker::Item item;
+#if LFX_VERSION >= 35
 			item.Factor = factor;
-			packer.Insert(image.pixels, image.width, image.height, item);
+#endif
+			packer.Insert(image.pixels.data(), image.width, image.height, item);
 			packed_items.push_back(item);
 		}
 
@@ -411,7 +415,7 @@ namespace LFX {
 		for (int i = 0; i < atlas.size(); ++i)
 		{
 			LFX::Image image;
-			image.pixels = &atlas[i]->Pixels[0];
+			image.pixels = atlas[i]->Pixels;
 			image.width = atlas[i]->Width;
 			image.height = atlas[i]->Height;
 			image.channels = options.Channels;
@@ -422,8 +426,6 @@ namespace LFX {
 			FILE* tfp = fopen(filename, "wb");
 			LFX::PNG_Save(tfp, image);
 			fclose(tfp);
-
-			image.pixels = NULL;
 		}
 
 		// chunk
@@ -515,11 +517,14 @@ namespace LFX {
 		if (PNG_Test(fs)) {
 			PNG_Load(img, fs);
 		}
+		else if (TGA_Test(fs)) {
+			TGA_Load(img, fs);
+		}
 		else if (BMP_Test(fs)) {
 			BMP_Load(img, fs);
 		}
 
-		if (img.pixels == NULL) {
+		if (img.pixels.empty()) {
 			LOGW("Load Texture '%s' failed", filename.c_str());
 			return NULL;
 		}
@@ -534,19 +539,17 @@ namespace LFX {
 		tex->data = img.pixels;
 		mTextures.push_back(tex);
 
-		img.pixels = NULL;
-
 		return tex;
 	}
 
-	Texture * World::CreateTexture(const String & nam, int w, int h, int channels, unsigned char *data)
+	Texture * World::CreateTexture(const String & nam, int w, int h, int channels)
 	{
 		Texture * t = new Texture;
 		t->name = nam;
 		t->width = w;
 		t->height = h;
 		t->channels = channels;
-		t->data = data;
+		t->data.resize(w * h * channels, 0);
 		mTextures.push_back(t);
 
 		return t;
@@ -657,7 +660,7 @@ namespace LFX {
 			mTerrains[i]->Build();
 		}
 
-//#undef LFX_USE_EMBREE_SCENE
+#undef LFX_USE_EMBREE_SCENE
 #ifdef LFX_USE_EMBREE_SCENE
 		LOGI("-:Building embree scene");
 		mScene = new EmbreeScene;

@@ -99,7 +99,7 @@ namespace LFX {
 			uint8_t * data = new uint8_t[image.width * image.height];
 			IS.Read(data, image.width * image.height);
 
-			image.pixels = new uint8_t[image.width * image.height * 3];
+			image.pixels.resize(image.width * image.height * 3);
 			for (int i = 0; i < image.width * image.height; ++i)
 			{
 				image.pixels[i * 3 + 0] = palette[data[i]].r;
@@ -113,9 +113,9 @@ namespace LFX {
 		}
 		else if (header.info.bitcount == 24)
 		{
-			image.pixels = new uint8_t[image.width * image.height * 3];
+			image.pixels.resize(image.width * image.height * 3);
 
-			IS.Read(image.pixels, image.width * image.height * 3);
+			IS.Read(image.pixels.data(), image.width * image.height * 3);
 			for (int i = 0; i < image.width * image.height; ++i)
 			{
 				std::swap(image.pixels[i * 3 + 0], image.pixels[i * 3 + 2]);
@@ -125,8 +125,8 @@ namespace LFX {
 		}
 		else if (header.info.bitcount == 32)
 		{
-			image.pixels = new uint8_t[image.width * image.height * 4];
-			IS.Read(image.pixels, image.width * image.height * 4);
+			image.pixels.resize(image.width * image.height * 4);
+			IS.Read(image.pixels.data(), image.width * image.height * 4);
 			for (int i = 0; i < image.width * image.height; ++i)
 			{
 				std::swap(image.pixels[i * 4 + 0], image.pixels[i * 4 + 2]);
@@ -193,7 +193,7 @@ namespace LFX {
 		uint8_t * buffer = new uint8_t[line_bytes];
 		for (int j = image.height - 1; j >= 0; --j)
 		{
-			const uint8_t * c_pixels = image.pixels + line_bytes * j;
+			const uint8_t * c_pixels = image.pixels.data() + line_bytes * j;
 
 			memcpy(buffer, c_pixels, line_bytes);
 

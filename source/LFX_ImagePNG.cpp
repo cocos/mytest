@@ -184,9 +184,15 @@ namespace LFX {
 		//
 		unsigned char * data = (unsigned char *)stream.GetData();
 		int len = stream.Size();
+		unsigned char* pixels = nullptr;
 		unsigned int w = 0, h = 0;
 
-		int err = lodepng_decode_memory(&image.pixels, &w, &h, data, len, colortype, 8);
+		int err = lodepng_decode_memory(&pixels, &w, &h, data, len, colortype, 8);
+		if (pixels != nullptr) {
+			image.pixels.resize(w * h * image.channels);
+			memcpy(image.pixels.data(), pixels, image.pixels.size());
+			SAFE_DELETE_ARRAY(pixels);
+		}
 
 		return err == 0;
 	}
@@ -223,7 +229,7 @@ namespace LFX {
 		state.info_png.color.colortype = colortype;
 		state.info_png.color.bitdepth = 8;
 		state.encoder.auto_convert = false;
-		lodepng_encode(&data, &size, image.pixels, image.width, image.height, &state);
+		lodepng_encode(&data, &size, image.pixels.data(), image.width, image.height, &state);
   		lodepng_state_cleanup(&state);
 
 		if (data != NULL)
