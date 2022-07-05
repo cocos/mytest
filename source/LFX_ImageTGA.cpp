@@ -19,8 +19,8 @@ namespace LFX {
 
 	bool TGA_Load(Image& image, Stream& stream)
 	{
-		byte TGAHeader[12];
-		byte TGACompare[12] = { 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+		uint8_t TGAHeader[12];
+		uint8_t TGACompare[12] = { 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 		bool rle = false;
 
 		stream.Read(TGAHeader, 12);
@@ -32,7 +32,7 @@ namespace LFX {
 			return false;
 		}
 
-		byte header[6];
+		uint8_t header[6];
 		stream.Read(header, 6);
 		if (header[4] != 24 && header[4] != 32) {
 			return false;
@@ -93,7 +93,7 @@ namespace LFX {
 					}
 				}
 
-				byte* d_pixels = image.pixels.data();
+				uint8_t* d_pixels = image.pixels.data();
 				switch (chanels) {
 				case 3:
 					d_pixels[i * 3 + 0] = pixel[0];
@@ -114,15 +114,15 @@ namespace LFX {
 		}
 
 		if (!image.pixels.empty() && reversed) {
-			byte* pixels = image.pixels.data();
-			int line_bytes = image.width * bitcount / 8;
+			uint8_t* pixels = image.pixels.data();
+			int line_uint8_ts = image.width * bitcount / 8;
 
 			std::vector<uint8_t> buffer;
-			buffer.resize(line_bytes);
+			buffer.resize(line_uint8_ts);
 			for (int i = 0, j = image.height - 1; i < j; ++i, --j) {
-				memcpy(buffer.data(), &pixels[i * line_bytes], line_bytes);
-				memcpy(&pixels[i * line_bytes], &pixels[j * line_bytes], line_bytes);
-				memcpy(&pixels[j * line_bytes], buffer.data(), line_bytes);
+				memcpy(buffer.data(), &pixels[i * line_uint8_ts], line_uint8_ts);
+				memcpy(&pixels[i * line_uint8_ts], &pixels[j * line_uint8_ts], line_uint8_ts);
+				memcpy(&pixels[j * line_uint8_ts], buffer.data(), line_uint8_ts);
 			}
 		}
 
