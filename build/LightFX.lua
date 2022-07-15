@@ -62,6 +62,7 @@ project "uvunwrap"
 	}
 
 	includedirs {
+		"../3rd/src/opennl",
 		"../uvunwrap",
 	}
 	files {
