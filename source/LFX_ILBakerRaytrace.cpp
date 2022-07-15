@@ -1,8 +1,11 @@
 #include "LFX_World.h"
 #include "LFX_ILBakerRaytrace.h"
+#include "LFX_ILPathTrace.h"
 #include "LFX_EmbreeScene.h"
 
 namespace LFX {
+
+	using namespace ILBaker;
 
 	inline float ComputeLuminance(Float3 color)
 	{
@@ -44,7 +47,7 @@ namespace LFX {
 
 		Float3 SampleDirection(Float2 samplePoint)
 		{
-			return ILBaker::SampleCosineHemisphere(samplePoint.x, samplePoint.y);
+			return SampleCosineHemisphere(samplePoint.x, samplePoint.y);
 		}
 
 		void AddSample(Float3 sampleDir, int sampleIdx, Float3 sample, bool hitSky)
@@ -74,72 +77,22 @@ namespace LFX {
 		}
 	};
 
-	enum class IntegrationTypes
-	{
-		Pixel = 0,
-		Lens,
-		BRDF,
-		Sun,
-		AreaLight,
-
-		NumValues,
-	};
-
-	struct IntegrationSampleSet
-	{
-		Float2 Samples[ILBakerRaytrace::NumIntegrationTypes];
-
-		void Init(const ILBaker::IntegrationSamples& samples, int pixelIdx, int sampleIdx)
-		{
-			assert(samples.NumTypes == ILBakerRaytrace::NumIntegrationTypes);
-			samples.GetSampleSet(pixelIdx, sampleIdx, Samples);
-		}
-
-		Float2 Pixel() const { return Samples[int(IntegrationTypes::Pixel)]; }
-		Float2 Lens() const { return Samples[int(IntegrationTypes::Lens)]; }
-		Float2 BRDF() const { return Samples[int(IntegrationTypes::BRDF)]; }
-		Float2 Sun() const { return Samples[int(IntegrationTypes::Sun)]; }
-		Float2 AreaLight() const { return Samples[int(IntegrationTypes::AreaLight)]; }
-	};
-
-	struct PathTracerParams
-	{
-		Float3 RayStart;
-		Float3 RayDir;
-		float RayLen = 0.0f;
-		int MaxPathLength = -1;
-#if 0
-		int RussianRouletteDepth = 4;
-		float RussianRouletteProbability = 0.5f;
-#endif
-		const IntegrationSampleSet* SampleSet = nullptr;
-
-		float DiffuseScale;
-		Float3 SkyRadiance;
-	};
-
 	//
-	void RT_CalcuLighting(Float3& diffuse, Float3& irradiance, const Float3 & P, const Vertex & V, Light * L, Material * M)
+	void RTCalcuLighting(Float3& diffuse, const Vertex & V, Light * L, const Material * M)
 	{
-		Float3 PS = V.Position - P;
-		float lenSq = PS.lenSqr();
-
 		float kl = 0;
 		Float3 color;
 		World::Instance()->GetShader()->DoLighting(color, kl, V, L, M);
-		if (kl >= 0)
-		{
+		if (kl >= 0) {
 			float len = 0;
 			Ray ray;
 
-			if (L->Type != Light::DIRECTION)
-			{
+			if (L->Type != Light::DIRECTION) {
 				ray.dir = L->Position - V.Position;
 				len = ray.dir.len();
 				ray.dir.normalize();
 			}
-			else
-			{
+			else {
 				ray.dir = -L->Direction;
 				len = FLT_MAX;
 			}
@@ -155,10 +108,9 @@ namespace LFX {
 		}
 
 		diffuse += kl > 0 ? color * L->IndirectScale : Float3(0, 0, 0);
-		irradiance += diffuse / (lenSq * lenSq);
 	}
 
-	void GetLightList(std::vector<Light*>& lights, const Float3& point)
+	void RTGetLightList(std::vector<Light*>& lights, const Float3& point)
 	{
 		for (int j = 0; j < World::Instance()->GetLightCount(); ++j) {
 			Light* light = World::Instance()->GetLight(j);
@@ -172,124 +124,20 @@ namespace LFX {
 		}
 	}
 
-	Float3 PathTrace(const PathTracerParams& params, ILBaker::Random& randomGenerator, float& illuminance, bool& hitSky)
+	bool RTPathTraceFunc(Float3& diffuse, const PathTraceParams& params, const Vertex& vtx, const Material* mtl, bool hitSky)
 	{
-		Ray ray;
-		ray.orig = params.RayStart;
-		ray.dir = params.RayDir;
-
-		Float3 radiance = Float3(0, 0, 0);
-		Float3 irradiance = Float3(0, 0, 0);
-		Float3 throughput = Float3(1.0f, 1.0f, 1.0f);
-		Float3 irrThroughput = Float3(1.0f, 1.0f, 1.0f);
-
-		// Keep tracing paths until we reach the specified max
-		int pathLength;
-		const int maxPathLength = params.MaxPathLength;
-		for (pathLength = 1; pathLength <= maxPathLength || maxPathLength == -1; ++pathLength)
-		{
-#if 0
-			// See if we should randomly terminate this path using Russian Roullete
-			const int rouletteDepth = params.RussianRouletteDepth;
-			if (pathLength >= rouletteDepth && rouletteDepth != -1)
-			{
-				float continueProbability = std::min<float>(params.RussianRouletteProbability, ComputeLuminance(throughput));
-				if (randomGenerator.RandomFloat() > continueProbability)
-					break;
-				throughput /= continueProbability;
-				irrThroughput /= continueProbability;
-			}
-#endif
-
-			bool continueTracing = false;
-			float sceneDistance = FLT_MAX;
-
-			Contact contact;
-			if (World::Instance()->GetScene()->RayCheck(contact, ray, params.RayLen, LFX_TERRAIN | LFX_MESH))
-			{
-				sceneDistance = contact.td;
-			}
-
-			Float3 rayOrigin = ray.orig;
-			Float3 rayDir = ray.dir;
-			if (sceneDistance < FLT_MAX)
-			{
-				if (pathLength == maxPathLength)
-					break;
-				if (contact.backFacing)
-					break;
-
-				Vertex hitSurface = contact.vhit;
-				Mat3 tangentToWorld;
-				tangentToWorld.SetXBasis(hitSurface.Tangent);
-				tangentToWorld.SetYBasis(hitSurface.Binormal);
-				tangentToWorld.SetZBasis(hitSurface.Normal);
-
-				Float3 material = ((Material *)contact.mtl)->Diffuse * params.DiffuseScale;
-				if (1)
-				{
-					// Compute direct lighting from the sun
-					Float3 directLighting;
-					Float3 directIrradiance;
-					if (1)
-					{
-						Float3 diffuse = Float3(0, 0, 0);
-						Float3 irradiance = Float3(0, 0, 0);
-
-						std::vector<Light *> lights;
-						GetLightList(lights, hitSurface.Position);
-						
-						for (size_t i = 0; i < lights.size(); ++i)
-						{
-							RT_CalcuLighting(diffuse, irradiance, ray.orig, hitSurface, lights[i], (Material*)contact.mtl);
-						}
-
-						directLighting = diffuse;
-						directIrradiance = irradiance;
-					}
-
-					radiance += directLighting * throughput;
-					irradiance += directIrradiance * irrThroughput;
-				}
-
-				// Pick a new path, using MIS to sample both our diffuse and specular BRDF's
-				if (1)
-				{
-					Float2 brdfSample = params.SampleSet->BRDF();
-					if (pathLength > 1)
-						brdfSample = randomGenerator.RandomFloat2();
-
-					Float3 sampleDir;
-					sampleDir = ILBaker::SampleCosineHemisphere(brdfSample.x, brdfSample.y);
-					sampleDir = Float3::Normalize(Mat3::Transform(sampleDir, tangentToWorld));
-
-					if (Float3::Dot(sampleDir, hitSurface.Normal) > 0.0f)
-					{
-						throughput = throughput * material;
-						irrThroughput = irrThroughput * 3.1415926f;
-
-						// Generate the ray for the new path
-						ray.orig = hitSurface.Position + sampleDir * 0.01f;
-						ray.dir = sampleDir;
-
-						continueTracing = true;
-					}
-				}
-			}
-			else
-			{
-				hitSky = true;
-
-				radiance += params.SkyRadiance * throughput;
-				irradiance += params.SkyRadiance * irrThroughput;
-			}
-
-			if (continueTracing == false)
-				break;
+		if (hitSky) {
+			diffuse += params.skyRadiance;
+			return true;
 		}
 
-		illuminance = ComputeLuminance(irradiance);
-		return radiance;
+		std::vector<Light*> lights;
+		RTGetLightList(lights, vtx.Position);
+		for (size_t i = 0; i < lights.size(); ++i) {
+			RTCalcuLighting(diffuse, vtx, lights[i], mtl);
+		}
+
+		return true;
 	}
 
 	Float4 ILBakerRaytrace::_doLighting(const Vertex & bakePoint, int texelIdxX, int texelIdxY)
@@ -323,22 +171,21 @@ namespace LFX {
 			Float3 rayDir = Mat3::Transform(rayDirTS, tangentToWorld);
 			rayDir = Float3::Normalize(rayDir);
 
-			PathTracerParams params;
-			params.SampleSet = &sampleSet;
-			params.RayDir = rayDir;
-			params.RayStart = rayStart + 0.001f * rayDir;
-			params.RayLen = 1000;
-			params.MaxPathLength = _cfg.MaxPathLength;
-			//params.RussianRouletteDepth = _cfg.RussianRouletteDepth;
-			//params.RussianRouletteProbability = 0.5f;
-			params.SkyRadiance = _cfg.SkyRadiance;
-			params.DiffuseScale = _cfg.DiffuseScale;
+			PathTraceParams params;
+			params.sampleSet = &sampleSet;
+			params.rayDir = rayDir;
+			params.rayStart = rayStart + 0.001f * rayDir;
+			params.rayLen = 1000;
+			params.maxPathLength = _cfg.MaxPathLength;
+			//params.russianRouletteDepth = _cfg.RussianRouletteDepth;
+			//params.russianRouletteProbability = 0.5f;
+			params.skyRadiance = _cfg.SkyRadiance;
+			params.diffuseScale = _cfg.DiffuseScale;
 
-			float illuminance = 0.0f;
 			bool hitSky = false;
-			Float3 sampleResult = PathTrace(params, _ctx.RandomGenerator, illuminance, hitSky);
+			PathTraceResult sampleResult = PathTrace(params, RTPathTraceFunc, _ctx.RandomGenerator, hitSky);
 
-			baker.AddSample(rayDirTS, sampleIdx, sampleResult, hitSky);
+			baker.AddSample(rayDirTS, sampleIdx, sampleResult.radiance, hitSky);
 		}
 
 		Float4 texelResults[1];
