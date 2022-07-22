@@ -1,6 +1,6 @@
 #include "LFX_World.h"
-#include "LFX_Stream.h"
 #include "LFX_Image.h"
+#include "LFX_Stream.h"
 #include "LFX_TextureAtlas.h"
 #include "LFX_DeviceStats.h"
 #include "LFX_EmbreeScene.h"
@@ -136,6 +136,44 @@ namespace LFX {
 				}
 				m->Unlock();
 
+#if 0
+				// Test lightmap uv
+				{
+					std::vector<Float2> uvs;
+					std::vector<Float2> luvs;
+					std::vector<int> indices;
+					uint8 color[3] = { 255, 255, 255 };
+
+					uvs.resize(numVtxs);
+					luvs.resize(numVtxs);
+					for (int i = 0; i < luvs.size(); ++i) {
+						uvs[i] = vtx[i].UV;
+						luvs[i] = vtx[i].LUV;
+					}
+
+					indices.resize(numTris * 3);
+					for (int i = 0; i < numTris; ++i) {
+						indices[i * 3 + 0] = tri[i].Index0;
+						indices[i * 3 + 1] = tri[i].Index1;
+						indices[i * 3 + 2] = tri[i].Index2;
+					}
+
+					Image luv_image(1024, 1024, 3);
+					memset(luv_image.pixels.data(), 0, luv_image.pixels.size());
+					Debug::RasterizeMeshToImage(&luv_image, luvs, indices, color);
+					FILE* tfp = fopen("test_luv.png", "wb");
+					LFX::PNG_Save(tfp, luv_image);
+					fclose(tfp);
+
+					Image uv_image(1024, 1024, 3);
+					Debug::RasterizeMeshToImage(&uv_image, uvs, indices, color);
+					tfp = fopen("test_uv.png", "wb");
+					LFX::PNG_Save(tfp, uv_image);
+					fclose(tfp);
+
+					break;
+				}
+#endif
 				break;
 			}
 

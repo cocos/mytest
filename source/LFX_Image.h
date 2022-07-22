@@ -17,6 +17,14 @@ namespace LFX {
 			width = 0;
 			height = 0;
 		}
+
+		Image(int w, int h, int channels)
+			: width(w)
+			, height(h)
+			, channels(channels)
+		{
+			pixels.resize(w * h * channels);
+		}
 	};
 
 	LFX_ENTRY bool BMP_Test(Stream & stream);
