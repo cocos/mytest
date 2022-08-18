@@ -30,6 +30,7 @@ namespace LFX {
 		void _calcuIndirectLightingTerrain();
 		void _calcuAmbientOcclusionMesh();
 		void _calcuAmbientOcclusionTerrain();
+		void _calcuSHProbe();
 		void _postProcess();
 
 	protected:

@@ -30,11 +30,17 @@ namespace LFX {
 				_calcuAmbientOcclusionTerrain();
 				_postProcess();
 			}
-			else {
+			else if (mEntity->GetType() == LFX_MESH) {
 				_calcuDirectLightingMesh();
 				_calcuIndirectLightingMesh();
 				_calcuAmbientOcclusionMesh();
 				_postProcess();
+			}
+			else if (mEntity->GetType() == LFX_SHPROBE) {
+				_calcuSHProbe();
+			}
+			else {
+				assert(0 && "Invalid entity!");
 			}
 
 			World::Instance()->_onThreadCompeleted();
@@ -57,9 +63,8 @@ namespace LFX {
 		if (pMesh->GetLightingMapSize())
 		{
 			std::vector<Light *> lights;
-			for (int l = 0; l < World::Instance()->GetLightCount(); ++l)
+			for (auto* light: World::Instance()->Lights())
 			{
-				Light * light = World::Instance()->GetLight(l);
 				if (IsLightVisible(light, pMesh->GetBound()))
 				{
 					lights.push_back(light);
@@ -92,9 +97,8 @@ namespace LFX {
 		bound.maximum += pTerrain->GetDesc().Position;
 
 		std::vector<Light *> lights;
-		for (int j = 0; j < World::Instance()->GetLightCount(); ++j)
+		for (auto* light : World::Instance()->Lights())
 		{
-			Light * light = World::Instance()->GetLight(j);
 			if (IsLightVisible(light, bound))
 			{
 				lights.push_back(light);
@@ -109,7 +113,7 @@ namespace LFX {
 	void STBaker::_calcuIndirectLightingMesh()
 	{
 		if (World::Instance()->GetSetting()->GIScale > 0) {
-			Mesh * pMesh = World::Instance()->GetMesh(mIndex);
+			Mesh * pMesh = World::Instance()->Meshes()[mIndex];
 
 			if (pMesh->GetLightingMapSize()) {
 				std::vector<Light *> lights;
@@ -125,7 +129,7 @@ namespace LFX {
 	void STBaker::_calcuIndirectLightingTerrain()
 	{
 		if (World::Instance()->GetSetting()->GIScale > 0) {
-			Terrain * pTerrain = (Terrain*)mEntity;
+			Terrain* pTerrain = (Terrain*)mEntity;
 
 			float blockSize = pTerrain->GetDesc().Dimension.x / pTerrain->GetDesc().BlockCount.x;
 			int xblock = mIndex % pTerrain->GetDesc().BlockCount.x;
@@ -139,7 +143,7 @@ namespace LFX {
 			bound.maximum.y = 10000;
 			bound.maximum.z = yblock * blockSize + blockSize;
 
-			std::vector<Light *> lights;
+			std::vector<Light*> lights;
 			pTerrain->GetLightList(lights, xblock, yblock, true);
 			if (lights.size() > 0) {
 				pTerrain->CalcuIndirectLighting(xblock, yblock, lights);
@@ -150,7 +154,7 @@ namespace LFX {
 	void STBaker::_calcuAmbientOcclusionMesh()
 	{
 		if (World::Instance()->GetSetting()->AOLevel > 0) {
-			Mesh * pMesh = World::Instance()->GetMesh(mIndex);
+			Mesh* pMesh = World::Instance()->Meshes()[mIndex];
 
 			if (pMesh->GetLightingMapSize() > 0) {
 				pMesh->CalcuAmbientOcclusion();
@@ -163,6 +167,14 @@ namespace LFX {
 		if (World::Instance()->GetSetting()->AOLevel > 0) {
 			//...
 		}
+	}
+
+	void STBaker::_calcuSHProbe()
+	{
+		SHBaker baker;
+		baker._cfg.SkyRadiance = World::Instance()->GetSetting()->SkyRadiance;
+		baker._cfg.DiffuseScale = World::Instance()->GetSetting()->GIScale;
+		baker.Run((SHProbe*)mEntity);
 	}
 
 	void STBaker::_postProcess()

@@ -39,7 +39,7 @@ namespace LFX {
 		{
 			int MapWidth = 0;
 			int MapHeight = 0;
-			ILBaker::Random RandomGenerator;
+			ILBaker::Random Random;
 			ILBaker::IntegrationSamples Samples;
 			std::vector<Float4> BakeOutput;
 		};

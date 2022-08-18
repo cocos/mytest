@@ -195,6 +195,14 @@ namespace LFX {
 				stream >> l->CastShadow;
 				break;
 			}
+
+			case LFX_FILE_SHPROBE: {
+				SHProbe* p = CreateSHProbe();
+				stream >> p->position;
+				stream >> p->normal;
+				break;
+			}
+
 			default:
 				LOGW("Unknown chunk %d", ckId);
 				return false;
@@ -206,18 +214,14 @@ namespace LFX {
 
 	void ConvertColor(Image& image, float& factor, std::vector<Float3>& colors, const World::Settings& settings)
 	{
+#if LFX_ENABLE_GAMMA
 		if (settings.Gamma != 1.0f) {
 			for (int k = 0; k < colors.size(); ++k)
 			{
 				colors[k] = Pow(colors[k], 1.0f / settings.Gamma);
 			}
 		}
-		if (settings.Tonemapping) {
-			for (int k = 0; k < colors.size(); ++k)
-			{
-				colors[k] = Shader::ACESToneMap(colors[k]);
-			}
-		}
+#endif
 
 		if (!settings.RGBEFormat) {
 			image.pixels.resize(image.width * image.height * 3);
@@ -417,7 +421,7 @@ namespace LFX {
 		std::vector<TextureAtlasPacker::Item> packed_items;
 		for (int i = 0; i < mMeshes.size(); ++i)
 		{
-			LFX::Mesh* mesh = LFX::World::Instance()->GetMesh(i);
+			LFX::Mesh* mesh = mMeshes[i];
 			if (mesh->GetLightingMapSize() == 0)
 				continue;
 
@@ -475,7 +479,7 @@ namespace LFX {
 			int packIndex = 0;
 			for (int i = 0; i < mMeshes.size(); ++i)
 			{
-				LFX::Mesh * mesh = LFX::World::Instance()->GetMesh(i);
+				LFX::Mesh * mesh = mMeshes[i];
 				if (mesh->GetLightingMapSize() == 0)
 					continue;
 
@@ -496,6 +500,20 @@ namespace LFX {
 #endif
 				fwrite(&i, sizeof(int), 1, fp);
 				fwrite(&remapInfo, sizeof(LightMapInfo), 1, fp);
+			}
+		}
+
+		// SH Probe
+		int numSHProbes = mSHProbes.size();
+		if (numSHProbes > 0) {
+			fwrite(&LFX_FILE_SHPROBE, sizeof(int), 1, fp);
+			fwrite(&numSHProbes, sizeof(int), 1, fp);
+
+			for (int i = 0; i < mSHProbes.size(); ++i) {
+				const auto& coefs = mSHProbes[i].coefficients;
+				const int numCoefs = coefs.size();
+				fwrite(&numCoefs, sizeof(int), 1, fp);
+				fwrite(coefs.data(), sizeof(coefs[0]) * coefs.size(), 1, fp);
 			}
 		}
 
@@ -612,6 +630,12 @@ namespace LFX {
 		return pLight;
 	}
 
+	SHProbe* World::CreateSHProbe()
+	{
+		mSHProbes.emplace_back();
+		return &mSHProbes.back();
+	}
+
 	Mesh * World::CreateMesh()
 	{
 		Mesh * pMesh = new Mesh();
@@ -657,8 +681,7 @@ namespace LFX {
 			if (node->elems.size() > 0)
 			{
 				Aabb bound = node->elems[0]->GetBound();
-				for (size_t i = 1; i < node->elems.size(); ++i)
-				{
+				for (size_t i = 1; i < node->elems.size(); ++i) {
 					bound.Merge(node->elems[i]->GetBound());
 				}
 
@@ -669,7 +692,6 @@ namespace LFX {
 		{
 			Aabb bound = _World_Optimize(node->child[0]);
 			bound.Merge(_World_Optimize(node->child[1]));
-
 			node->aabb = bound;
 		}
 
@@ -750,6 +772,11 @@ namespace LFX {
 			}
 		}
 
+		for (size_t i = 0; i < mSHProbes.size(); ++i)
+		{
+			mTasks.push_back({ &mSHProbes[i], (int)i });
+		}
+
 		for (size_t i = 0; i < mThreads.size(); ++i)
 		{
 			LOGI("-: Starting thread %d", i);
@@ -783,8 +810,7 @@ namespace LFX {
 		}
 
 		// end
-		for (size_t i = 0; i < mThreads.size(); ++i)
-		{
+		for (size_t i = 0; i < mThreads.size(); ++i) {
 			mThreads[i]->Stop();
 			delete mThreads[i];
 		}

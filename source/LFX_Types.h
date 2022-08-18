@@ -37,6 +37,8 @@
 #define LFX_FORCE_RGBE 1
 #endif
 
+#define LFX_ENABLE_GAMMA 0
+
 // Features(too slow)
 //#define LFX_FEATURE_EDGA_AA
 //#define LFX_FEATURE_GI_MSAA

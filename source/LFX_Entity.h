@@ -8,6 +8,7 @@ namespace LFX {
 
 #define LFX_MESH 0x01
 #define LFX_TERRAIN 0x02
+#define LFX_SHPROBE 0x03
 
 	struct LFX_ENTRY Material
 	{

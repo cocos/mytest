@@ -7,6 +7,7 @@
 #include "LFX_Scene.h"
 #include "LFX_Shader.h"
 #include "LFX_Baker.h"
+#include "LFX_SHBaker.h"
 #include "LFX_Rasterizer.h"
 
 namespace LFX {
@@ -15,6 +16,7 @@ namespace LFX {
 	static const int LFX_FILE_TERRAIN = 0x01;
 	static const int LFX_FILE_MESH = 0x02;
 	static const int LFX_FILE_LIGHT = 0x03;
+	static const int LFX_FILE_SHPROBE = 0x04;
 	static const int LFX_FILE_EOF = 0x00;
 
 	class EmbreeScene;
@@ -28,7 +30,6 @@ namespace LFX {
 		{
 			bool Selected;
 			bool RGBEFormat;
-			bool Tonemapping;
 
 			Float3 Ambient;
 			Float3 SkyRadiance;
@@ -55,14 +56,13 @@ namespace LFX {
 			{
 				Selected = false;
 				RGBEFormat = false;
-				Tonemapping = false;
 
 				MSAA = 1;
 #ifdef LFX_FEATURE_EDGE_AA
 				EdgeAA = 0;
 #endif
 				Size = 512;
-				Gamma = 2.2f;
+				Gamma = 1.0f;
 
 				GIScale = 0.5f;
 				GISamples = 25;
@@ -87,34 +87,21 @@ namespace LFX {
 		void Save();
 		void Clear();
 
-		/// Scene
 		Scene* GetScene() { return mScene; }
-
-		/// Shader
 		Shader* GetShader() { return mShader; }
 
-		/// Texture
 		Texture * LoadTexture(const String & filename);
 		Texture * CreateTexture(const String & name, int w, int h, int channels);
 		Texture * GetTexture(const String & name);
 
-		/// Light
+		Mesh* CreateMesh();
 		Light * CreateLight();
-		Light * GetLight(int i) { return mLights[i]; }
-		int GetLightCount() { return mLights.size(); }
-		const std::vector<Light*>& GetLights() const { return mLights; }
-
-		/// Mesh
-		Mesh * CreateMesh();
-		Mesh * GetMesh(int i) { return mMeshes[i]; }
-		int GetMeshCount() { return mMeshes.size(); }
-		const std::vector<Mesh*>& GetMeshes() const { return mMeshes; }
-
-		/// Terrain
-		Terrain * CreateTerrain(float * heightfield, const Terrain::Desc & desc);
-		Terrain * GetTerrain(int i) { return mTerrains[i]; }
-		int GetTerrainCount() { return mTerrains.size(); }
-		const std::vector<Terrain*>& GetTerrains() const { return mTerrains; }
+		SHProbe* CreateSHProbe();
+		Terrain* CreateTerrain(float* heightfield, const Terrain::Desc& desc);
+		const std::vector<Mesh*>& Meshes() const { return mMeshes; }
+		const std::vector<Light*>& Lights() const { return mLights; }
+		const std::vector<SHProbe>& SHProbes() const { return mSHProbes; }
+		const std::vector<Terrain*>& Terrains() const { return mTerrains; }
 
 		void Build();
 		void Start();
@@ -138,6 +125,7 @@ namespace LFX {
 		std::vector<Light *> mLights;
 		std::vector<Mesh *> mMeshes;
 		std::vector<Terrain *> mTerrains;
+		std::vector<SHProbe> mSHProbes;
 
 		std::vector<STBaker::Task> mTasks;
 		int mTaskIndex;

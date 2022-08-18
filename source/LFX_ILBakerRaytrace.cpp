@@ -112,8 +112,7 @@ namespace LFX {
 
 	void RTGetLightList(std::vector<Light*>& lights, const Float3& point)
 	{
-		for (int j = 0; j < World::Instance()->GetLightCount(); ++j) {
-			Light* light = World::Instance()->GetLight(j);
+		for (auto* light : World::Instance()->Lights()) {
 			if (!light->GIEnable) {
 				continue;
 			}
@@ -124,17 +123,19 @@ namespace LFX {
 		}
 	}
 
-	bool RTPathTraceFunc(Float3& diffuse, const PathTraceParams& params, const Vertex& vtx, const Material* mtl, bool hitSky)
+	bool RTPathTraceFunc(Float3& result, const PathTraceParams& params, const Vertex& vtx, const Material* mtl, bool hitSky)
 	{
 		if (hitSky) {
-			diffuse += params.skyRadiance;
+			result += params.skyRadiance;
 			return true;
 		}
 
 		std::vector<Light*> lights;
 		RTGetLightList(lights, vtx.Position);
 		for (size_t i = 0; i < lights.size(); ++i) {
+			Float3 diffuse;
 			RTCalcuLighting(diffuse, vtx, lights[i], mtl);
+			result += diffuse * params.diffuseScale;
 		}
 
 		return true;
@@ -175,7 +176,7 @@ namespace LFX {
 			params.sampleSet = &sampleSet;
 			params.rayDir = rayDir;
 			params.rayStart = rayStart + 0.001f * rayDir;
-			params.rayLen = 1000;
+			params.rayLen = DEFAULT_RAYTRACE_MAX_LENGHT;
 			params.maxPathLength = _cfg.MaxPathLength;
 			//params.russianRouletteDepth = _cfg.RussianRouletteDepth;
 			//params.russianRouletteProbability = 0.5f;
@@ -183,7 +184,7 @@ namespace LFX {
 			params.diffuseScale = _cfg.DiffuseScale;
 
 			bool hitSky = false;
-			PathTraceResult sampleResult = PathTrace(params, RTPathTraceFunc, _ctx.RandomGenerator, hitSky);
+			PathTraceResult sampleResult = PathTrace(params, RTPathTraceFunc, _ctx.Random, hitSky);
 
 			baker.AddSample(rayDirTS, sampleIdx, sampleResult.radiance, hitSky);
 		}
@@ -203,7 +204,7 @@ namespace LFX {
 			_ctx.BakeOutput[i] = Float4(0, 0, 0, 0);
 		}
 
-		GenerateIntegrationSamples(_ctx.Samples, _cfg.SqrtNumSamples, BakeGroupSize, 1, 5, _ctx.RandomGenerator);
+		GenerateIntegrationSamples(_ctx.Samples, _cfg.SqrtNumSamples, BakeGroupSize, 1, 5, _ctx.Random);
 
 		int index = 0;
 		for (int v = 0; v < _ctx.MapHeight; ++v)

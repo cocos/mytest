@@ -64,8 +64,8 @@ namespace LFX {
 
 	float GetAngleAtt(const Float3& L, const Float3& litDir, float litAngleScale, float litAngleOffset) {
 		float cd = litDir.dot(L);
-		float attenuation = Clamp(cd * litAngleScale + litAngleOffset, 0.0f, 1.0f);
-		return (attenuation * attenuation);
+		float att = Clamp(cd * litAngleScale + litAngleOffset, 0.0f, 1.0f);
+		return (att * att);
 	}
 
 	void Shader::DoLighting(Float3& color, float& kl, const Vertex& v, const Light* light, const Material* mtl)

@@ -12,6 +12,8 @@
 
 namespace LFX { namespace ILBaker {
 
+	#define DEFAULT_RAYTRACE_MAX_LENGHT 1000.0f 
+
 	struct EIntegrationTypes
 	{
 		enum

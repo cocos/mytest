@@ -41,9 +41,8 @@ namespace LFX {
 
 		rtcScene = rtcDeviceNewScene(rtcDevice, RTC_SCENE_DYNAMIC, RTC_INTERSECT1);
 
-		for (int i = 0; i < World::Instance()->GetMeshCount(); ++i)
+		for (auto* mesh : World::Instance()->Meshes())
 		{
-			Mesh * mesh = World::Instance()->GetMesh(i);
 			int totalNumTriangles = mesh->NumOfTriangles();
 			int totalNumVertices = mesh->NumOfVertices();
 
@@ -89,9 +88,7 @@ namespace LFX {
 #define _ES_TERRAIN_ENABLED 1
 #if _ES_TERRAIN_ENABLED
 		{
-			for (int i = 0; i < World::Instance()->GetTerrainCount(); ++i) {
-				Terrain *pTerrain = World::Instance()->GetTerrain(i);
-
+			for (auto* pTerrain : World::Instance()->Terrains()) {
 				std::vector<Vertex> & pVertex = pTerrain->_getVertexBuffer();
 				std::vector<Triangle> & pTriangle = pTerrain->_getTriBuffer();
 				int totalNumTriangles = pTerrain->_getTriBuffer().size();

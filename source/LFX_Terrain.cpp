@@ -619,9 +619,8 @@ namespace LFX {
 		bound.minimum += mDesc.Position;
 		bound.maximum += mDesc.Position;
 
-		for (int j = 0; j < World::Instance()->GetLightCount(); ++j)
+		for (Light* light : World::Instance()->Lights())
 		{
-			Light * light = World::Instance()->GetLight(j);
 			if (forGI && !light->GIEnable)
 				continue;
 

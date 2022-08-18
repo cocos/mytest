@@ -62,7 +62,7 @@ namespace LFX {
 		Aabb worldBound;
 
 		worldBound.Invalid();
-		for (auto mesh : World::Instance()->GetMeshes())
+		for (auto mesh : World::Instance()->Meshes())
 		{
 			Aabb bound = mesh->GetBound();
 			worldBound.Merge(bound);
@@ -72,7 +72,7 @@ namespace LFX {
 		if (worldBound.Valid())
 		{
 			mBVTree.Build(worldBound, LFX_BVH_LEVELS);
-			for (auto mesh : World::Instance()->GetMeshes())
+			for (auto mesh : World::Instance()->Meshes())
 			{
 				BVT_AddMesh(mBVTree.RootNode(), mesh);
 			}
@@ -129,7 +129,7 @@ namespace LFX {
 	{
 		if ((flags & LFX_MESH) && mBVTree.RootNode() != NULL && _occluded(mBVTree.RootNode(), ray, len))
 			return true;
-		if ((flags & LFX_TERRAIN) && _occluded(World::Instance()->GetTerrains(), ray, len))
+		if ((flags & LFX_TERRAIN) && _occluded(World::Instance()->Terrains(), ray, len))
 			return true;
 
 		return false;
@@ -179,10 +179,12 @@ namespace LFX {
 		contact.entity = NULL;
 		contact.backFacing = false;
 
-		if ((flags & LFX_MESH) && mBVTree.RootNode() != NULL)
+		if ((flags & LFX_MESH) && mBVTree.RootNode() != NULL) {
 			_rayCheck(contact, mBVTree.RootNode(), ray, len);
-		if ((flags & LFX_TERRAIN) && World::Instance()->GetTerrains().size() > 0)
-			_rayCheck(contact, World::Instance()->GetTerrains(), ray, len);
+		}
+		if ((flags & LFX_TERRAIN) && World::Instance()->Terrains().size() > 0) {
+			_rayCheck(contact, World::Instance()->Terrains(), ray, len);
+		}
 
 		if (contact.entity != NULL)
 		{

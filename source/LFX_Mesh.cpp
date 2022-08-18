@@ -639,11 +639,11 @@ namespace LFX {
 
 	void Mesh::GetLightList(std::vector<Light *> & lights, bool forGI)
 	{
-		for (int l = 0; l < World::Instance()->GetLightCount(); ++l)
+		for (Light* light : World::Instance()->Lights())
 		{
-			Light * light = World::Instance()->GetLight(l);
-			if (forGI && !light->GIEnable)
+			if (forGI && !light->GIEnable) {
 				continue;
+			}
 
 			if (IsLightVisible(light, GetBound()))
 			{
