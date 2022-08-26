@@ -62,6 +62,8 @@ namespace LFX {
 		stream >> mSetting.AORadius;
 		stream >> mSetting.AOColor;
 		stream >> mSetting.Threads;
+		stream >> mSetting.BakeLightMap;
+		stream >> mSetting.BakeLightProbe;
 		// È¡ÏûGamma
 		mSetting.Gamma = 1;
 		// 
@@ -754,28 +756,28 @@ namespace LFX {
 		}
 
 		mTasks.clear();
-		for (size_t i = 0; i < mMeshes.size(); ++i)
-		{
-			if (mMeshes[i]->GetLightingMapSize())
-			{
-				mTasks.push_back({ mMeshes[i], (int)i });
+		if (mSetting.BakeLightMap) {
+			for (size_t i = 0; i < mMeshes.size(); ++i) {
+				if (mMeshes[i]->GetLightingMapSize()) {
+					mTasks.push_back({ mMeshes[i], (int)i });
+				}
 			}
-		}
-		for (auto terrain : mTerrains)
-		{
-			for (int i = 0; i < terrain->GetDesc().BlockCount.x * terrain->GetDesc().BlockCount.y; ++i)
-			{
-				if (terrain->_getBlockValids()[i])
-				{
-					mTasks.push_back({ terrain, i });
+
+			for (auto terrain : mTerrains) {
+				for (int i = 0; i < terrain->GetDesc().BlockCount.x * terrain->GetDesc().BlockCount.y; ++i) {
+					if (terrain->_getBlockValids()[i]) {
+						mTasks.push_back({ terrain, i });
+					}
 				}
 			}
 		}
-
-		for (size_t i = 0; i < mSHProbes.size(); ++i)
-		{
-			mTasks.push_back({ &mSHProbes[i], (int)i });
+		
+		if (mSetting.BakeLightProbe) {
+			for (size_t i = 0; i < mSHProbes.size(); ++i) {
+				mTasks.push_back({ &mSHProbes[i], (int)i });
+			}
 		}
+		
 
 		for (size_t i = 0; i < mThreads.size(); ++i)
 		{
