@@ -883,7 +883,7 @@ namespace LFX {
         }
 
         out.indices.resize(imesh.corner.size());
-        assert(out.indices.size() == mesh->indices.size() * 3);
+        assert(out.indices.size() == mesh->triangles.size() * 3);
         for (size_t i = 0; i < imesh.corner.size(); ++i) {
             out.indices[i] = imesh.corner[i];
         }
