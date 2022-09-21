@@ -177,7 +177,7 @@ namespace LFX {
 		contact.tv = 0;
 		contact.triIndex = -1;
 		contact.entity = NULL;
-		contact.backFacing = false;
+		contact.facing = false;
 
 		if ((flags & LFX_MESH) && mBVTree.RootNode() != NULL) {
 			_rayCheck(contact, mBVTree.RootNode(), ray, len);
@@ -186,11 +186,9 @@ namespace LFX {
 			_rayCheck(contact, World::Instance()->Terrains(), ray, len);
 		}
 
-		if (contact.entity != NULL)
-		{
+		if (contact.entity != NULL) {
 			Vertex a, b, c;
-			if (contact.entity->GetType() == LFX_TERRAIN)
-			{
+			if (contact.entity->GetType() == LFX_TERRAIN) {
 				Terrain* terrain = (Terrain*)contact.entity;
 
 				Triangle tri = terrain->_getTriangle(contact.triIndex);
@@ -198,9 +196,8 @@ namespace LFX {
 				b = terrain->_getVertex(tri.Index1);
 				c = terrain->_getVertex(tri.Index2);
 			}
-			else
-			{
-				Mesh * mesh = (Mesh *)contact.entity;
+			else {
+				Mesh* mesh = (Mesh*)contact.entity;
 
 				Triangle tri = mesh->_getTriangle(contact.triIndex);
 				a = mesh->_getVertex(tri.Index0);
@@ -208,8 +205,11 @@ namespace LFX {
 				c = mesh->_getVertex(tri.Index2);
 			}
 
+#if 0
 			Float3 triNml = Float3::Normalize(Float3::Cross(c.Position - a.Position, b.Position - a.Position));
 			contact.backFacing = Float3::Dot(triNml, ray.dir) >= 0.0f;
+#endif
+			contact.facing = Float3::Dot(contact.vhit.Normal, -ray.dir) >= 0.0f;
 		}
 
 		return contact.entity != NULL;

@@ -37,6 +37,7 @@ namespace LFX {
 
 		struct Context
 		{
+			Entity* entity = nullptr;
 			int MapWidth = 0;
 			int MapHeight = 0;
 			ILBaker::Random Random;
@@ -48,7 +49,7 @@ namespace LFX {
 		Context _ctx;
 
 	public:
-		void Run(int w, int h, const std::vector<RVertex>& rchart);
+		void Run(Entity* entity, int w, int h, const std::vector<RVertex>& rchart);
 
 	protected:
 		Float4 _doLighting(const Vertex & bakerPoint, int texelIdxX, int texelIdxY);

@@ -248,8 +248,8 @@ namespace LFX {
 		int triIndex;
 		Vertex vhit;
 		Entity* entity;
-		bool backFacing;
-		const void * mtl;
+		bool facing;
+		const void* mtl;
 	};
 
 }

@@ -45,11 +45,6 @@ namespace LFX {
 			ResultSum = Float3(0, 0, 0);
 		}
 
-		Float3 SampleDirection(Float2 samplePoint)
-		{
-			return SampleCosineHemisphere(samplePoint.x, samplePoint.y);
-		}
-
 		void AddSample(Float3 sampleDir, int sampleIdx, Float3 sample, bool hitSky)
 		{
 			ResultSum += sample;
@@ -149,8 +144,9 @@ namespace LFX {
 		const int samplesPerTexel = _cfg.SqrtNumSamples * _cfg.SqrtNumSamples;
 
 		const int texelIdx = texelIdxY * _ctx.MapWidth + texelIdxX;
-		if (texelIdxX >= _ctx.MapWidth || texelIdxY >= _ctx.MapHeight)
+		if (texelIdxX >= _ctx.MapWidth || texelIdxY >= _ctx.MapHeight) {
 			return Float4(0, 0, 0, 0);
+		}
 
 		Mat3 tangentToWorld;
 		tangentToWorld.SetXBasis(bakePoint.Tangent);
@@ -163,16 +159,19 @@ namespace LFX {
 		// Loop over all texels in the 8x8 group, and compute 1 sample for each
 		for (int sampleIdx = 0; sampleIdx < samplesPerTexel; ++sampleIdx)
 		{
+			Random& rand = _ctx.Random;
 			IntegrationSampleSet sampleSet;
 			sampleSet.Init(_ctx.Samples, groupTexelIdx, sampleIdx);
 
 			// Create a random ray direction in tangent space, then convert to world space
 			Float3 rayStart = bakePoint.Position;
-			Float3 rayDirTS = baker.SampleDirection(sampleSet.Pixel());
+			Float3 rayDirTS = SampleCosineHemisphere(sampleSet.Pixel());
+			//Float3 rayDirTS = SampleCosineHemisphere(rand.RandomFloat2());
 			Float3 rayDir = Mat3::Transform(rayDirTS, tangentToWorld);
 			rayDir = Float3::Normalize(rayDir);
 
 			PathTraceParams params;
+			params.entity = _ctx.entity;
 			params.sampleSet = &sampleSet;
 			params.rayDir = rayDir;
 			params.rayStart = rayStart + 0.001f * rayDir;
@@ -184,19 +183,21 @@ namespace LFX {
 			params.diffuseScale = _cfg.DiffuseScale;
 
 			bool hitSky = false;
-			PathTraceResult sampleResult = PathTrace(params, RTPathTraceFunc, _ctx.Random, hitSky);
-
-			baker.AddSample(rayDirTS, sampleIdx, sampleResult.radiance, hitSky);
+			PathTraceResult sampleResult = PathTrace(params, RTPathTraceFunc, rand, hitSky);
+			baker.AddSample(rayDirTS, sampleIdx, sampleResult.color, hitSky);
 		}
 
 		Float4 texelResults[1];
 		baker.FinalResult(texelResults);
-
 		return texelResults[0];
 	}
 
-	void ILBakerRaytrace::Run(int w, int h, const std::vector<RVertex>& rchart)
+	void ILBakerRaytrace::Run(Entity* entity, int w, int h, const std::vector<RVertex>& rchart)
 	{
+		_cfg.SqrtNumSamples = 15;
+		_cfg.MaxPathLength = 3;
+
+		_ctx.entity = entity;
 		_ctx.MapWidth = w;
 		_ctx.MapHeight = h;
 		_ctx.BakeOutput.resize(w * h);

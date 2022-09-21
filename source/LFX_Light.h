@@ -43,6 +43,7 @@ namespace LFX {
 		float IndirectScale;
 		bool GIEnable;
 		bool CastShadow;
+		bool SaveShadowMask;
 
 		Light()
 		{
@@ -63,11 +64,12 @@ namespace LFX {
 
 			DirectScale = 1;
 			IndirectScale = 1;
+			GIEnable = true;
 			CastShadow = false;
-			GIEnable = false;
+			SaveShadowMask = false;
 		}
 	};
 
-	LFX_ENTRY bool IsLightVisible(Light * pLight, const Aabb & bound);
-	LFX_ENTRY bool IsLightVisible(Light * pLight, const Float3 & point);
+	LFX_ENTRY bool IsLightVisible(Light* pLight, const Aabb& bound);
+	LFX_ENTRY bool IsLightVisible(Light* pLight, const Float3& point);
 }

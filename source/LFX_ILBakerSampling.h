@@ -196,6 +196,12 @@ inline Float3 SampleCosineHemisphere(float u1, float u2)
     return dir;
 }
 
+// Returns a random cosine-weighted direction on the hemisphere around z = 1
+inline Float3 SampleCosineHemisphere(const Float2& uv)
+{
+    return SampleCosineHemisphere(uv.x, uv.y);
+}
+
 inline Float3 SampleStratifiedCosineHemisphere(int sX, int sY, int sqrtNumSamples, float u1, float u2)
 {
    // Jitter the samples

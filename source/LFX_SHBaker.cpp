@@ -50,7 +50,7 @@ namespace LFX {
 
 	void SHBaker::Run(SHProbe* probe)
 	{
-		std::vector<Float3> radiances;
+		std::vector<Float3> results;
 		std::vector<Float3> samples = LightProbeSampler::uniformSampleSphereAll(32, 32);
 		for (int sampleIdx = 0; sampleIdx < samples.size(); ++sampleIdx) {
 			Ray ray;
@@ -60,7 +60,8 @@ namespace LFX {
 			Contact contact;
 			if (World::Instance()->GetScene()->RayCheck(contact, ray, DEFAULT_RAYTRACE_MAX_LENGHT, LFX_TERRAIN | LFX_MESH)) {
 				// back facing
-				if (contact.backFacing) {
+				if (!contact.facing) {
+					results.push_back(Float3(0, 0, 0));
 					continue;
 				}
 
@@ -75,14 +76,14 @@ namespace LFX {
 					SHCalcLighting(result, vtx, light, mtl);
 				}
 
-				radiances.push_back(result);
+				results.push_back(result);
 			}
 			else {
-				radiances.push_back(_cfg.SkyRadiance);
+				results.push_back(_cfg.SkyRadiance);
 			}
 		}
 
-		auto radianceCoefficients = SH::project(LightProbeQuality::Normal, samples, radiances);
+		auto radianceCoefficients = SH::project(LightProbeQuality::Normal, samples, results);
 		auto irradianceCoefficients = SH::convolveCosine(LightProbeQuality::Normal, radianceCoefficients);
 		probe->coefficients = irradianceCoefficients;
 	}

@@ -106,7 +106,7 @@ namespace LFX {
 			msInstance = NULL;
 		}
 
-		static T * Instance()
+		static T* Instance()
 		{
 			return msInstance;
 		}

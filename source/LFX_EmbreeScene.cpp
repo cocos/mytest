@@ -161,7 +161,7 @@ namespace LFX {
 		contact.tv = 0;
 		contact.triIndex = -1;
 		contact.entity = NULL;
-		contact.backFacing = false;
+		contact.facing = false;
 
 		if (rtcDevice != NULL)
 		{
@@ -223,14 +223,18 @@ namespace LFX {
 					else
 					{
 						Mesh * mesh = (Mesh *)contact.entity;
+
 						Triangle tri = mesh->_getTriangle(contact.triIndex);
 						a = mesh->_getVertex(tri.Index0);
 						b = mesh->_getVertex(tri.Index1);
 						c = mesh->_getVertex(tri.Index2);
 					}
 
+#if 0
 					Float3 triNml = Float3::Normalize(Float3::Cross(c.Position - a.Position, b.Position - a.Position));
 					contact.backFacing = Float3::Dot(triNml, ray.dir) >= 0.0f;
+#endif
+					contact.facing = Float3::Dot(contact.vhit.Normal, -ray.dir) >= 0.0f;
 				}
 
 				return true;
@@ -255,9 +259,9 @@ namespace LFX {
 			{
 				EmbreeRay r(orig, ray.dir, len, mask);
 				rtcIntersect(rtcScene, r);
-
-				if (!r.Hit())
+				if (!r.Hit()) {
 					break;
+				}
 
 				Entity * entity = mEntityMap[r.geomID];
 				if (entity != NULL && entity->GetType() == LFX_MESH)

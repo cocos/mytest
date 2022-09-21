@@ -47,6 +47,7 @@ namespace LFX { namespace ILBaker {
 	struct PathTraceParams
 	{
 		const IntegrationSampleSet* sampleSet = nullptr;
+		Entity* entity = nullptr;
 		Float3 rayStart;
 		Float3 rayDir;
 		float rayLen = 0.0f;
@@ -61,8 +62,7 @@ namespace LFX { namespace ILBaker {
 	struct PathTraceResult
 	{
 		int pathLen = 1;
-		Float3 radiance = Float3(0, 0, 0);
-		Float3 irradiance = Float3(0, 0, 0);
+		Float3 color = Float3(0, 0, 0);
 	};
 
 	typedef bool (*PathTraceFunc)(Float3& diffuse, const PathTraceParams& params, const Vertex& vtx, const Material* mtl, bool hitSky);

@@ -23,7 +23,7 @@ namespace LFX {
 
 	bool World::Load()
 	{
-		String filename = "tmp/lfx.i";
+		String filename = "tmp/lfx.in";
 
 		FileStream stream(filename.c_str());
 		if (!stream.IsOpen()) {
@@ -66,9 +66,10 @@ namespace LFX {
 		stream >> mSetting.BakeLightProbe;
 		// È¡ÏûGamma
 		mSetting.Gamma = 1;
-		// 
-		mSetting.GIScale = 0.0f;
+		mSetting.GIScale = 1.0f;
 		mSetting.AOLevel = 0;
+		// Disable sky lighting
+		mSetting.SkyRadiance = Float3(0, 0, 0);
 
 		int ckId = 0;
 		while (stream.Read(&ckId, sizeof(int))) {
@@ -195,6 +196,14 @@ namespace LFX {
 				stream >> l->IndirectScale;
 				stream >> l->GIEnable;
 				stream >> l->CastShadow;
+				l->GIEnable = true;
+				l->DirectScale = 1.0f;
+				if (l->Type == Light::DIRECTION) {
+					l->SaveShadowMask = true;
+				}
+				if (!l->CastShadow) {
+					l->GIEnable = false;
+				}
 				break;
 			}
 
@@ -214,7 +223,7 @@ namespace LFX {
 		return true;
 	}
 
-	void ConvertColor(Image& image, float& factor, std::vector<Float3>& colors, const World::Settings& settings)
+	void ConvertColor(Image& image, float& factor, std::vector<Float4>& colors, const World::Settings& settings)
 	{
 #if LFX_ENABLE_GAMMA
 		if (settings.Gamma != 1.0f) {
@@ -225,8 +234,8 @@ namespace LFX {
 		}
 #endif
 
+		image.pixels.resize(image.width * image.height * image.channels);
 		if (!settings.RGBEFormat) {
-			image.pixels.resize(image.width * image.height * 3);
 			for (int k = 0; k < colors.size(); ++k)
 			{
 				factor = std::max(colors[k].x, factor);
@@ -236,20 +245,20 @@ namespace LFX {
 
 			for (int k = 0; k < colors.size(); ++k)
 			{
-				Float3 color = colors[k];
+				Float3 color = Float3(colors[k].x, colors[k].y, colors[k].z);
 				color /= factor;
 				color.saturate();
 
-				image.pixels[k * 3 + 0] = (uint8_t)std::min(int(color.x * 255), 255);
-				image.pixels[k * 3 + 1] = (uint8_t)std::min(int(color.y * 255), 255);
-				image.pixels[k * 3 + 2] = (uint8_t)std::min(int(color.z * 255), 255);
+				image.pixels[k * 4 + 0] = (uint8_t)std::min(int(color.x * 255), 255);
+				image.pixels[k * 4 + 1] = (uint8_t)std::min(int(color.y * 255), 255);
+				image.pixels[k * 4 + 2] = (uint8_t)std::min(int(color.z * 255), 255);
+				image.pixels[k * 4 + 3] = (uint8_t)std::min(int(colors[k].w * 255), 255);
 			}
 		}
 		else {
-			image.pixels.resize(image.width * image.height * 4);
 			for (int k = 0; k < colors.size(); ++k)
 			{
-				RGBE rgbe = RGBE_FROM(colors[k]);
+				RGBE rgbe = RGBE_FROM(Float3(colors[k].x, colors[k].y, colors[k].z));
 
 				image.pixels[k * 4 + 0] = rgbe.r;
 				image.pixels[k * 4 + 1] = rgbe.g;
@@ -278,13 +287,19 @@ namespace LFX {
 		}
 	}
 
+	int GetLightmapChannels()
+	{
+		//mSetting.RGBEFormat ? 4 : 3;
+		return 4; // rgb and shadow mask
+	}
+
 	void World::Save()
 	{
 		String path = "output";
 		//FileUtil::DeleteDir(path);
 		FileUtil::MakeDir(path);
 
-		String lfx_file = path + "/lfx.o";
+		String lfx_file = path + "/lfx.out";
 		FILE* fp = fopen(lfx_file.c_str(), "wb");
 		if (fp == NULL) {
 			LOGE("Can not open file '%s'", lfx_file.c_str());
@@ -293,7 +308,6 @@ namespace LFX {
 
 		LOGD("Writing lfx file '%s'", lfx_file.c_str());
 
-		//
 		fwrite(&LFX_FILE_VERSION, 4, 1, fp);
 
 		// Pack and save terrain lightmap
@@ -313,7 +327,7 @@ namespace LFX {
 			{
 				for (int x = 0; x < terrain->GetDesc().BlockCount.x; ++x)
 				{
-					std::vector<Float3> colors;
+					std::vector<Float4> colors;
 					colors.resize(lmap_size * lmap_size);
 					terrain->GetLightingMap(x, y, colors);
 					if (!mSetting.RGBEFormat)
@@ -335,7 +349,7 @@ namespace LFX {
 					const int w = std::min(ntiles, terrain->GetDesc().BlockCount.x - x);
 					const int h = std::min(ntiles, terrain->GetDesc().BlockCount.y - y);
 					const int dims = std::max(w * lmap_size, h * lmap_size);
-					const int channels = mSetting.RGBEFormat ? 4 : 3;
+					const int channels = GetLightmapChannels();
 
 					LFX::Image image;
 					image.pixels.resize(dims * dims * channels);
@@ -350,7 +364,7 @@ namespace LFX {
 					{
 						for (int i = 0; i < w; ++i)
 						{
-							std::vector<Float3> colors;
+							std::vector<Float4> colors;
 							colors.resize(lmap_size * lmap_size);
 							terrain->GetLightingMap(x + i, y + j, colors);
 
@@ -415,7 +429,7 @@ namespace LFX {
 		TextureAtlasPacker::Options options;
 		options.Width = mSetting.Size;
 		options.Height = mSetting.Size;
-		options.Channels = mSetting.RGBEFormat ? 4 : 3;
+		options.Channels = GetLightmapChannels();
 		options.Border = 0;
 		options.Space = 0;
 		TextureAtlasPacker packer(options);
@@ -424,13 +438,14 @@ namespace LFX {
 		for (int i = 0; i < mMeshes.size(); ++i)
 		{
 			LFX::Mesh* mesh = mMeshes[i];
-			if (mesh->GetLightingMapSize() == 0)
+			if (mesh->GetLightingMapSize() == 0) {
 				continue;
+			}
 
 			LOGD("Pack mesh %d", i);
 
 			const int dims = mesh->GetLightingMapSize();
-			std::vector<LFX::Float3>& colors = mesh->_getLightingMap();
+			std::vector<Float4>& colors = mesh->_getLightingMap();
 
 			float factor = 1.0f;
 			LFX::Image image;
@@ -456,8 +471,7 @@ namespace LFX {
 		}
 
 		auto atlas = packer.GetAtlasArray();
-		for (int i = 0; i < atlas.size(); ++i)
-		{
+		for (int i = 0; i < atlas.size(); ++i) {
 			LFX::Image image;
 			image.pixels = atlas[i]->Pixels;
 			image.width = atlas[i]->Width;
@@ -479,13 +493,13 @@ namespace LFX {
 			fwrite(&numPackItems, sizeof(int), 1, fp);
 
 			int packIndex = 0;
-			for (int i = 0; i < mMeshes.size(); ++i)
-			{
-				LFX::Mesh * mesh = mMeshes[i];
-				if (mesh->GetLightingMapSize() == 0)
+			for (int i = 0; i < mMeshes.size(); ++i) {
+				LFX::Mesh* mesh = mMeshes[i];
+				if (mesh->GetLightingMapSize() == 0) {
 					continue;
+				}
 
-				const TextureAtlasPacker::Item & item = packed_items[packIndex++];
+				const TextureAtlasPacker::Item& item = packed_items[packIndex++];
 				int size = mesh->GetLightingMapSize();
 				float offset = LMAP_BORDER / (float)size;
 				float scale = 1 - offset * 2;
@@ -512,10 +526,12 @@ namespace LFX {
 			fwrite(&numSHProbes, sizeof(int), 1, fp);
 
 			for (int i = 0; i < mSHProbes.size(); ++i) {
-				const auto& coefs = mSHProbes[i].coefficients;
-				const int numCoefs = coefs.size();
+				const auto& probe = mSHProbes[i];
+				const int numCoefs = probe.coefficients.size() * 3;
+				fwrite(&probe.position, sizeof(probe.position), 1, fp);
+				fwrite(&probe.normal, sizeof(probe.normal), 1, fp);
 				fwrite(&numCoefs, sizeof(int), 1, fp);
-				fwrite(coefs.data(), sizeof(coefs[0]) * coefs.size(), 1, fp);
+				fwrite((const float*)probe.coefficients.data(), numCoefs * sizeof(float), 1, fp);
 			}
 		}
 
@@ -562,7 +578,7 @@ namespace LFX {
 		SAFE_DELETE(mScene);
 	}
 
-	Texture * World::LoadTexture(const String & filename)
+	Texture* World::LoadTexture(const String & filename)
 	{
 		Texture* tex = GetTexture(filename);
 		if (tex != NULL) {
@@ -600,7 +616,7 @@ namespace LFX {
 		return tex;
 	}
 
-	Texture * World::CreateTexture(const String & nam, int w, int h, int channels)
+	Texture* World::CreateTexture(const String & nam, int w, int h, int channels)
 	{
 		Texture * t = new Texture;
 		t->name = nam;
@@ -613,7 +629,7 @@ namespace LFX {
 		return t;
 	}
 
-	Texture * World::GetTexture(const String & name)
+	Texture* World::GetTexture(const String & name)
 	{
 		for (int i = 0; i < mTextures.size(); ++i) {
 			if (mTextures[i]->name == name)
@@ -623,12 +639,10 @@ namespace LFX {
 		return NULL;
 	}
 
-	Light * World::CreateLight()
+	Light* World::CreateLight()
 	{
-		Light * pLight = new Light;
-
+		Light* pLight = new Light;
 		mLights.push_back(pLight);
-
 		return pLight;
 	}
 
@@ -638,25 +652,32 @@ namespace LFX {
 		return &mSHProbes.back();
 	}
 
-	Mesh * World::CreateMesh()
+	Mesh* World::CreateMesh()
 	{
-		Mesh * pMesh = new Mesh();
-
+		Mesh* pMesh = new Mesh();
 		mMeshes.push_back(pMesh);
-
 		return pMesh;
 	}
 
-	Terrain * World::CreateTerrain(float* heightfield, const Terrain::Desc & desc)
+	Terrain* World::CreateTerrain(float* heightfield, const Terrain::Desc & desc)
 	{
 		Terrain* terrain = new Terrain(heightfield, desc);
-
 		mTerrains.push_back(terrain);
-
 		return terrain;
 	}
 
-	bool _World_AttachMesh(BSPTree<Mesh *>::Node * node, Mesh * mesh)
+	Light* World::GetMainLight() const
+	{
+		for (auto* light : mLights) {
+			if (light->Type == Light::DIRECTION) {
+				return light;
+			}
+		}
+
+		return nullptr;
+	}
+
+	bool _World_AttachMesh(BSPTree<Mesh*>::Node* node, Mesh* mesh)
 	{
 		Aabb bound = mesh->GetBound();
 
@@ -680,8 +701,7 @@ namespace LFX {
 	{
 		if (node->child[0] == NULL)
 		{
-			if (node->elems.size() > 0)
-			{
+			if (node->elems.size() > 0) {
 				Aabb bound = node->elems[0]->GetBound();
 				for (size_t i = 1; i < node->elems.size(); ++i) {
 					bound.Merge(node->elems[i]->GetBound());
@@ -703,15 +723,12 @@ namespace LFX {
 	void World::Build()
 	{
 		LOGI("-:Building meshes");
-		for (size_t i = 0; i < mMeshes.size(); ++i)
-		{
+		for (size_t i = 0; i < mMeshes.size(); ++i) {
 			mMeshes[i]->Build();
 		}
 
-		for (size_t i = 0; i < mMeshes.size(); ++i)
-		{
-			if (!mMeshes[i]->Valid())
-			{
+		for (size_t i = 0; i < mMeshes.size(); ++i) {
+			if (!mMeshes[i]->Valid()) {
 				delete mMeshes[i];
 				mMeshes.erase(mMeshes.begin() + i--);
 			}
@@ -722,7 +739,7 @@ namespace LFX {
 			mTerrains[i]->Build();
 		}
 
-#undef LFX_USE_EMBREE_SCENE
+//#undef LFX_USE_EMBREE_SCENE
 #ifdef LFX_USE_EMBREE_SCENE
 		LOGI("-:Building embree scene");
 		mScene = new EmbreeScene;
@@ -735,8 +752,7 @@ namespace LFX {
 
 	void World::Start()
 	{
-		for (size_t i = 0; i < mThreads.size(); ++i)
-		{
+		for (size_t i = 0; i < mThreads.size(); ++i) {
 			delete[] mThreads[i];
 		}
 		mThreads.clear();
@@ -750,8 +766,7 @@ namespace LFX {
 		DeviceStats stats = DeviceStats::GetStats();
 		mSetting.Threads = std::max(1, stats.Processors - 2);
 #endif
-		for (int i = 0; i < mSetting.Threads; ++i)
-		{
+		for (int i = 0; i < mSetting.Threads; ++i) {
 			mThreads.push_back(new STBaker(i));
 		}
 
@@ -779,8 +794,7 @@ namespace LFX {
 		}
 		
 
-		for (size_t i = 0; i < mThreads.size(); ++i)
-		{
+		for (size_t i = 0; i < mThreads.size(); ++i) {
 			LOGI("-: Starting thread %d", i);
 			mThreads[i]->Start();
 		}

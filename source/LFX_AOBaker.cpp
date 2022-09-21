@@ -72,13 +72,13 @@ namespace LFX {
 	{
 		float strength = World::Instance()->GetSetting()->AOStrength;
 		float radius = World::Instance()->GetSetting()->AORadius;
-		if (radius <= 0)
+		if (radius <= 0) {
 			return Float3(1, 1, 1);
+		}
 
 		Float3 xaxis = Float3(1, 0, 0);
 		Float3 zaxis = Float3(0, 0, 1);
-		if (v.Normal.dot(xaxis) > 0.99f)
-		{
+		if (v.Normal.dot(xaxis) > 0.99f) {
 			xaxis = Float3(0, -1, 0);
 		}
 

@@ -117,8 +117,8 @@ namespace LFX {
 		mLightingMap.resize(mDesc.BlockCount.x * mDesc.BlockCount.y);
 		for (int i = 0; i < mLightingMap.size(); ++i)
 		{
-			mLightingMap[i] = new Float3[mapSize * mapSize];
-			memset(mLightingMap[i], 0, sizeof(Float3) * mapSize * mapSize);
+			mLightingMap[i] = new Float4[mapSize * mapSize];
+			memset(mLightingMap[i], 0, sizeof(Float4) * mapSize * mapSize);
 		}
 
 		mBlockValid.resize(mDesc.BlockCount.x * mDesc.BlockCount.y);
@@ -409,13 +409,14 @@ namespace LFX {
 
 		int sx = mapSize * xblock;
 		int sy = mapSize * yblock;
-		Float3 * lmap = mLightingMap[yblock * mDesc.BlockCount.x + xblock];
+		Float4* lmap = mLightingMap[yblock * mDesc.BlockCount.x + xblock];
 
 		for (int line = 0; line < mapSize; ++line)
 		{
 			int j = sy + line;
 			for (int i = sx; i < sx + mapSize; ++i)
 			{
+				float shadowMask = 1.0f;
 				Float3 color(0, 0, 0);
 
 				for (int y = 0; y < msaa; ++y)
@@ -437,19 +438,26 @@ namespace LFX {
 
 						for (int l = 0; l < lights.size(); ++l)
 						{
-							color += _doLighting(p, lights[l]);
+							float mask = 1.0f;
+							color += _doLighting(p, lights[l], mask);
+							shadowMask += mask;
 						}
 					}
 				}
 
 				color /= (float)msaa * msaa;
+				shadowMask /= (float)msaa * msaa;
 
-				lmap[(j - sy) * mapSize + (i - sx)] = color + World::Instance()->GetSetting()->Ambient;
+				auto& outColor = lmap[(j - sy) * mapSize + (i - sx)];
+				outColor.x = color.x + World::Instance()->GetSetting()->Ambient.x;
+				outColor.y = color.y + World::Instance()->GetSetting()->Ambient.y;
+				outColor.z = color.z + World::Instance()->GetSetting()->Ambient.z;
+				outColor.w = shadowMask;
 			}
 		}
 	}
 
-	void Terrain::CalcuIndirectLighting(int xblock, int yblock, const std::vector<Light *> & lights)
+	void Terrain::CalcuIndirectLighting(int xblock, int yblock)
 	{
 		if (World::Instance()->GetSetting()->Selected) return;
 
@@ -507,9 +515,9 @@ namespace LFX {
 		baker._cfg.MaxPathLength = World::Instance()->GetSetting()->GIPathLength;
 		baker._cfg.RussianRouletteDepth = -1;
 
-		baker.Run(mapSize * msaa, mapSize * msaa, rchart);
+		baker.Run(this, mapSize * msaa, mapSize * msaa, rchart);
 
-		Float3 * lmap = mLightingMap[yblock * mDesc.BlockCount.x + xblock];
+		Float4* lmap = mLightingMap[yblock * mDesc.BlockCount.x + xblock];
 		for (int j = 0; j < mapSize; ++j)
 		{
 			for (int i = 0; i < mapSize; ++i)
@@ -529,16 +537,19 @@ namespace LFX {
 				}
 				color /= (float)msaa * msaa;
 
-				lmap[(j - 0) * mapSize + (i - 0)] += color;
+				auto& outColor = lmap[(j - 0) * mapSize + (i - 0)];
+				outColor.x = color.x;
+				outColor.y = color.y;
+				outColor.z = color.z;
 			}
 		}
 	}
 
-	void Terrain::GetLightingMap(int i, int j, std::vector<Float3>& colors)
+	void Terrain::GetLightingMap(int i, int j, std::vector<Float4>& colors)
 	{
 		int mapSize = mDesc.LMapSize;
-		Float3* lmap = mLightingMap[j * mDesc.BlockCount.x + i];
 		int lmapSize = mapSize - Terrain::kLMapBorder * 2;
+		Float4* lmap = mLightingMap[j * mDesc.BlockCount.x + i];
 
 		int index = 0;
 		for (int y = 0; y < mapSize; ++y)
@@ -556,7 +567,7 @@ namespace LFX {
 		}
 	}
 
-	Float3 * Terrain::_getLightingMap(int xBlock, int zBlock)
+	Float4 * Terrain::_getLightingMap(int xBlock, int zBlock)
 	{
 		return mLightingMap[zBlock * mDesc.BlockCount.x + xBlock];
 	}
@@ -631,7 +642,7 @@ namespace LFX {
 		}
 	}
 
-	Float3 Terrain::_doLighting(const Vertex & v, Light * pLight)
+	Float3 Terrain::_doLighting(const Vertex & v, Light * pLight, float& shadowMask)
 	{
 		float kl = 0;
 		Float3 color;
@@ -661,6 +672,7 @@ namespace LFX {
 				if (World::Instance()->GetScene()->Occluded(ray, len, LFX_MESH))
 				{
 					kl = 0;
+					shadowMask = 0;
 				}
 			}
 		}
@@ -680,7 +692,7 @@ namespace LFX {
 		int sx = mapSize * xblock;
 		int sy = mapSize * yblock;
 
-		Float3 * lmap = mLightingMap[yblock * mDesc.BlockCount.x + xblock];
+		Float4* lmap = mLightingMap[yblock * mDesc.BlockCount.x + xblock];
 		for (int l = 0; l < mapSize; ++l)
 		{
 			int j = sy + l;
@@ -717,7 +729,10 @@ namespace LFX {
 
 				color /= (float)msaa * msaa;
 
-				lmap[(j - 0) * mapSize + (i - 0)] += color;
+				auto& outColor = lmap[(j - 0) * mapSize + (i - 0)];
+				outColor.x *= color.x;
+				outColor.y *= color.y;
+				outColor.z *= color.z;
 			}
 		}
 	}
@@ -725,7 +740,7 @@ namespace LFX {
 	void Terrain::PostProcess(int xblock, int yblock)
 	{
 #if 1
-		Float3 * lmap = mLightingMap[yblock * mDesc.BlockCount.x + xblock];
+		Float4* lmap = mLightingMap[yblock * mDesc.BlockCount.x + xblock];
 		int mapSize = mDesc.LMapSize - Terrain::kLMapBorder * 2;
 
 		Rasterizer::Blur(lmap, mapSize, mapSize, mapSize);

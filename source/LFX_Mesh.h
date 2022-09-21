@@ -43,14 +43,14 @@ namespace LFX {
 		bool Occluded(const Ray & ray, float length);
 
 		void CalcuDirectLighting(const std::vector<Light *> & lights);
-		void CalcuIndirectLighting(const std::vector<Light *> & lights);
+		void CalcuIndirectLighting();
 		void CalcuAmbientOcclusion();
-		Float3 _doLighting(const Vertex & v, int mtlId, Light * pLight);
+		Float3 _doLighting(const Vertex& v, int mtlId, Light* pLight, float& shadowMask);
 
 		void GetLightingMap(std::vector<RGBE> & colors);
-		void GetLightingMap(std::vector<Float3> & colors);
+		void GetLightingMap(std::vector<Float4> & colors);
 		void GetGeometry(Vertex * pVertex, int * pIndex);
-		std::vector<Float3> & _getLightingMap();
+		std::vector<Float4> & _getLightingMap();
 
 		void GetLightList(std::vector<Light *> & lights, bool forGI);
 
@@ -69,11 +69,11 @@ namespace LFX {
 		BSPTree<int> mBSPTree;
 		Float2 mUVMin, mUVMax;
 
-		void * mUserData;
+		void* mUserData;
 		bool mCastShadow;
 		bool mReceiveShadow;
 		int mLightingMapSize;
-		std::vector<Float3> mLightingMap;
+		std::vector<Float4> mLightingMap;
 	};
 
 }

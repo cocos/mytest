@@ -228,7 +228,7 @@ int local_main(int argc, char* argv[])
 	return 0;
 }
 
-#define LFX_REMOTE_MODE 0
+#define LFX_REMOTE_MODE 1
 
 int main(int argc, char* argv[])
 {

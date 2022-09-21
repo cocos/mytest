@@ -62,6 +62,42 @@ namespace LFX {
 		delete[] temp;
 	}
 
+	void Rasterizer::Blur(Float4* data, int w, int h, int stride)
+	{
+		Float4* temp = new Float4[w * h];
+
+		int index = 0;
+		for (int v = 0; v < h; ++v)
+		{
+			for (int u = 0; u < w; ++u)
+			{
+				Float4 color(0, 0, 0, 0);
+
+				for (int y = -1; y <= 1; ++y)
+				{
+					for (int x = -1; x <= 1; ++x)
+					{
+						int s = Clamp<int>(u + x, 0, w - 1);
+						int t = Clamp<int>(v + y, 0, h - 1);
+
+						color += data[(t * stride) + s];
+					}
+				}
+
+				color /= 9.0f;
+
+				temp[index++] = color;
+			}
+		}
+
+		for (int i = 0; i < h; ++i)
+		{
+			memcpy(data + i * stride, temp + i * w, w * sizeof(Float4));
+		}
+
+		delete[] temp;
+	}
+
 	void Rasterizer::Optimize(Float4* lmap, int w, int h, int border)
 	{
 		for (int y = 0; y < h; ++y)

@@ -56,13 +56,13 @@ namespace LFX {
 		bool Occluded(const Ray & ray, float length);
 
 		void CalcuDirectLighting(int xblock, int yblock, const std::vector<Light *> & lights);
-		void CalcuIndirectLighting(int xblock, int yblock, const std::vector<Light *> & lights);
+		void CalcuIndirectLighting(int xblock, int yblock);
 		void CalcuAmbientOcclusion(int xblock, int yblock);
 		void PostProcess(int xblock, int yblock);
 
-		void GetLightingMap(int xBlock, int zBlock, std::vector<Float3> & colors);
+		void GetLightingMap(int xBlock, int zBlock, std::vector<Float4> & colors);
 		void GetBlockGeometry(int xBlock, int zBlock, Vertex * vbuff, int * ibuff);
-		Float3* _getLightingMap(int xBlock, int zBlock);
+		Float4* _getLightingMap(int xBlock, int zBlock);
 		std::vector<Vertex> & _getVertexBuffer() { return mVertexBuffer; }
 		std::vector<Triangle> & _getTriBuffer() { return mTriBuffer; }
 
@@ -73,7 +73,7 @@ namespace LFX {
 		void _rayCheckImp(Contact & contract, BSPTree<int>::Node * node, const Ray & ray, float length);
 		bool _occludedImp(BSPTree<int>::Node * node, const Ray & ray, float length);
 
-		Float3 _doLighting(const Vertex & v, Light * pLight);
+		Float3 _doLighting(const Vertex & v, Light * pLight, float& shadowMask);
 
 	protected:
 		Desc mDesc;
@@ -83,7 +83,7 @@ namespace LFX {
 
 		int mMapSizeU;
 		int mMapSizeV;
-		std::vector<Float3*> mLightingMap;
+		std::vector<Float4*> mLightingMap;
 		std::vector<bool> mBlockValid;
 
 		Material mMaterial;

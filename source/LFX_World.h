@@ -95,14 +95,15 @@ namespace LFX {
 		Scene* GetScene() { return mScene; }
 		Shader* GetShader() { return mShader; }
 
-		Texture * LoadTexture(const String & filename);
-		Texture * CreateTexture(const String & name, int w, int h, int channels);
-		Texture * GetTexture(const String & name);
+		Texture* LoadTexture(const String& filename);
+		Texture* CreateTexture(const String& name, int w, int h, int channels);
+		Texture* GetTexture(const String& name);
 
 		Mesh* CreateMesh();
-		Light * CreateLight();
+		Light* CreateLight();
 		SHProbe* CreateSHProbe();
 		Terrain* CreateTerrain(float* heightfield, const Terrain::Desc& desc);
+		Light* GetMainLight() const; // main direction light
 		const std::vector<Mesh*>& Meshes() const { return mMeshes; }
 		const std::vector<Light*>& Lights() const { return mLights; }
 		const std::vector<SHProbe>& SHProbes() const { return mSHProbes; }

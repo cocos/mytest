@@ -24,15 +24,27 @@ namespace LFX {
 			if (mCompeleted)
 				continue;
 
+			bool hasLightForGI = false;
+			for (auto* light : World::Instance()->Lights()) {
+				if (light->GIEnable) {
+					hasLightForGI = true;
+					break;
+				}
+			}
+
 			if (mEntity->GetType() == LFX_TERRAIN) {
 				_calcuDirectLightingTerrain();
-				_calcuIndirectLightingTerrain();
+				if (hasLightForGI) {
+					_calcuIndirectLightingTerrain();
+				}
 				_calcuAmbientOcclusionTerrain();
 				_postProcess();
 			}
 			else if (mEntity->GetType() == LFX_MESH) {
 				_calcuDirectLightingMesh();
-				_calcuIndirectLightingMesh();
+				if (hasLightForGI) {
+					_calcuIndirectLightingMesh();
+				}
 				_calcuAmbientOcclusionMesh();
 				_postProcess();
 			}
@@ -113,15 +125,10 @@ namespace LFX {
 	void STBaker::_calcuIndirectLightingMesh()
 	{
 		if (World::Instance()->GetSetting()->GIScale > 0) {
-			Mesh * pMesh = World::Instance()->Meshes()[mIndex];
+			Mesh* pMesh = World::Instance()->Meshes()[mIndex];
 
 			if (pMesh->GetLightingMapSize()) {
-				std::vector<Light *> lights;
-				pMesh->GetLightList(lights, true);
-
-				if (lights.size() > 0) {
-					pMesh->CalcuIndirectLighting(lights);
-				}
+				pMesh->CalcuIndirectLighting();
 			}
 		}
 	}
@@ -135,19 +142,7 @@ namespace LFX {
 			int xblock = mIndex % pTerrain->GetDesc().BlockCount.x;
 			int yblock = mIndex / pTerrain->GetDesc().BlockCount.x;
 
-			Aabb bound;
-			bound.minimum.x = xblock * blockSize;
-			bound.minimum.y = 0;
-			bound.minimum.z = yblock * blockSize;
-			bound.maximum.x = xblock * blockSize + blockSize;
-			bound.maximum.y = 10000;
-			bound.maximum.z = yblock * blockSize + blockSize;
-
-			std::vector<Light*> lights;
-			pTerrain->GetLightList(lights, xblock, yblock, true);
-			if (lights.size() > 0) {
-				pTerrain->CalcuIndirectLighting(xblock, yblock, lights);
-			}
+			pTerrain->CalcuIndirectLighting(xblock, yblock);
 		}
 	}
 
