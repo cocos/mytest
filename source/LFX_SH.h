@@ -1,20 +1,14 @@
 #pragma once
 
-#include <functional>
-#include <cmath>
-#include <vector>
-#include "LFX_Vec3.h"
 #include "LFX_Math.h"
+#include "LFX_Vec3.h"
+#include <cmath>
+#include <functional>
+#include <vector>
 
 namespace LFX {
 
-#define SH_BASIS_FAST_COUNT   4
-#define SH_BASIS_NORMAL_COUNT 9
-
-enum class LightProbeQuality {
-    Fast = 0,   // 4 basis functions of L0 & L1
-    Normal = 1, // 9 basis functions of L0 & L1 & L2
-};
+#define SH_BASIS_COUNT 9
 
 class LightProbeSampler {
 public:
@@ -44,38 +38,30 @@ public:
     /**
      * recreate a function from sh coefficients
      */
-    static Float3 evaluate(LightProbeQuality quality, const Float3& sample, const std::vector<Float3>& coefficients);
+    static Float3 evaluate(const Float3& sample, const std::vector<Float3>& coefficients);
 
     /**
      * project a function to sh coefficients
      */
-    static std::vector<Float3> project(LightProbeQuality quality, const std::vector<Float3>& samples, const std::vector<Float3>& values);
+    static std::vector<Float3> project(const std::vector<Float3>& samples, const std::vector<Float3>& values);
 
     /**
      * calculate irradiance's sh coefficients from radiance's sh coefficients directly
      */
-    static std::vector<Float3> convolveCosine(LightProbeQuality quality, const std::vector<Float3>& radianceCoefficients);
-
-    /**
-     * return band count: lmax = 1 or lmax = 2
-     */
-    static inline int32_t getBandCount(LightProbeQuality quality) {
-        return (quality == LightProbeQuality::Normal ? 2 : 1);
-    }
+    static std::vector<Float3> convolveCosine(const std::vector<Float3>& radianceCoefficients);
 
     /**
      * return basis function count
      */
-    static inline uint32_t getBasisCount(LightProbeQuality quality) {
-        static const uint32_t BASIS_COUNTS[] = {SH_BASIS_FAST_COUNT, SH_BASIS_NORMAL_COUNT};
-        return BASIS_COUNTS[static_cast<uint32_t>(quality)];
+    static inline uint32_t getBasisCount() {
+        return SH_BASIS_COUNT;
     }
 
     /**
      * evaluate from a basis function
      */
-    static inline float evaluateBasis(LightProbeQuality quality, uint32_t index, const Float3& sample) {
-        assert(index < getBasisCount(quality));
+    static inline float evaluateBasis(uint32_t index, const Float3& sample) {
+        assert(index < getBasisCount());
         const auto& func = _basisFunctions[index];
 
         return func(sample);

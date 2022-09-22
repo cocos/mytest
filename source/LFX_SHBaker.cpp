@@ -83,8 +83,8 @@ namespace LFX {
 			}
 		}
 
-		auto radianceCoefficients = SH::project(LightProbeQuality::Normal, samples, results);
-		auto irradianceCoefficients = SH::convolveCosine(LightProbeQuality::Normal, radianceCoefficients);
+		auto radianceCoefficients = SH::project(samples, results);
+		auto irradianceCoefficients = SH::convolveCosine(radianceCoefficients);
 		probe->coefficients = irradianceCoefficients;
 	}
 
