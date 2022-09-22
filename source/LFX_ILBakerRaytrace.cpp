@@ -136,7 +136,7 @@ namespace LFX {
 		return true;
 	}
 
-	Float4 ILBakerRaytrace::_doLighting(const Vertex & bakePoint, int texelIdxX, int texelIdxY)
+	Float4 ILBakerRaytrace::_doLighting(const Vertex& bakePoint, int texelIdxX, int texelIdxY)
 	{
 		const int groupTexelIdxX = texelIdxX % BakeGroupSizeX;
 		const int groupTexelIdxY = texelIdxY % BakeGroupSizeY;
@@ -165,8 +165,8 @@ namespace LFX {
 
 			// Create a random ray direction in tangent space, then convert to world space
 			Float3 rayStart = bakePoint.Position;
-			Float3 rayDirTS = SampleCosineHemisphere(sampleSet.Pixel());
-			//Float3 rayDirTS = SampleCosineHemisphere(rand.RandomFloat2());
+			//Float3 rayDirTS = SampleCosineHemisphere(sampleSet.Pixel());
+			Float3 rayDirTS = SampleCosineHemisphere(rand.RandomFloat2());
 			Float3 rayDir = Mat3::Transform(rayDirTS, tangentToWorld);
 			rayDir = Float3::Normalize(rayDir);
 
@@ -194,8 +194,7 @@ namespace LFX {
 
 	void ILBakerRaytrace::Run(Entity* entity, int w, int h, const std::vector<RVertex>& rchart)
 	{
-		_cfg.SqrtNumSamples = 15;
-		_cfg.MaxPathLength = 3;
+		_cfg.MaxPathLength = 2;
 
 		_ctx.entity = entity;
 		_ctx.MapWidth = w;

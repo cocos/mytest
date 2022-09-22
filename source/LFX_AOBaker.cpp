@@ -68,7 +68,8 @@ namespace LFX {
 	{
 	}
 
-	Float3 AOBaker::Calcu(const RVertex & v, int flags, void * entity)
+#if 0
+	Float3 AOBaker::Calc(const RVertex & v, int flags, void * entity)
 	{
 		float strength = World::Instance()->GetSetting()->AOStrength;
 		float radius = World::Instance()->GetSetting()->AORadius;
@@ -150,6 +151,65 @@ namespace LFX {
 		ao = Clamp(ao, 0.0f, 1.0f);
 
 		return Float3::Lerp(World::Instance()->GetSetting()->AOColor, Float3(1, 1, 1), 1 - ao);
+	}
+#endif
+
+	Float3 AOBaker::Calc(const Vertex& v, int flags, void* entity)
+	{
+		const auto* settings = World::Instance()->GetSetting();
+		//const float scale = settings->AOStrength;
+		const float scale = 1.0f;
+		const float radius = settings->AORadius;
+		const float slope = 120.0f;
+		const int32 samples = 15 * 15;
+		//const Float3 color = settings->AOColor;
+		const Float3 color = Float3(0.25f, 0.25f, 0.25f);
+
+		if (radius <= 0) {
+			return Float3(1, 1, 1);
+		}
+
+		Mat3 tangentToWorld;
+		tangentToWorld.SetXBasis(v.Tangent);
+		tangentToWorld.SetYBasis(v.Binormal);
+		tangentToWorld.SetZBasis(v.Normal);
+
+		float ao = 0;
+		for (int s = 0; s < samples; ++s) {
+			Float2 rd = Random.RandomFloat2();
+
+			Float3 sampleDir;
+			sampleDir = ILBaker::SampleCosineHemisphere(rd.x, rd.y);
+			sampleDir = Mat3::Transform(sampleDir, tangentToWorld);
+			sampleDir = Float3::Normalize(sampleDir);
+
+			Ray ray;
+			ray.orig = v.Position + v.Normal * 0.01f;
+			ray.dir = sampleDir;
+
+			Contact contact;
+			if (!World::Instance()->GetScene()->RayCheck(contact, ray, radius * 2, flags)) {
+				continue;
+			}
+
+			if (contact.entity == entity) {
+				continue;
+			}
+
+			float ka = Clamp(contact.vhit.Normal.dot(-v.Normal), -1.0f, 1.0f);
+			ka = RadianToDegree(acos(ka));
+			ka = 1 - std::min(1.0f, ka / slope);
+
+			float kd = contact.td / radius;
+			kd = 1 - Clamp(kd, 0.0f, 1.0f);
+
+			ao += ka * kd;
+		}
+
+		ao = ao * scale / samples;
+		ao = Clamp(ao, 0.0f, 1.0f);
+
+		return Float3::Lerp(color, Float3(1, 1, 1), 1 - ao);
 	}
 
 }

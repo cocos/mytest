@@ -467,6 +467,7 @@ namespace LFX {
 				int index = j * width + i;
 				Float4 color = lmap[index];
 				float mask = mmap[index];
+				//color = Float4(1, 1, 1, 1);
 				mLightingMap[index] = Float4(color.x, color.y, color.z, mask);
 			}
 		}
@@ -552,8 +553,8 @@ namespace LFX {
 						int x = i * msaa + m;
 						int y = j * msaa + n;
 
-						const RVertex& p = rasterizer->_rchart[y * rasterizer->_width + x];
-						color += baker.Calcu(p, LFX_MESH | LFX_TERRAIN, this);
+						const auto& p = rasterizer->_rchart[y * rasterizer->_width + x];
+						color += baker.Calc(p, LFX_MESH | LFX_TERRAIN, this);
 					}
 				}
 
@@ -574,32 +575,35 @@ namespace LFX {
 		float kl = 0.0f;
 		Float3 color;
 
-		World::Instance()->GetShader()->DoLighting(color, kl, v, pLight, &mMtlBuffer[mtlId]);
-		if (kl >= 0 && pLight->CastShadow && mReceiveShadow)
+		if (pLight->DirectScale > 0)
 		{
-			float len = 0;
-			Ray ray;
-
-			if (pLight->Type != Light::DIRECTION)
+			World::Instance()->GetShader()->DoLighting(color, kl, v, pLight, &mMtlBuffer[mtlId]);
+			if (kl >= 0 && pLight->CastShadow && mReceiveShadow)
 			{
-				ray.dir = pLight->Position - v.Position;
-				len = ray.dir.len();
-				ray.dir.normalize();
-			}
-			else
-			{
-				ray.dir = -pLight->Direction;
-				len = FLT_MAX;
-			}
+				float len = 0;
+				Ray ray;
 
-			ray.orig = v.Position + ray.dir * UNIT_LEN * 0.01f;
-
-			if (len > 0.01f * UNIT_LEN)
-			{
-				if (World::Instance()->GetScene()->Occluded(ray, len, LFX_MESH | LFX_TERRAIN))
+				if (pLight->Type != Light::DIRECTION)
 				{
-					kl = 0.0f;
-					shadowMask = 0.0f;
+					ray.dir = pLight->Position - v.Position;
+					len = ray.dir.len();
+					ray.dir.normalize();
+				}
+				else
+				{
+					ray.dir = -pLight->Direction;
+					len = FLT_MAX;
+				}
+
+				ray.orig = v.Position + ray.dir * UNIT_LEN * 0.01f;
+
+				if (len > 0.01f * UNIT_LEN)
+				{
+					if (World::Instance()->GetScene()->Occluded(ray, len, LFX_MESH | LFX_TERRAIN))
+					{
+						kl = 0.0f;
+						shadowMask = 0.0f;
+					}
 				}
 			}
 		}

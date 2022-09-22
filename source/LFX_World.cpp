@@ -64,10 +64,9 @@ namespace LFX {
 		stream >> mSetting.Threads;
 		stream >> mSetting.BakeLightMap;
 		stream >> mSetting.BakeLightProbe;
-		// È¡ÏûGamma
+		// disable gamma correction
 		mSetting.Gamma = 1;
 		mSetting.GIScale = 1.0f;
-		mSetting.AOLevel = 0;
 		// Disable sky lighting
 		mSetting.SkyRadiance = Float3(0, 0, 0);
 
@@ -173,7 +172,6 @@ namespace LFX {
 					tfp = fopen("test_uv.png", "wb");
 					LFX::PNG_Save(tfp, uv_image);
 					fclose(tfp);
-
 					break;
 				}
 #endif
@@ -196,9 +194,9 @@ namespace LFX {
 				stream >> l->IndirectScale;
 				stream >> l->GIEnable;
 				stream >> l->CastShadow;
-				l->GIEnable = true;
-				l->DirectScale = 1.0f;
-				if (l->Type == Light::DIRECTION) {
+				//l->GIEnable = true;
+				//l->GIEnable = false;
+				if (l->Type == Light::DIRECTION && l->DirectScale == 0) {
 					l->SaveShadowMask = true;
 				}
 				if (!l->CastShadow) {
