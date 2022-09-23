@@ -647,32 +647,35 @@ namespace LFX {
 		float kl = 0;
 		Float3 color;
 
-		World::Instance()->GetShader()->DoLighting(color, kl, v, pLight, &mMaterial);
-		if (kl >= 0 && pLight->CastShadow)
+		if (pLight->DirectScale > 0)
 		{
-			float len = 0;
-			Ray ray;
-
-			if (pLight->Type != Light::DIRECTION)
+			World::Instance()->GetShader()->DoLighting(color, kl, v, pLight, &mMaterial);
+			if (kl >= 0 && pLight->CastShadow)
 			{
-				ray.dir = pLight->Position - v.Position;
-				len = ray.dir.len();
-				ray.dir.normalize();
-			}
-			else
-			{
-				ray.dir = -pLight->Direction;
-				len = FLT_MAX;
-			}
+				float len = 0;
+				Ray ray;
 
-			ray.orig = v.Position + ray.dir * UNIT_LEN * 0.01f;
-
-			if (len > 0.01f * UNIT_LEN)
-			{
-				if (World::Instance()->GetScene()->Occluded(ray, len, LFX_MESH))
+				if (pLight->Type != Light::DIRECTION)
 				{
-					kl = 0;
-					shadowMask = 0;
+					ray.dir = pLight->Position - v.Position;
+					len = ray.dir.len();
+					ray.dir.normalize();
+				}
+				else
+				{
+					ray.dir = -pLight->Direction;
+					len = FLT_MAX;
+				}
+
+				ray.orig = v.Position + ray.dir * UNIT_LEN * 0.01f;
+
+				if (len > 0.01f * UNIT_LEN)
+				{
+					if (World::Instance()->GetScene()->Occluded(ray, len, LFX_MESH))
+					{
+						kl = 0;
+						shadowMask = 0;
+					}
 				}
 			}
 		}
@@ -723,7 +726,7 @@ namespace LFX {
 						p.Binormal = Float3::Cross(p.Normal, p.Tangent);
 						p.Tangent = Float3::Cross(p.Binormal, p.Normal);
 
-						color += baker.Calcu(p, LFX_MESH, this);
+						color += baker.Calc(p, LFX_MESH, this);
 					}
 				}
 

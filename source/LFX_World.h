@@ -67,9 +67,9 @@ namespace LFX {
 				Size = 512;
 				Gamma = 1.0f;
 
-				GIScale = 0.5f;
+				GIScale = 1.0f;
 				GISamples = 25;
-				GIPathLength = 4;
+				GIPathLength = 2;
 
 				AOLevel = 0;
 				AOStrength = 0.5f;

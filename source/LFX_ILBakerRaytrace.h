@@ -1,6 +1,5 @@
 #pragma once
 
-#include "LFX_ILBaker.h"
 #include "LFX_ILBakerRandom.h"
 #include "LFX_ILBakerSampling.h"
 #include "LFX_ILBakerSamples.h"

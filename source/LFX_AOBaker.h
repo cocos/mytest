@@ -7,7 +7,8 @@
 
 #include "LFX_Types.h"
 #include "LFX_Entity.h"
-#include "LFX_Rasterizer.h"
+#include "LFX_ILBakerRandom.h"
+#include "LFX_ILBakerSampling.h"
 
 namespace LFX {
 
@@ -17,11 +18,14 @@ namespace LFX {
 		AOBaker();
 		~AOBaker();
 
-		Float3 Calcu(const RVertex & v, int flags, void * entity);
+		//Float3 Calc(const RVertex& v, int flags, void* entity);
+
+		Float3 Calc(const Vertex& v, int flags, void* entity);
 
 	protected:
 		Float4 hd[29];
 		Float4 ld[13];
+		ILBaker::Random Random;
 	};
 
 }

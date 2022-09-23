@@ -34,9 +34,6 @@ namespace LFX { namespace ILBaker {
 			bool continueTracing = false;
 
 			// Check for intersection with the scene
-			Float3 rayOrigin = ray.orig;
-			Float3 rayDir = ray.dir;
-
 			Contact contact;
 			if (World::Instance()->GetScene()->RayCheck(contact, ray, params.rayLen, LFX_TERRAIN | LFX_MESH)) {
 				traceEntity = contact.entity;
@@ -103,10 +100,6 @@ namespace LFX { namespace ILBaker {
 			}
 
 			if (continueTracing == false) break;
-		}
-
-		if (result.color.x > 10.0f) {
-			hitSky = false;
 		}
 
 		return result;
