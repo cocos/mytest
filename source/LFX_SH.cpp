@@ -34,34 +34,34 @@ std::vector<Float3> LightProbeSampler::uniformSampleSphereAll(uint32_t uCount1, 
 }
 
 std::vector<SH::BasisFunction> SH::_basisFunctions = {
-    [](const Float3& v) -> float { return +0.5F * std::sqrtf(InvPi); },
-    [](const Float3& v) -> float { return -0.5F * std::sqrtf(3.0F * InvPi) * v.y; },
-    [](const Float3& v) -> float { return +0.5F * std::sqrtf(3.0F * InvPi) * v.z; },
-    [](const Float3& v) -> float { return -0.5F * std::sqrtf(3.0F * InvPi) * v.x; },
-    [](const Float3& v) -> float { return +0.5F * std::sqrtf(15.0F * InvPi) * v.y * v.x; },
-    [](const Float3& v) -> float { return -0.5F * std::sqrtf(15.0F * InvPi) * v.y * v.z; },
-    [](const Float3& v) -> float { return 0.25F * std::sqrtf(5.0F * InvPi) * (3.0F * v.z * v.z - 1.0F); },
-    [](const Float3& v) -> float { return -0.5F * std::sqrtf(15.0F * InvPi) * v.z * v.x; },
-    [](const Float3& v) -> float { return 0.25F * std::sqrtf(15.0F * InvPi) * (v.x * v.x - v.y * v.y); },
+    [](const Float3& v) -> float { return 0.282095F; },                             // 0.5F * std::sqrtf(InvPi)
+    [](const Float3& v) -> float { return 0.488603F * v.y; },                       // 0.5F * std::sqrtf(3.0F * InvPi) * v.y
+    [](const Float3& v) -> float { return 0.488603F * v.z; },                       // 0.5F * std::sqrtf(3.0F * InvPi) * v.z
+    [](const Float3& v) -> float { return 0.488603F * v.x; },                       // 0.5F * std::sqrtf(3.0F * InvPi) * v.x
+    [](const Float3& v) -> float { return 1.09255F * v.y * v.x; },                  // 0.5F * std::sqrtf(15.0F * InvPi) * v.y * v.x
+    [](const Float3& v) -> float { return 1.09255F * v.y * v.z; },                  // 0.5F * std::sqrtf(15.0F * InvPi) * v.y * v.z
+    [](const Float3& v) -> float { return 0.946175F * (v.z * v.z - 1.0F / 3.0F); }, // 0.75F * std::sqrtf(5.0F * InvPi) * (v.z * v.z - 1.0F / 3.0F)
+    [](const Float3& v) -> float { return 1.09255F * v.z * v.x; },                  // 0.5F * std::sqrtf(15.0F * InvPi) * v.z * v.x
+    [](const Float3& v) -> float { return 0.546274F * (v.x * v.x - v.y * v.y); },   // 0.25F * std::sqrtf(15.0F * InvPi) * (v.x * v.x - v.y * v.y)
 };
 
-Float3 SH::evaluate(LightProbeQuality quality, const Float3& sample, const std::vector<Float3>& coefficients) {
+Float3 SH::evaluate(const Float3& sample, const std::vector<Float3>& coefficients) {
     Float3 result{0.0F, 0.0F, 0.0F};
 
     const auto size = coefficients.size();
     for (auto i = 0; i < size; i++) {
         const Float3& c = coefficients[i];
-        result += c * evaluateBasis(quality, i, sample);
+        result += c * evaluateBasis(i, sample);
     }
 
     return result;
 }
 
-std::vector<Float3> SH::project(LightProbeQuality quality, const std::vector<Float3>& samples, const std::vector<Float3>& values) {
+std::vector<Float3> SH::project(const std::vector<Float3>& samples, const std::vector<Float3>& values) {
     assert(samples.size() > 0 && samples.size() == values.size());
 
     // integral using Monte Carlo method
-    const auto basisCount = getBasisCount(quality);
+    const auto basisCount = getBasisCount();
     const auto sampleCount = samples.size();
     const auto scale = 1.0F / (LightProbeSampler::uniformSpherePdf() * static_cast<float>(sampleCount));
 
@@ -72,7 +72,7 @@ std::vector<Float3> SH::project(LightProbeQuality quality, const std::vector<Flo
         Float3 coefficient{0.0F, 0.0F, 0.0F};
 
         for (auto k = 0; k < sampleCount; k++) {
-            coefficient += values[k] * evaluateBasis(quality, i, samples[k]);
+            coefficient += values[k] * evaluateBasis(i, samples[k]);
         }
 
         coefficient *= scale;
@@ -82,9 +82,9 @@ std::vector<Float3> SH::project(LightProbeQuality quality, const std::vector<Flo
     return coefficients;
 }
 
-std::vector<Float3> SH::convolveCosine(LightProbeQuality quality, const std::vector<Float3>& radianceCoefficients) {
+std::vector<Float3> SH::convolveCosine(const std::vector<Float3>& radianceCoefficients) {
     static const float COSTHETA[3] = {0.8862268925F, 1.0233267546F, 0.4954159260F};    
-    const auto lmax = getBandCount(quality);
+    const auto lmax = 2;
 
     std::vector<Float3> irradianceCoefficients;
 
