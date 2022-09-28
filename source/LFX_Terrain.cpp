@@ -538,9 +538,9 @@ namespace LFX {
 				color /= (float)msaa * msaa;
 
 				auto& outColor = lmap[(j - 0) * mapSize + (i - 0)];
-				outColor.x = color.x;
-				outColor.y = color.y;
-				outColor.z = color.z;
+				outColor.x += color.x;
+				outColor.y += color.y;
+				outColor.z += color.z;
 			}
 		}
 	}

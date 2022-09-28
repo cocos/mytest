@@ -64,9 +64,9 @@ namespace LFX {
 		stream >> mSetting.Threads;
 		stream >> mSetting.BakeLightMap;
 		stream >> mSetting.BakeLightProbe;
+		//mSetting.GIScale = 1.0f;
 		// disable gamma correction
 		mSetting.Gamma = 1;
-		mSetting.GIScale = 1.0f;
 		// Disable sky lighting
 		mSetting.SkyRadiance = Float3(0, 0, 0);
 
