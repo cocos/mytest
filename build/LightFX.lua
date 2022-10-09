@@ -51,7 +51,7 @@ project "LightFX"
 	filter{}
 	
 project "uvunwrap"
-	kind "StaticLib"
+	kind "ConsoleApp"
 	
 	disablewarnings {
 		"4100", -- unreferenced formal parameter
@@ -68,4 +68,7 @@ project "uvunwrap"
 	files {
 		
 		"../uvunwrap/**.*",
-	}	
+	}
+	links {
+		"opennl"
+	}
