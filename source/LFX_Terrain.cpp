@@ -647,7 +647,7 @@ namespace LFX {
 		float kl = 0;
 		Float3 color;
 
-		if (pLight->DirectScale > 0)
+		if (pLight->DirectScale > 0 || pLight->SaveShadowMask)
 		{
 			World::Instance()->GetShader()->DoLighting(color, kl, v, pLight, &mMaterial);
 			if (kl >= 0 && pLight->CastShadow)
