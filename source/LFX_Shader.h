@@ -15,7 +15,9 @@ namespace LFX {
 
 		static Float3 ACESToneMap(const Float3& color);
 
-		virtual void DoLighting(Float3& color, float& kl, const Vertex& v, const Light* light, const Material* mtl);
+		virtual void DoLighting(Float3& color, float& kl, 
+			const Vertex& v, const Light* light,
+			const Material* mtl, bool textureSampler);
 	};
 
 }

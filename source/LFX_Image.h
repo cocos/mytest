@@ -38,5 +38,8 @@ namespace LFX {
 	LFX_ENTRY bool TGA_Test(Stream & stream);
 	LFX_ENTRY bool TGA_Load(Image & image, Stream & stream);
 
+	LFX_ENTRY bool JPG_Test(Stream & stream);
+	LFX_ENTRY bool JPG_Load(Image & image, Stream & stream);
+
 }
 

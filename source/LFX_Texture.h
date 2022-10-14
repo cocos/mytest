@@ -37,10 +37,12 @@ namespace LFX {
 		{
 			assert(x < width && y < height);
 
-			unsigned char r, g, b, a;
+			unsigned char r = 0;
+			unsigned char g = 0;
+			unsigned char b = 0;
+			unsigned char a = 0;
 
-			if (channels == 4)
-			{
+			if (channels == 4) {
 				b = data[(y * width + x) * 4 + 0];
 				g = data[(y * width + x) * 4 + 1];
 				r = data[(y * width + x) * 4 + 2];
@@ -53,17 +55,25 @@ namespace LFX {
 
 				return true;
 			}
-			else if (channels == 3)
-			{
+			else if (channels == 3) {
 				r = data[(y * width + x) * 3 + 0];
 				g = data[(y * width + x) * 3 + 1];
 				b = data[(y * width + x) * 3 + 2];
-				a = 255;
 
 				c.x = r / 255.0f;
 				c.y = g / 255.0f;
 				c.z = b / 255.0f;
-				c.w = a / 255.0f;
+				c.w = 1.0f;
+
+				return true;
+			}
+			else if (channels == 1) {
+				r = data[(y * width + x) * 3 + 0];
+
+				c.x = r / 255.0f;
+				c.y = r / 255.0f;
+				c.z = r / 255.0f;
+				c.w = 1.0f;
 
 				return true;
 			}
@@ -101,22 +111,26 @@ namespace LFX {
 			int iu1 = iu0 + 1;
 			int iv1 = iv0 + 1;
 
-			if (iu1 > width - 1)
+			if (iu1 > width - 1) {
 				iu1 = iu0;
-
-			if (iv1 > height - 1)
+			}
+			if (iv1 > height - 1) {
 				iv1 = iv0;
+			}
 
 			Float4 c0, c1, c2, c3;
-
-			if (!GetColor(c0, iu0, iv0))
+			if (!GetColor(c0, iu0, iv0)) {
 				return Float4(1, 1, 1, 1);
-			if (!GetColor(c1, iu1, iv0))
+			}
+			if (!GetColor(c1, iu1, iv0)) {
 				return Float4(1, 1, 1, 1);
-			if (!GetColor(c2, iu0, iv1))
+			}
+			if (!GetColor(c2, iu0, iv1)) {
 				return Float4(1, 1, 1, 1);
-			if (!GetColor(c3, iu1, iv1))
+			}
+			if (!GetColor(c3, iu1, iv1)) {
 				return Float4(1, 1, 1, 1);
+			}
 
 			float du = fu - iu0;
 			float dv = fv - iv0;

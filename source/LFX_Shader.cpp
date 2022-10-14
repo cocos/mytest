@@ -68,7 +68,9 @@ namespace LFX {
 		return (att * att);
 	}
 
-	void Shader::DoLighting(Float3& color, float& kl, const Vertex& v, const Light* light, const Material* mtl)
+	void Shader::DoLighting(Float3& color, float& kl, 
+		const Vertex& v, const Light* light,
+		const Material* mtl, bool textureSampler)
 	{
 		float kd = 0, ks = 0, ka = 0;
 
@@ -133,7 +135,21 @@ namespace LFX {
 		}
 
 		kl = kd * ks * ka;
-		color = kl * mtl->Diffuse / Pi * light->Color;
+		if (kl > 0) {
+			Float3 diffuse = mtl->Diffuse;
+			if (textureSampler && mtl->Maps[0] != nullptr) {
+				Float4 textureColor(1, 1, 1, 1);
+				textureColor = mtl->Maps[0]->SampleColor(v.UV.x, v.UV.y, true);
+				diffuse.x *= textureColor.x;
+				diffuse.y *= textureColor.y;
+				diffuse.z *= textureColor.z;
+			}
+
+			color = kl * mtl->Diffuse / Pi * light->Color;
+		}
+		else {
+			color = Float3(0, 0, 0);
+		}
 	}
 
 }

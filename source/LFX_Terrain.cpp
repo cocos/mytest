@@ -439,7 +439,7 @@ namespace LFX {
 						for (int l = 0; l < lights.size(); ++l)
 						{
 							float mask = 1.0f;
-							color += _doLighting(p, lights[l], mask);
+							color += _doDirectLighting(p, lights[l], mask);
 							shadowMask += mask;
 						}
 					}
@@ -642,14 +642,14 @@ namespace LFX {
 		}
 	}
 
-	Float3 Terrain::_doLighting(const Vertex & v, Light * pLight, float& shadowMask)
+	Float3 Terrain::_doDirectLighting(const Vertex & v, Light * pLight, float& shadowMask)
 	{
 		float kl = 0;
 		Float3 color;
 
 		if (pLight->DirectScale > 0 || pLight->SaveShadowMask)
 		{
-			World::Instance()->GetShader()->DoLighting(color, kl, v, pLight, &mMaterial);
+			World::Instance()->GetShader()->DoLighting(color, kl, v, pLight, &mMaterial, false);
 			if (kl >= 0 && pLight->CastShadow)
 			{
 				float len = 0;

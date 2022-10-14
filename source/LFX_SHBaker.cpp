@@ -7,7 +7,7 @@ namespace LFX {
 	{
 		float kl = 0;
 		Float3 color;
-		World::Instance()->GetShader()->DoLighting(color, kl, V, L, M);
+		World::Instance()->GetShader()->DoLighting(color, kl, V, L, M, false);
 		if (kl >= 0 && L->CastShadow) {
 			float len = 0;
 			Ray ray;
@@ -39,7 +39,7 @@ namespace LFX {
 	{
 		float kl = 0;
 		Float3 color;
-		World::Instance()->GetShader()->DoLighting(color, kl, V, L, M);
+		World::Instance()->GetShader()->DoLighting(color, kl, V, L, M, true);
 		if (kl >= 0 && L->CastShadow) {
 			float len = 0;
 			Ray ray;

@@ -73,7 +73,7 @@ namespace LFX {
 		void _rayCheckImp(Contact & contract, BSPTree<int>::Node * node, const Ray & ray, float length);
 		bool _occludedImp(BSPTree<int>::Node * node, const Ray & ray, float length);
 
-		Float3 _doLighting(const Vertex & v, Light * pLight, float& shadowMask);
+		Float3 _doDirectLighting(const Vertex & v, Light * pLight, float& shadowMask);
 
 	protected:
 		Desc mDesc;

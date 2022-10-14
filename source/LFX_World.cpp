@@ -589,6 +589,9 @@ namespace LFX {
 		if (PNG_Test(fs)) {
 			PNG_Load(img, fs);
 		}
+		else if (JPG_Test(fs)) {
+			JPG_Load(img, fs);
+		}
 		else if (TGA_Test(fs)) {
 			TGA_Load(img, fs);
 		}
@@ -616,7 +619,7 @@ namespace LFX {
 
 	Texture* World::CreateTexture(const String & nam, int w, int h, int channels)
 	{
-		Texture * t = new Texture;
+		Texture* t = new Texture;
 		t->name = nam;
 		t->width = w;
 		t->height = h;

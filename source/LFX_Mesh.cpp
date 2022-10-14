@@ -425,7 +425,7 @@ namespace LFX {
 			for (auto* light : lights)
 			{
 #ifndef LFX_DEBUG_LUV
-				color += _doLighting(v, mtlId, light, shadowMask);
+				color += _doDirectLighting(v, mtlId, light, shadowMask);
 #else
 				color += Float3(0.5f, 0.5f, 0.5f);
 #endif
@@ -570,14 +570,14 @@ namespace LFX {
 		delete rasterizer;
 	}
 
-	Float3 Mesh::_doLighting(const Vertex& v, int mtlId, Light* pLight, float& shadowMask)
+	Float3 Mesh::_doDirectLighting(const Vertex& v, int mtlId, Light* pLight, float& shadowMask)
 	{
 		float kl = 0.0f;
 		Float3 color;
 
 		if (pLight->DirectScale > 0 || pLight->SaveShadowMask)
 		{
-			World::Instance()->GetShader()->DoLighting(color, kl, v, pLight, &mMtlBuffer[mtlId]);
+			World::Instance()->GetShader()->DoLighting(color, kl, v, pLight, &mMtlBuffer[mtlId], false);
 			if (kl >= 0 && pLight->CastShadow && mReceiveShadow)
 			{
 				float len = 0;

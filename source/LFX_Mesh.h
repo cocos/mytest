@@ -45,7 +45,7 @@ namespace LFX {
 		void CalcuDirectLighting(const std::vector<Light *> & lights);
 		void CalcuIndirectLighting();
 		void CalcuAmbientOcclusion();
-		Float3 _doLighting(const Vertex& v, int mtlId, Light* pLight, float& shadowMask);
+		Float3 _doDirectLighting(const Vertex& v, int mtlId, Light* pLight, float& shadowMask);
 
 		void GetLightingMap(std::vector<RGBE> & colors);
 		void GetLightingMap(std::vector<Float4> & colors);
