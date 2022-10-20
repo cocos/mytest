@@ -17,14 +17,18 @@ bool ReadInMesh(FILE* fp, NLInMesh& mesh)
 	int numVertices = 0;
 	fread(&numVertices, sizeof(int), 1, fp);
 	if (numVertices <= 0) {
-		printf("Error: Invalid number vertex %d!!", numVertices);
+		printf("Error: Invalid number of vertex %d!!", numVertices);
 		return false;
 	}
 
 	int numIndices = 0;
 	fread(&numIndices, sizeof(int), 1, fp);
 	if (numIndices <= 0) {
-		printf("Error: Invalid number index %d!!", numIndices);
+		printf("Error: Invalid number of index %d!!", numIndices);
+		return false;
+	}
+	if (numIndices % 3 != 0) {
+		printf("Error: Index number %d is not triangle list", numIndices);
 		return false;
 	}
 
