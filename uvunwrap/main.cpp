@@ -32,6 +32,9 @@ bool ReadInMesh(FILE* fp, NLInMesh& mesh)
 	mesh.triangles.resize(numIndices / 3);
 	fread(mesh.vertices.data(), sizeof(Float3), mesh.vertices.size(), fp);
 	fread(mesh.triangles.data(), sizeof(Int3), mesh.triangles.size(), fp);
+
+	printf("Info: Input mesh %d vertices, %d indices", numVertices, numIndices);
+
 	return true;
 }
 
@@ -51,6 +54,8 @@ void SaveOutMesh(FILE* fp, NLOutMesh& mesh)
 	int numIndices = mesh.indices.size();
 	fwrite(&numIndices, sizeof(int), 1, fp);
 	fwrite(mesh.indices.data(), sizeof(int), mesh.indices.size(), fp);
+
+	printf("Info: Output mesh %d vertices, %d indices", numVertices, numIndices);
 }
 
 int main(int argc, char* argv[])
