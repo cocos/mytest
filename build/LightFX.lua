@@ -23,6 +23,7 @@ project "LightFX"
 		"../3rd/src/websocketpp-0.8.2",
 	}
 	includedirs {
+		"../3rd/src/stb",
 		"../3rd/src/lodepng",
 		"../3rd/src/socket.io-client-cpp/src",
 		"../source",
