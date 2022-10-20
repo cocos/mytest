@@ -31,7 +31,7 @@ bool ReadInMesh(FILE* fp, NLInMesh& mesh)
 	mesh.vertices.resize(numVertices);
 	mesh.triangles.resize(numIndices / 3);
 	fread(mesh.vertices.data(), sizeof(Float3), mesh.vertices.size(), fp);
-	fread(mesh.triangles.data(), sizeof(Int3), mesh.vertices.size(), fp);
+	fread(mesh.triangles.data(), sizeof(Int3), mesh.triangles.size(), fp);
 	return true;
 }
 
