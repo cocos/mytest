@@ -137,9 +137,9 @@ namespace LFX {
 		kl = kd * ks * ka;
 		if (kl > 0) {
 			Float3 diffuse = mtl->Diffuse;
-			if (textureSampler && mtl->Maps[0] != nullptr) {
+			if (textureSampler && mtl->DiffuseMap != nullptr) {
 				Float4 textureColor(1, 1, 1, 1);
-				textureColor = mtl->Maps[0]->SampleColor(v.UV.x, v.UV.y, true);
+				textureColor = mtl->DiffuseMap->SampleColor(v.UV.x, v.UV.y, true);
 				diffuse.x *= textureColor.x;
 				diffuse.y *= textureColor.y;
 				diffuse.z *= textureColor.z;

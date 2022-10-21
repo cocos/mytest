@@ -133,7 +133,7 @@ namespace LFX {
 					stream >> mtl[i].Diffuse;
 					String tex = stream.ReadString();
 					if (tex != "") {
-						mtl[i].Maps[0] = LoadTexture(tex);
+						mtl[i].DiffuseMap = LoadTexture(tex);
 					}
 				}
 				m->Unlock();

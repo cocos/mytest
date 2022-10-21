@@ -12,13 +12,23 @@ namespace LFX {
 
 	struct LFX_ENTRY Material
 	{
+		float Metallic;
+		float Roughness;
 		Float3 Diffuse;
-		Texture* Maps[1];
+		Texture* DiffuseMap;
+		Texture* MetallicMap;
+		Texture* RoughnessMap;
+		Texture* PBRMap;
 
 		Material()
 		{
+			Metallic = 0;
+			Roughness = 0;
 			Diffuse = Float3(1, 1, 1);
-			Maps[0] = NULL;
+			DiffuseMap = NULL;
+			MetallicMap = NULL;
+			RoughnessMap = NULL;
+			PBRMap = NULL;
 		}
 	};
 

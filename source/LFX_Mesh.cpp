@@ -124,7 +124,7 @@ namespace LFX {
 			float tu, tv;
 			if (Intersect(ray, &dist, tu, tv, a, b, c) && dist < contract.td && dist <= length)
 			{
-				if (m.Maps[0] != NULL)
+				if (m.DiffuseMap != NULL)
 				{
 					const Float2 & uv0 = mVertexBuffer[triangle.Index0].UV;
 					const Float2 & uv1 = mVertexBuffer[triangle.Index1].UV;
@@ -132,7 +132,7 @@ namespace LFX {
 
 					Float2 uv = uv0 * (1 - tu - tv) + uv1 * tu + uv2 * tv;
 
-					Float4 color = m.Maps[0]->SampleColor(uv.x, uv.y);
+					Float4 color = m.DiffuseMap->SampleColor(uv.x, uv.y);
 					if (color.w < 0.5f)
 						continue;
 				}
@@ -178,7 +178,7 @@ namespace LFX {
 			float tu, tv;
 			if (Intersect(ray, &dist, tu, tv, a, b, c) && dist <= length)
 			{
-				if (m.Maps[0] != NULL)
+				if (m.DiffuseMap != NULL)
 				{
 					const Float2 & uv0 = mVertexBuffer[triangle.Index0].UV;
 					const Float2 & uv1 = mVertexBuffer[triangle.Index1].UV;
@@ -186,9 +186,10 @@ namespace LFX {
 
 					Float2 uv = uv0 * (1 - tu - tv) + uv1 * tu + uv2 * tv;
 
-					Float4 color = m.Maps[0]->SampleColor(uv.x, uv.y);
-					if (color.w < 0.5f)
+					Float4 color = m.DiffuseMap->SampleColor(uv.x, uv.y);
+					if (color.w < 0.5f) {
 						continue;
+					}
 
 					return true;
 				}
@@ -197,11 +198,13 @@ namespace LFX {
 			}
 		}
 
-		if (node->child[0] != NULL && _occludedImp(node->child[0], ray, length))
+		if (node->child[0] != NULL && _occludedImp(node->child[0], ray, length)) {
 			return true;
+		}
 
-		if (node->child[1] != NULL && _occludedImp(node->child[1], ray, length))
+		if (node->child[1] != NULL && _occludedImp(node->child[1], ray, length)) {
 			return true;
+		}
 
 		return false;
 	}
