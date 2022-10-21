@@ -1,4 +1,5 @@
 #include "uvunwarp.h"
+#include <iostream>
 
 using namespace LFX;
 
@@ -17,18 +18,18 @@ bool ReadInMesh(FILE* fp, NLInMesh& mesh)
 	int numVertices = 0;
 	fread(&numVertices, sizeof(int), 1, fp);
 	if (numVertices <= 0) {
-		printf("Error: Invalid number of vertex %d!!", numVertices);
+		std::cerr << "Invalid number of vertex " << numVertices << "!" << std::endl;
 		return false;
 	}
 
 	int numIndices = 0;
 	fread(&numIndices, sizeof(int), 1, fp);
 	if (numIndices <= 0) {
-		printf("Error: Invalid number of index %d!!", numIndices);
+		std::cerr << "Invalid number of index " << numIndices << "!" << std::endl;
 		return false;
 	}
 	if (numIndices % 3 != 0) {
-		printf("Error: Index number %d is not triangle list", numIndices);
+		std::cerr << " Index number " << numIndices << "is not triangle list" << std::endl;
 		return false;
 	}
 
@@ -78,18 +79,18 @@ int main(int argc, char* argv[])
 	}
 
 	if (GInputFile == nullptr) {
-		printf("Error: missing input file argment!!!");
+		std::cerr << "missing input file argment!!!" << std::endl;
 		return -1;
 	}
 
 	if (GOutputFile == nullptr) {
-		printf("Error: missing output file argment!!!");
+		std::cerr << "missing output file argment!!!" << std::endl;
 		return -1;
 	}
 
 	FILE* inFile = fopen(GInputFile, "rb");
 	if (inFile == nullptr) {
-		printf("Error: open input file '%s' faild!!!", GInputFile);
+		std::cerr << "open input file '" << GInputFile << "' faild!!!" << std::endl;
 		return -1;
 	}
 
@@ -105,12 +106,11 @@ int main(int argc, char* argv[])
 
 	FILE* outFile = fopen(GOutputFile, "wb");
 	if (outFile == nullptr) {
-		printf("Error: open output file '%s' faild!!!", GInputFile);
+		std::cerr << "Error: open output file '" << GInputFile << "' faild!!!" << std::endl;
 		return -1;
 	}
 
 	SaveOutMesh(outFile, outMesh);
 	fclose(outFile);
-
 	return 0;
 }
