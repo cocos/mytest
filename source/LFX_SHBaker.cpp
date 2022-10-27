@@ -82,72 +82,91 @@ namespace LFX {
 
 	void SHBaker::Run(SHProbe* probe)
 	{
-		std::vector<Float3> results;
-		std::vector<Float3> samples = LightProbeSampler::uniformSampleSphereAll(32, 32);
+		std::vector<Float3> radianceCoefficients;
 
-		for (int sampleIdx = 0; sampleIdx < samples.size(); ++sampleIdx) {
-			Ray ray;
-			ray.orig = probe->position;
-			ray.dir = samples[sampleIdx];
-			
-			Contact contact;
-			if (World::Instance()->GetScene()->RayCheck(contact, ray, DEFAULT_RAYTRACE_MAX_LENGHT, LFX_TERRAIN | LFX_MESH)) {
-				// back facing
-				if (!contact.facing) {
-					results.push_back(Float3(0, 0, 0));
+		// Calculate indirect lightings
+		{
+			std::vector<Float3> results;
+			std::vector<Float3> samples = LightProbeSampler::uniformSampleSphereAll(32, 32);
+
+			for (int sampleIdx = 0; sampleIdx < samples.size(); ++sampleIdx) {
+				Ray ray;
+				ray.orig = probe->position;
+				ray.dir = samples[sampleIdx];
+
+				Contact contact;
+				if (World::Instance()->GetScene()->RayCheck(contact, ray, DEFAULT_RAYTRACE_MAX_LENGHT, LFX_TERRAIN | LFX_MESH)) {
+					// back facing
+					if (!contact.facing) {
+						results.push_back(Float3(0, 0, 0));
+						continue;
+					}
+
+					Vertex vtx = contact.vhit;
+					Material* mtl = (Material*)contact.mtl;
+					const float lenSq = (vtx.Position - ray.orig).lenSqr();
+
+					Float3 result;
+					std::vector<Light*> lights;
+					SHGetLightList(lights, vtx.Position);
+					for (auto* light : lights) {
+						if (!light->GIEnable) {
+							continue;
+						}
+						if (light->IndirectScale <= 0) {
+							continue;
+						}
+						SHCalcIndirectLighting(result, vtx, light, mtl);
+					}
+
+					results.push_back(result);
+				}
+				else {
+					results.push_back(_cfg.SkyRadiance);
+				}
+			}
+
+			radianceCoefficients = SH::project(samples, results);
+		}
+
+
+		// Calculate direct lightings
+		{
+            std::vector<Float3> results;
+			std::vector<Float3> samples;
+
+			std::vector<Light*> lights;
+			SHGetLightList(lights, probe->position);
+			for (auto* light : lights) {
+				if (light->Type == Light::DIRECTION) {
+					continue;
+				}
+				if (light->DirectScale <= 0) {
 					continue;
 				}
 
-				Vertex vtx = contact.vhit;
-				Material* mtl = (Material*)contact.mtl;
-				const float lenSq = (vtx.Position - ray.orig).lenSqr();
+				Vertex vtx;
+				Material mat;
+
+				vtx.Position = probe->position;
+				vtx.Normal = Float3::Normalize(light->Position - probe->position);
 
 				Float3 result;
-				std::vector<Light*> lights;
-				SHGetLightList(lights, vtx.Position);
-				for (auto* light : lights) {
-					if (!light->GIEnable) {
-						continue;
-					}
-					if (light->IndirectScale <= 0) {
-						continue;
-					}
-					SHCalcIndirectLighting(result, vtx, light, mtl);
-				}
-
+				SHCalcDirectLighting(result, vtx, light, &mat);
 				results.push_back(result);
+				samples.push_back(vtx.Normal);
 			}
-			else {
-				results.push_back(_cfg.SkyRadiance);
+
+			if (!samples.empty()) {
+				auto directRadianceCoefficients = SH::project(samples, results);
+				assert(radianceCoefficients.size() == directRadianceCoefficients.size());
+
+				for (auto i = 0; i < directRadianceCoefficients.size(); i++) {
+					radianceCoefficients[i] += directRadianceCoefficients[i];
+				}
 			}
 		}
 
-#define LFX_ENABLE_SHPROBE_DIRECT_LIGHTING 0
-#if LFX_ENABLE_SHPROBE_DIRECT_LIGHTING
-		std::vector<Light*> lights;
-		SHGetLightList(lights, probe->position);
-		for (auto* light : lights) {
-			if (light->Type == Light::DIRECTION) {
-				continue;
-			}
-			if (light->DirectScale <= 0) {
-				continue;
-			}
-
-			Vertex vtx;
-			Material mat;
-
-			vtx.Position = probe->position;
-			vtx.Normal = Float3::Normalize(light->Position - probe->position);
-
-			Float3 result;
-			SHCalcDirectLighting(result, vtx, light, &mat);
-			results.push_back(result);
-			samples.push_back(vtx.Normal);
-		}
-#endif
-
-		auto radianceCoefficients = SH::project(samples, results);
 		auto irradianceCoefficients = SH::convolveCosine(radianceCoefficients);
 		probe->coefficients = irradianceCoefficients;
 	}
