@@ -39,12 +39,15 @@ namespace LFX {
 			Entity* entity = nullptr;
 			int MapWidth = 0;
 			int MapHeight = 0;
+			int MaxPathLength = 0;
+			int NumSqrtSamples = 0;
+			float LightingScale = 0;
+			Float3 SkyRadiance;
 			ILBaker::Random Random;
 			ILBaker::IntegrationSamples Samples;
 			std::vector<Float4> BakeOutput;
 		};
 
-		Config _cfg;
 		Context _ctx;
 
 	public:

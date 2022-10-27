@@ -73,7 +73,7 @@ namespace LFX {
 	};
 
 	//
-	void RTCalcuLighting(Float3& diffuse, const Vertex & V, Light * L, const Material * M)
+	float RTCalcuLighting(Float3& diffuse, const Vertex & V, Light * L, const Material * M)
 	{
 		float kl = 0;
 		Float3 color;
@@ -103,6 +103,7 @@ namespace LFX {
 		}
 
 		diffuse += kl > 0 ? color * L->IndirectScale : Float3(0, 0, 0);
+		return kl;
 	}
 
 	void RTGetLightList(std::vector<Light*>& lights, const Float3& point)
@@ -125,15 +126,16 @@ namespace LFX {
 			return true;
 		}
 
+		float kl = 0;
 		std::vector<Light*> lights;
 		RTGetLightList(lights, vtx.Position);
 		for (size_t i = 0; i < lights.size(); ++i) {
 			Float3 diffuse;
-			RTCalcuLighting(diffuse, vtx, lights[i], mtl);
+			kl += RTCalcuLighting(diffuse, vtx, lights[i], mtl);
 			result += diffuse * params.diffuseScale;
 		}
 
-		return true;
+		return kl > 0;
 	}
 
 	Float4 ILBakerRaytrace::_doLighting(const Vertex& bakePoint, int texelIdxX, int texelIdxY)
@@ -141,7 +143,7 @@ namespace LFX {
 		const int groupTexelIdxX = texelIdxX % BakeGroupSizeX;
 		const int groupTexelIdxY = texelIdxY % BakeGroupSizeY;
 		const int groupTexelIdx = groupTexelIdxX * groupTexelIdxY;
-		const int samplesPerTexel = _cfg.SqrtNumSamples * _cfg.SqrtNumSamples;
+		const int samplesPerTexel = _ctx.NumSqrtSamples * _ctx.NumSqrtSamples;
 
 		const int texelIdx = texelIdxY * _ctx.MapWidth + texelIdxX;
 		if (texelIdxX >= _ctx.MapWidth || texelIdxY >= _ctx.MapHeight) {
@@ -176,11 +178,11 @@ namespace LFX {
 			params.rayDir = rayDir;
 			params.rayStart = rayStart + 0.001f * rayDir;
 			params.rayLen = DEFAULT_RAYTRACE_MAX_LENGHT;
-			params.maxPathLength = _cfg.MaxPathLength;
-			//params.russianRouletteDepth = _cfg.RussianRouletteDepth;
+			params.maxPathLength = _ctx.MaxPathLength;
+			//params.russianRouletteDepth = _ctx.RussianRouletteDepth;
 			//params.russianRouletteProbability = 0.5f;
-			params.skyRadiance = _cfg.SkyRadiance;
-			params.diffuseScale = _cfg.DiffuseScale;
+			params.skyRadiance = _ctx.SkyRadiance;
+			params.diffuseScale = _ctx.LightingScale;
 
 			bool hitSky = false;
 			PathTraceResult sampleResult = PathTrace(params, RTPathTraceFunc, rand, hitSky);
@@ -194,17 +196,19 @@ namespace LFX {
 
 	void ILBakerRaytrace::Run(Entity* entity, int w, int h, const std::vector<RVertex>& rchart)
 	{
-		_cfg.MaxPathLength = 2;
-
 		_ctx.entity = entity;
 		_ctx.MapWidth = w;
 		_ctx.MapHeight = h;
+		_ctx.LightingScale = World::Instance()->GetSetting()->GIScale;
+		_ctx.NumSqrtSamples = World::Instance()->GetSetting()->GISamples;
+		_ctx.MaxPathLength = World::Instance()->GetSetting()->GIPathLength;
+		_ctx.SkyRadiance = World::Instance()->GetSetting()->SkyRadiance;
 		_ctx.BakeOutput.resize(w * h);
 		for (size_t i = 0; i < _ctx.BakeOutput.size(); ++i) {
 			_ctx.BakeOutput[i] = Float4(0, 0, 0, 0);
 		}
 
-		GenerateIntegrationSamples(_ctx.Samples, _cfg.SqrtNumSamples, BakeGroupSize, 1, 5, _ctx.Random);
+		GenerateIntegrationSamples(_ctx.Samples, _ctx.NumSqrtSamples, BakeGroupSize, 1, 5, _ctx.Random);
 
 		int index = 0;
 		for (int v = 0; v < _ctx.MapHeight; ++v)

@@ -492,11 +492,6 @@ namespace LFX {
 		rasterizer->DoRasterize();
 
 		ILBakerRaytrace baker;
-		baker._cfg.SkyRadiance = World::Instance()->GetSetting()->SkyRadiance;
-		baker._cfg.DiffuseScale = World::Instance()->GetSetting()->GIScale;
-		baker._cfg.SqrtNumSamples = World::Instance()->GetSetting()->GISamples;
-		baker._cfg.MaxPathLength = World::Instance()->GetSetting()->GIPathLength;
-		baker._cfg.RussianRouletteDepth = -1;
 		baker.Run(this, rasterizer->_width, rasterizer->_height, rasterizer->_rchart);
 
 		int index = 0;

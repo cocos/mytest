@@ -18,19 +18,15 @@ namespace LFX {
 	class SHBaker
 	{
 	public:
-		struct Config
+		struct Context
 		{
+			int MaxPathLength = 0;
+			float LightingScale = 0;
 			Float3 SkyRadiance;
-			float DiffuseScale; // π‚’’Àı∑≈
-
-			Config()
-			{
-				SkyRadiance = Float3(0.2f, 0.5f, 0.8f);
-				DiffuseScale = 0.5f;
-			}
+			ILBaker::Random Random;
 		};
 
-		Config _cfg;
+		Context _ctx;
 
 	public:
 		void Run(SHProbe* probe);

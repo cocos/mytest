@@ -1,4 +1,6 @@
 #include "LFX_SHBaker.h"
+#include "LFX_ILPathTrace.h"
+#include "LFX_ILBakerSampling.h"
 #include "LFX_World.h"
 
 namespace LFX {
@@ -35,7 +37,7 @@ namespace LFX {
 		result += kl > 0 ? color * L->DirectScale : Float3(0, 0, 0);
 	}
 
-	void SHCalcIndirectLighting(Float3& result, const Vertex& V, Light* L, const Material* M)
+	float SHCalcIndirectLighting(Float3& result, const Vertex& V, Light* L, const Material* M)
 	{
 		float kl = 0;
 		Float3 color;
@@ -65,6 +67,7 @@ namespace LFX {
 		}
 
 		result += kl > 0 ? color * L->IndirectScale : Float3(0, 0, 0);
+		return kl;
 	}
 
 	void SHGetLightList(std::vector<Light*>& lights, const Float3& point)
@@ -80,8 +83,134 @@ namespace LFX {
 		}
 	}
 
+	using namespace ILBaker;
+
+	bool SHPathTraceFunc(Float3& result, const PathTraceParams& params, const Vertex& vtx, const Material* mtl, bool hitSky)
+	{
+		if (hitSky) {
+			result += params.skyRadiance;
+			return true;
+		}
+
+		float kl = 0;
+		std::vector<Light*> lights;
+		SHGetLightList(lights, vtx.Position);
+		for (size_t i = 0; i < lights.size(); ++i) {
+			Float3 diffuse;
+			kl += SHCalcIndirectLighting(diffuse, vtx, lights[i], mtl);
+			result += diffuse * params.diffuseScale;
+		}
+
+		return kl > 0;
+	}
+
+	PathTraceResult SHPathTrace(const PathTraceParams& params, Random& rand, bool& hitSky)
+	{
+		PathTraceResult result;
+
+		Ray ray;
+		ray.orig = params.rayStart;
+		ray.dir = params.rayDir;
+
+		// Keep tracing paths until we reach the specified max
+		float throughput = 1.0f;
+		Entity* traceEntity = params.entity;
+		const int maxPathLength = params.maxPathLength;
+		for (; result.pathLen <= maxPathLength || maxPathLength == -1; ++result.pathLen) {
+#if 0 // Disable russian roulette
+			// See if we should randomly terminate this path using Russian Roullete
+			const int rouletteDepth = params.RussianRouletteDepth;
+			if (pathLength >= rouletteDepth && rouletteDepth != -1) {
+				float continueProbability = std::min<float>(params.RussianRouletteProbability, ComputeLuminance(throughput));
+				if (randomGenerator.RandomFloat() > continueProbability) {
+					break;
+				}
+				throughput /= continueProbability;
+				irrThroughput /= continueProbability;
+			}
+#endif
+
+			// Set this to true to keep the loop going
+			bool continueTracing = false;
+
+			// Check for intersection with the scene
+			Contact contact;
+			if (World::Instance()->GetScene()->RayCheck(contact, ray, params.rayLen, LFX_TERRAIN | LFX_MESH)) {
+				traceEntity = contact.entity;
+
+				// back facing
+				if (!contact.facing) {
+					break;
+				}
+
+				Vertex vtx = contact.vhit;
+				Material* mtl = (Material*)contact.mtl;
+
+				Float3 diffuse;
+				if (!SHPathTraceFunc(diffuse, params, vtx, mtl, false)) {
+					break;
+				}
+
+				float lenSq = (vtx.Position - ray.orig).lenSqr();
+				//throughput *= 1.0f / (lenSq + 1.0f);
+				throughput *= 1.0f / Pi;
+				result.color += (diffuse * throughput);
+
+				// Pick a new path, using MIS to sample both our diffuse and specular BRDF's
+				if (1) {
+					Mat3 tangentToWorld;
+					tangentToWorld.SetXBasis(vtx.Tangent);
+					tangentToWorld.SetYBasis(vtx.Binormal);
+					tangentToWorld.SetZBasis(vtx.Normal);
+
+					Float2 sample;
+#if 0
+					// Randomly select if we should sample our diffuse BRDF, or our specular BRDF
+					if (params.sampleSet && result.pathLen <= 1) {
+						sample = params.sampleSet->BRDF();
+					}
+					else {
+						sample = rand.RandomFloat2();
+					}
+#else
+					sample = rand.RandomFloat2();
+#endif
+
+					//Float3 v = Float3::Normalize(rayOrigin - hitSurface.position);
+
+					// We're sampling the diffuse BRDF, so sample a cosine-weighted hemisphere
+					Float3 sampleDir;
+					sampleDir = SampleCosineHemisphere(sample);
+					sampleDir = Float3::Normalize(Mat3::Transform(sampleDir, tangentToWorld));
+					if (sampleDir.dot(vtx.Normal) > 0.0f) {
+						// Generate the ray for the new path
+						ray.orig = vtx.Position + sampleDir * 0.01f;
+						ray.dir = sampleDir;
+
+						continueTracing = true;
+					}
+				}
+			}
+			else {
+				Float3 diffuse;
+				if (SHPathTraceFunc(diffuse, params, Vertex(), nullptr, true)) {
+					result.color += diffuse * throughput;
+				}
+				hitSky = true;
+			}
+
+			if (continueTracing == false) break;
+		}
+
+		return result;
+	}
+
 	void SHBaker::Run(SHProbe* probe)
 	{
+		_ctx.LightingScale = World::Instance()->GetSetting()->GIScale;
+		_ctx.MaxPathLength = World::Instance()->GetSetting()->GIPathLength;
+		_ctx.SkyRadiance = World::Instance()->GetSetting()->SkyRadiance;
+
 		std::vector<Float3> radianceCoefficients;
 
 		// Calculate indirect lightings
@@ -94,41 +223,24 @@ namespace LFX {
 				ray.orig = probe->position;
 				ray.dir = samples[sampleIdx];
 
-				Contact contact;
-				if (World::Instance()->GetScene()->RayCheck(contact, ray, DEFAULT_RAYTRACE_MAX_LENGHT, LFX_TERRAIN | LFX_MESH)) {
-					// back facing
-					if (!contact.facing) {
-						results.push_back(Float3(0, 0, 0));
-						continue;
-					}
+				PathTraceParams params;
+				params.sampleSet = nullptr;
+				params.rayDir = ray.dir;
+				params.rayStart = ray.orig;
+				params.rayLen = DEFAULT_RAYTRACE_MAX_LENGHT;
+				params.maxPathLength = _ctx.MaxPathLength;
+				//params.russianRouletteDepth = _ctx.RussianRouletteDepth;
+				//params.russianRouletteProbability = 0.5f;
+				params.skyRadiance = _ctx.SkyRadiance;
+				params.diffuseScale = _ctx.LightingScale;
 
-					Vertex vtx = contact.vhit;
-					Material* mtl = (Material*)contact.mtl;
-					const float lenSq = (vtx.Position - ray.orig).lenSqr();
-
-					Float3 result;
-					std::vector<Light*> lights;
-					SHGetLightList(lights, vtx.Position);
-					for (auto* light : lights) {
-						if (!light->GIEnable) {
-							continue;
-						}
-						if (light->IndirectScale <= 0) {
-							continue;
-						}
-						SHCalcIndirectLighting(result, vtx, light, mtl);
-					}
-
-					results.push_back(result);
-				}
-				else {
-					results.push_back(_cfg.SkyRadiance);
-				}
+				bool hitSky = false;
+				PathTraceResult sampleResult = SHPathTrace(params, _ctx.Random, hitSky);
+				results.push_back(sampleResult.color);
 			}
 
 			radianceCoefficients = SH::project(samples, results);
 		}
-
 
 		// Calculate direct lightings
 		{
