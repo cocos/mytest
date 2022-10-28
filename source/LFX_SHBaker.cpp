@@ -216,7 +216,7 @@ namespace LFX {
 		// Calculate indirect lightings
 		{
 			std::vector<Float3> results;
-			std::vector<Float3> samples = LightProbeSampler::uniformSampleSphereAll(32, 32);
+			std::vector<Float3> samples = LightProbeSampler::uniformSampleSphereAll(1024);
 
 			for (int sampleIdx = 0; sampleIdx < samples.size(); ++sampleIdx) {
 				Ray ray;

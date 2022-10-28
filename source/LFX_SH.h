@@ -20,7 +20,7 @@ public:
     /**
      *  generate ucount1 * ucount2 samples from sphere uniformly
      */
-    static std::vector<Float3> uniformSampleSphereAll(uint32_t uCount1, uint32_t uCount2);
+    static std::vector<Float3> uniformSampleSphereAll(uint32_t sampleCount);
 
     /**
      *  probability density function of uniform distribution on spherical surface
