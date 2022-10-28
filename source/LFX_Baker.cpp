@@ -167,8 +167,6 @@ namespace LFX {
 	void STBaker::_calcuSHProbe()
 	{
 		SHBaker baker;
-		baker._cfg.SkyRadiance = World::Instance()->GetSetting()->SkyRadiance;
-		baker._cfg.DiffuseScale = World::Instance()->GetSetting()->GIScale;
 		baker.Run((SHProbe*)mEntity);
 	}
 
