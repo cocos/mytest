@@ -194,13 +194,8 @@ namespace LFX {
 				stream >> l->IndirectScale;
 				stream >> l->GIEnable;
 				stream >> l->CastShadow;
-				//l->GIEnable = true;
-				//l->GIEnable = false;
 				if (l->Type == Light::DIRECTION && l->DirectScale == 0) {
 					l->SaveShadowMask = true;
-				}
-				if (!l->CastShadow) {
-					l->GIEnable = false;
 				}
 				break;
 			}
