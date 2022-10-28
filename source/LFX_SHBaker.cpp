@@ -1,6 +1,6 @@
 #include "LFX_SHBaker.h"
-#include "LFX_ILPathTrace.h"
 #include "LFX_ILBakerSampling.h"
+#include "LFX_ILPathTrace.h"
 #include "LFX_World.h"
 
 namespace LFX {
@@ -243,6 +243,7 @@ namespace LFX {
 		}
 
 		// Calculate direct lightings
+#ifdef COMPUTE_DIRECT_LIHGTINGS
 		{
             std::vector<Float3> results;
 			std::vector<Float3> samples;
@@ -278,6 +279,7 @@ namespace LFX {
 				}
 			}
 		}
+#endif
 
 		auto irradianceCoefficients = SH::convolveCosine(radianceCoefficients);
 		probe->coefficients = irradianceCoefficients;
