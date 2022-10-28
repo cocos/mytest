@@ -207,8 +207,9 @@ namespace LFX {
 
 	void SHBaker::Run(SHProbe* probe)
 	{
-		_ctx.LightingScale = World::Instance()->GetSetting()->GIScale;
-		_ctx.MaxPathLength = World::Instance()->GetSetting()->GIPathLength;
+		_ctx.Samples = World::Instance()->GetSetting()->GIProbeSamples;
+		_ctx.LightingScale = World::Instance()->GetSetting()->GIProbeScale;
+		_ctx.MaxPathLength = World::Instance()->GetSetting()->GIProbePathLength;
 		_ctx.SkyRadiance = World::Instance()->GetSetting()->SkyRadiance;
 
 		std::vector<Float3> radianceCoefficients;
@@ -216,7 +217,7 @@ namespace LFX {
 		// Calculate indirect lightings
 		{
 			std::vector<Float3> results;
-			std::vector<Float3> samples = LightProbeSampler::uniformSampleSphereAll(1024);
+			std::vector<Float3> samples = LightProbeSampler::uniformSampleSphereAll(_ctx.Samples);
 
 			for (int sampleIdx = 0; sampleIdx < samples.size(); ++sampleIdx) {
 				Ray ray;

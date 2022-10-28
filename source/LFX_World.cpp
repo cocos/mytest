@@ -57,6 +57,9 @@ namespace LFX {
 		stream >> mSetting.GIScale;
 		stream >> mSetting.GISamples;
 		stream >> mSetting.GIPathLength;
+		stream >> mSetting.GIProbeScale;
+		stream >> mSetting.GIProbeSamples;
+		stream >> mSetting.GIProbePathLength;
 		stream >> mSetting.AOLevel;
 		stream >> mSetting.AOStrength;
 		stream >> mSetting.AORadius;
@@ -286,29 +289,18 @@ namespace LFX {
 		return 4; // rgb and shadow mask
 	}
 
-	void World::Save()
+	void SaveLightmaps(FILE* fp, const String& path)
 	{
-		String path = "output";
-		//FileUtil::DeleteDir(path);
-		FileUtil::MakeDir(path);
-
-		String lfx_file = path + "/lfx.out";
-		FILE* fp = fopen(lfx_file.c_str(), "wb");
-		if (fp == NULL) {
-			LOGE("Can not open file '%s'", lfx_file.c_str());
-			return;
-		}
-
-		LOGD("Writing lfx file '%s'", lfx_file.c_str());
-
-		fwrite(&LFX_FILE_VERSION, 4, 1, fp);
+		const auto* settings = World::Instance()->GetSetting();
+		const auto& terrains = World::Instance()->Terrains();
+		const auto& meshes = World::Instance()->Meshes();
 
 		// Pack and save terrain lightmap
-		for (int t = 0; t < mTerrains.size() && !mSetting.Selected; ++t) {
-			Terrain* terrain = mTerrains[t];
+		for (int t = 0; t < terrains.size() && !settings->Selected; ++t) {
+			Terrain* terrain = terrains[t];
 			int lmap_index = 0;
 			int lmap_size = terrain->GetDesc().LMapSize;
-			int ntiles = std::max(1, mSetting.Size / lmap_size);
+			int ntiles = std::max(1, settings->Size / lmap_size);
 			int nblocks = terrain->GetDesc().BlockCount.x * terrain->GetDesc().BlockCount.y;
 
 			fwrite(&LFX_FILE_TERRAIN, 4, 1, fp);
@@ -323,7 +315,7 @@ namespace LFX {
 					std::vector<Float4> colors;
 					colors.resize(lmap_size * lmap_size);
 					terrain->GetLightingMap(x, y, colors);
-					if (!mSetting.RGBEFormat)
+					if (!settings->RGBEFormat)
 					{
 						for (int k = 0; k < colors.size(); ++k)
 						{
@@ -366,7 +358,7 @@ namespace LFX {
 							temp.width = lmap_size;
 							temp.height = lmap_size;
 							temp.channels = channels;
-							ConvertColor(temp, factor, colors, mSetting);
+							ConvertColor(temp, factor, colors, *settings);
 
 							TextureAtlasPacker::Item item;
 #if LFX_VERSION >= 35
@@ -420,17 +412,17 @@ namespace LFX {
 
 		// Mesh
 		TextureAtlasPacker::Options options;
-		options.Width = mSetting.Size;
-		options.Height = mSetting.Size;
+		options.Width = settings->Size;
+		options.Height = settings->Size;
 		options.Channels = GetLightmapChannels();
 		options.Border = 0;
 		options.Space = 0;
 		TextureAtlasPacker packer(options);
 
 		std::vector<TextureAtlasPacker::Item> packed_items;
-		for (int i = 0; i < mMeshes.size(); ++i)
+		for (int i = 0; i < meshes.size(); ++i)
 		{
-			LFX::Mesh* mesh = mMeshes[i];
+			LFX::Mesh* mesh = meshes[i];
 			if (mesh->GetLightingMapSize() == 0) {
 				continue;
 			}
@@ -445,7 +437,7 @@ namespace LFX {
 			image.width = dims;
 			image.height = dims;
 			image.channels = options.Channels;
-			ConvertColor(image, factor, colors, mSetting);
+			ConvertColor(image, factor, colors, *settings);
 			colors.clear();
 #if 0
 			// test
@@ -486,8 +478,8 @@ namespace LFX {
 			fwrite(&numPackItems, sizeof(int), 1, fp);
 
 			int packIndex = 0;
-			for (int i = 0; i < mMeshes.size(); ++i) {
-				LFX::Mesh* mesh = mMeshes[i];
+			for (int i = 0; i < meshes.size(); ++i) {
+				LFX::Mesh* mesh = meshes[i];
 				if (mesh->GetLightingMapSize() == 0) {
 					continue;
 				}
@@ -511,21 +503,50 @@ namespace LFX {
 				fwrite(&remapInfo, sizeof(LightMapInfo), 1, fp);
 			}
 		}
+	}
 
-		// SH Probe
-		int numSHProbes = mSHProbes.size();
+	void SaveLightProbes(FILE* fp)
+	{
+		const auto& probes = World::Instance()->SHProbes();
+
+		int numSHProbes = probes.size();
 		if (numSHProbes > 0) {
 			fwrite(&LFX_FILE_SHPROBE, sizeof(int), 1, fp);
 			fwrite(&numSHProbes, sizeof(int), 1, fp);
-
-			for (int i = 0; i < mSHProbes.size(); ++i) {
-				const auto& probe = mSHProbes[i];
+			for (int i = 0; i < probes.size(); ++i) {
+				const auto& probe = probes[i];
 				const int numCoefs = probe.coefficients.size() * 3;
 				fwrite(&probe.position, sizeof(probe.position), 1, fp);
 				fwrite(&probe.normal, sizeof(probe.normal), 1, fp);
 				fwrite(&numCoefs, sizeof(int), 1, fp);
 				fwrite((const float*)probe.coefficients.data(), numCoefs * sizeof(float), 1, fp);
 			}
+		}
+	}
+
+	void World::Save()
+	{
+		String path = "output";
+		//FileUtil::DeleteDir(path);
+		FileUtil::MakeDir(path);
+
+		String lfx_file = path + "/lfx.out";
+		FILE* fp = fopen(lfx_file.c_str(), "wb");
+		if (fp == NULL) {
+			LOGE("Can not open file '%s'", lfx_file.c_str());
+			return;
+		}
+
+		LOGD("Writing lfx file '%s'", lfx_file.c_str());
+
+		fwrite(&LFX_FILE_VERSION, 4, 1, fp);
+
+		if (mSetting.BakeLightMap) {
+			SaveLightmaps(fp, path);
+		}
+
+		if (mSetting.BakeLightProbe) {
+			SaveLightProbes(fp);
 		}
 
 		// end

@@ -20,6 +20,7 @@ namespace LFX {
 	public:
 		struct Context
 		{
+			int Samples = 1024;
 			int MaxPathLength = 0;
 			float LightingScale = 0;
 			Float3 SkyRadiance;

@@ -45,6 +45,10 @@ namespace LFX {
 			int GISamples;
 			int GIPathLength;
 
+			float GIProbeScale;
+			int GIProbeSamples;
+			int GIProbePathLength;
+
 			int AOLevel;
 			float AOStrength;
 			float AORadius;
