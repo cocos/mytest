@@ -145,7 +145,7 @@ namespace LFX {
 				diffuse.z *= textureColor.z;
 			}
 
-			color = kl * mtl->Diffuse / Pi * light->Color;
+			color = kl * diffuse / Pi * light->Color;
 		}
 		else {
 			color = Float3(0, 0, 0);
