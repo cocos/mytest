@@ -75,7 +75,7 @@ namespace LFX {
 
 	void Shader::DoLighting(Float3& color, float& kl, 
 		const Vertex& v, const Light* light,
-		const Material* mtl, bool textureSampler)
+		const Material* mtl, bool sampler, bool specular)
 	{
 		float kd = 0, ks = 0, ka = 0;
 
@@ -139,7 +139,7 @@ namespace LFX {
 		kl = kd * ks * ka;
 		if (kl > 0) {
 			Float3 diffuse = mtl->Diffuse;
-			if (textureSampler && mtl->DiffuseMap != nullptr) {
+			if (sampler && mtl->DiffuseMap != nullptr) {
 				Float4 textureColor(1, 1, 1, 1);
 				textureColor = mtl->DiffuseMap->SampleColor(v.UV.x, v.UV.y, true);
 				diffuse.x *= textureColor.x;
@@ -147,12 +147,15 @@ namespace LFX {
 				diffuse.z *= textureColor.z;
 			}
 
-			const float metallic = mtl->GetSurfaceMetallic(v.UV.x, v.UV.y);
-			const float roughness = mtl->GetSurfaceRoughness(v.UV.x, v.UV.y);
-			const float roughnessContributes = std::pow(roughness * metallic, 1.5f);
-			const float s = Saturate(roughnessContributes + (1.0f - metallic));
-
-			color = kl * diffuse / Pi * light->Color * s;
+			color = kl * diffuse / Pi * light->Color;
+			 
+			if (specular) {
+				const float metallic = mtl->GetSurfaceMetallic(v.UV.x, v.UV.y);
+				const float roughness = mtl->GetSurfaceRoughness(v.UV.x, v.UV.y);
+				const float roughnessContributes = std::pow(roughness * metallic, 1.5f);
+				const float s = Saturate(roughnessContributes + (1.0f - metallic));
+				color *= s;
+			}
 		}
 		else {
 			color = Float3(0, 0, 0);

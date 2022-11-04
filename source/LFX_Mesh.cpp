@@ -325,10 +325,10 @@ namespace LFX {
 			{
 				//	2D triangle area = (u1*v2-u2*v1)/2
 				// weight the tangent vectors by the UV triangles area size (fix problems with base UV assignment)
-				float a = t2 / div;
+				float a =  t2 / div;
 				float b = -t1 / div;
 				float c = -s2 / div;
-				float d = s1 / div;
+				float d =  s1 / div;
 
 				vertSt0.tan1 += v_1_0 * a + v_2_0 * b;
 				vertSt1.tan1 += vertSt0.tan1;
@@ -575,7 +575,7 @@ namespace LFX {
 
 		if (pLight->DirectScale > 0 || pLight->SaveShadowMask)
 		{
-			World::Instance()->GetShader()->DoLighting(color, kl, v, pLight, &mMtlBuffer[mtlId], false);
+			World::Instance()->GetShader()->DoLighting(color, kl, v, pLight, &mMtlBuffer[mtlId], false, false);
 			if (kl >= 0 && pLight->CastShadow && mReceiveShadow)
 			{
 				float len = 0;
