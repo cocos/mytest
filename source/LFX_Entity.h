@@ -30,6 +30,36 @@ namespace LFX {
 			RoughnessMap = NULL;
 			PBRMap = NULL;
 		}
+
+		float GetSurfaceMetallic(float u, float v) const
+		{
+			float value = Metallic;
+
+			float m = 1.0f;
+			if (PBRMap != nullptr) {
+				m = PBRMap->SampleColor(u, v).z;
+			}
+			else if (MetallicMap != nullptr) {
+				m = MetallicMap->SampleColor(u, v).x;
+			}
+
+			return value * m;
+		}
+
+		float GetSurfaceRoughness(float u, float v) const
+		{
+			float value = Roughness;
+
+			float m = 1.0f;
+			if (PBRMap != nullptr) {
+				m = PBRMap->SampleColor(u, v).y;
+			}
+			else if (RoughnessMap != nullptr) {
+				m = RoughnessMap->SampleColor(u, v).x;
+			}
+
+			return value * m;
+		}
 	};
 
 	class LFX_ENTRY Entity

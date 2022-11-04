@@ -68,6 +68,11 @@ namespace LFX {
 		return (att * att);
 	}
 
+	float GetRoughnessContributes(float roughness, float metallic)
+	{
+		return std::pow(roughness * metallic, 1.5f);
+	}
+
 	void Shader::DoLighting(Float3& color, float& kl, 
 		const Vertex& v, const Light* light,
 		const Material* mtl, bool textureSampler)
@@ -76,8 +81,7 @@ namespace LFX {
 
 		switch (light->Type)
 		{
-		case Light::DIRECTION:
-		{
+		case Light::DIRECTION: {
 			kd = v.Normal.dot(-light->Direction);
 			kd = Clamp<float>(kd, 0, 1);
 
@@ -87,8 +91,7 @@ namespace LFX {
 		}
 		break;
 
-		case Light::POINT:
-		{
+		case Light::POINT: {
 			Float3 lightDir = light->Position - v.Position;
 #if LFX_VERSION < 30
 			float length = lightDir.len();
@@ -105,8 +108,7 @@ namespace LFX {
 		}
 		break;
 
-		case Light::SPOT:
-		{
+		case Light::SPOT: {
 			Float3 spotDir = light->Position - v.Position;
 
 			kd = v.Normal.dot(-light->Direction);
@@ -145,7 +147,12 @@ namespace LFX {
 				diffuse.z *= textureColor.z;
 			}
 
-			color = kl * diffuse / Pi * light->Color;
+			const float metallic = mtl->GetSurfaceMetallic(v.UV.x, v.UV.y);
+			const float roughness = mtl->GetSurfaceRoughness(v.UV.x, v.UV.y);
+			const float roughnessContributes = std::pow(roughness * metallic, 1.5f);
+			const float s = Saturate(roughnessContributes + (1.0f - metallic));
+
+			color = kl * diffuse / Pi * light->Color * s;
 		}
 		else {
 			color = Float3(0, 0, 0);

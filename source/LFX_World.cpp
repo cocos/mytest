@@ -133,10 +133,16 @@ namespace LFX {
 				stream.Read(tri, sizeof(Triangle) * numTris);
 
 				for (auto i = 0; i < numMtls; ++i) {
+					stream >> mtl[i].Metallic;
+					stream >> mtl[i].Roughness;
 					stream >> mtl[i].Diffuse;
-					String tex = stream.ReadString();
-					if (tex != "") {
-						mtl[i].DiffuseMap = LoadTexture(tex);
+					String diffuseMap = stream.ReadString();
+					if (diffuseMap != "") {
+						mtl[i].DiffuseMap = LoadTexture(diffuseMap);
+					}
+					String pbrMap = stream.ReadString();
+					if (pbrMap != "") {
+						mtl[i].PBRMap = LoadTexture(pbrMap);
 					}
 				}
 				m->Unlock();
@@ -783,6 +789,7 @@ namespace LFX {
 		DeviceStats stats = DeviceStats::GetStats();
 		mSetting.Threads = std::max(1, stats.Processors - 2);
 #endif
+		//mSetting.Threads = 1;
 		for (int i = 0; i < mSetting.Threads; ++i) {
 			mThreads.push_back(new STBaker(i));
 		}

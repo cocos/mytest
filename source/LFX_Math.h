@@ -164,6 +164,11 @@ namespace LFX {
 		return 0;
 	}
 
+	inline float Saturate(float r)
+	{
+		return Clamp<float>(r, 0, 1);
+	}
+
 	inline void Saturate(Float3 & r)
 	{
 		r.x = Clamp<float>(r.x, 0, 1);
