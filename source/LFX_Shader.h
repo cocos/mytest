@@ -17,7 +17,7 @@ namespace LFX {
 
 		virtual void DoLighting(Float3& color, float& kl, 
 			const Vertex& v, const Light* light,
-			const Material* mtl, bool textureSampler, bool specular);
+			const Material* mtl, bool sampler, bool specular);
 	};
 
 }

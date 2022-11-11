@@ -32,26 +32,36 @@ namespace LFX {
 
 	float GetDistAtt(float distSqr, float invSqrAttRadius)
 	{
-		float attenuation = 1.0f / std::max(distSqr, 0.01f * 0.01f);
+		//float attenuation = 1.0f / std::max(distSqr, 0.01f * 0.01f);
+		float attenuation = 1.0f / std::max(distSqr, 0.1f);
 		attenuation *= SmoothDistAtt(distSqr, invSqrAttRadius);
 		return attenuation;
 	}
 
 #if LFX_VERSION >= 30
-	float CalcLightAtten(float distSqr, float radius, float size)
+	float CalcLightAtten(float distSqr, float size, float range)
 	{
-		float litRadius = radius;
+		float litRadius = size;
 		float litRadiusSqr = litRadius * litRadius;
 #if LFX_VERSION >= 35
 		float illum = (litRadiusSqr / std::max(litRadiusSqr, distSqr));
 #else
 		float illum = Pi * (litRadiusSqr / std::max(litRadiusSqr, distSqr));
 #endif
-		float attRadiusSqrInv = 1.0f / std::max(size, 0.01f);
+		float attRadiusSqrInv = 1.0f / std::max(range, 0.01f);
 		attRadiusSqrInv *= attRadiusSqrInv;
 		float att = GetDistAtt(distSqr, attRadiusSqrInv);
+		float ka = illum * att;
 
-		return illum * att;
+#if 0
+		// Sanity check
+		if (ka > 800.0f) {
+			int iii = 0;
+			float ca = GetDistAtt(distSqr, attRadiusSqrInv);
+		}
+#endif
+
+		return ka;
 	}
 #else
 	float CalcLightAtten(float d, float start, float end)
@@ -98,7 +108,7 @@ namespace LFX {
 			ka = (length - light->AttenStart) / (light->AttenEnd - light->AttenStart);
 			ka = std::pow(1 - Clamp<float>(ka, 0, 1), light->AttenFallOff);
 #else
-			ka = CalcLightAtten(lightDir.lenSqr(), light->Radius, light->Size);
+			ka = CalcLightAtten(lightDir.lenSqr(), light->Size, light->Range);
 #endif
 			lightDir.normalize();
 			kd = v.Normal.dot(lightDir);
@@ -118,7 +128,7 @@ namespace LFX {
 			ka = (length - pLight->AttenStart) / (light->AttenEnd - light->AttenStart);
 			ka = std::pow(1 - Clamp<float>(ka, 0, 1), light->AttenFallOff);
 #else
-			ka = CalcLightAtten(spotDir.lenSqr(), light->Radius, light->Size);
+			ka = CalcLightAtten(spotDir.lenSqr(), light->Range, light->Size);
 #endif
 
 			spotDir.normalize();

@@ -415,7 +415,7 @@ namespace LFX {
 		std::vector<float> mmap(width * height);
 
 		for (int i = 0; i < mmap.size(); ++i) {
-			mmap[i] = 0.0f;
+			mmap[i] = 1.0f;
 		}
 
 		RasterizerScan2 rs(this, width, height, msaa, border);

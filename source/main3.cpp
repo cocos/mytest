@@ -62,7 +62,7 @@ int remote_main(int argc, char* argv[])
 
 		commands += " ";
 	}
-	LOGI("%s", commands.c_str());
+	LOGI("CmdLine: %s", commands.c_str());
 
 	sio::client h;
 	h.connect(url);
@@ -94,6 +94,7 @@ int remote_main(int argc, char* argv[])
 	});
 
 	h.socket()->on("disconnect", [](sio::event &) {
+		LOGE("?: Disconnect");
 		SAFE_DELETE(GWorld);
 		GStatus = E_STOPPED;
 	});

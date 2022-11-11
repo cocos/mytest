@@ -42,7 +42,7 @@ namespace LFX {
 		float kl = 0;
 		Float3 color;
 		World::Instance()->GetShader()->DoLighting(color, kl, V, L, M, true, true);
-		if (kl >= 0 && L->CastShadow) {
+		if (kl > 0 && L->CastShadow) {
 			float len = 0;
 			Ray ray;
 

@@ -2,6 +2,7 @@
 
 #include "LFX_Math.h"
 #include "LFX_Geom.h"
+#include "LFX_Texture.h"
 
 namespace LFX {
 
@@ -29,8 +30,8 @@ namespace LFX {
 
 			struct
 			{
-				float Radius;
 				float Size;
+				float Range;
 				float Luminance;
 			};
 		};
@@ -72,4 +73,23 @@ namespace LFX {
 
 	LFX_ENTRY bool IsLightVisible(Light* pLight, const Aabb& bound);
 	LFX_ENTRY bool IsLightVisible(Light* pLight, const Float3& point);
+
+	struct LFX_ENTRY SkyLight
+	{
+		Float3 SkyColor;
+		Float3 GroundColor;
+		float illum;
+		Texture* CubeMap[6];
+
+		SkyLight()
+		{
+			SkyColor = Float3(0, 0, 0);
+			GroundColor = Float3(0, 0, 0);
+			illum = 1.0f;
+
+			for (int i = 0; i < 6; ++i) {
+				CubeMap[i] = nullptr;
+			}
+		}
+	};
 }

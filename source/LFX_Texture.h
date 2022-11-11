@@ -43,9 +43,9 @@ namespace LFX {
 			unsigned char a = 0;
 
 			if (channels == 4) {
-				b = data[(y * width + x) * 4 + 0];
+				r = data[(y * width + x) * 4 + 0];
 				g = data[(y * width + x) * 4 + 1];
-				r = data[(y * width + x) * 4 + 2];
+				b = data[(y * width + x) * 4 + 2];
 				a = data[(y * width + x) * 4 + 3];
 
 				c.x = r / 255.0f;
