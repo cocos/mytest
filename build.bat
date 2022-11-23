@@ -1,7 +1,7 @@
-tools\unzip -n -d 3rd\embree\lib 3rd\embree\lib\embree.zip 
-tools\unzip -n -d 3rd\embree\lib 3rd\embree\lib\embree_avx.zip 
-tools\unzip -n -d 3rd\embree\lib 3rd\embree\lib\embree_avx2.zip 
-tools\unzip -n -d 3rd\embree\lib 3rd\embree\lib\embree_sse42.zip 
+build\unzip -n -d 3rd\embree\lib 3rd\embree\lib\embree.zip 
+build\unzip -n -d 3rd\embree\lib 3rd\embree\lib\embree_avx.zip 
+build\unzip -n -d 3rd\embree\lib 3rd\embree\lib\embree_avx2.zip 
+build\unzip -n -d 3rd\embree\lib 3rd\embree\lib\embree_sse42.zip 
 
 echo make solution
 cd build\win
@@ -14,4 +14,4 @@ cd ..\..\
 echo compress to target
 set datestr=%date:~0,4%%date:~5,2%%date:~8,2%
 set filename=build\lightmap-tools-win32-%datestr%.zip
-tools\zip -j %filename% build\win\bin\Release\LightFX.exe
+build\zip -j %filename% build\win\bin\Release\LightFX.exe
