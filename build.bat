@@ -13,6 +13,5 @@ cd ..\..\
 
 echo compress to target
 set datestr=%date:~0,4%%date:~5,2%%date:~8,2%
-set filename=build\lightmap-tools-win32\darwin-%datestr%.zip
-mkdir build\lightmap-tools-win32
+set filename=build\lightmap-tools-win32-%datestr%.zip
 tools\zip -j %filename% build\win\bin\Release\LightFX.exe
