@@ -163,6 +163,7 @@ jobs:
 
       - name: Change files
         run: |
+          cd /Users/cocos/Documents/actions-runner/_work/LightFX/LightFX/cocos-editor
           echo '修改文件 ./workflow/repos/editor/.build.config.js'
           pwd
           ls
