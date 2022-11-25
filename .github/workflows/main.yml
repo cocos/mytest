@@ -1,7 +1,8 @@
-
 name: build cerator tools
 
 on: 
+  #pull_request_target:
+  #pull_request:
   issue_comment:
     types: [created, edited]
 
@@ -13,7 +14,7 @@ concurrency:
 jobs:
   Win-Build:
     if: |
-      contains(github.event.comment.body, '@cocos-build xxx')
+      contains(github.event.comment.body, '@cocos-build')
     runs-on: win-build
     steps:
       - name: Get PR Number
@@ -72,10 +73,9 @@ jobs:
          local-dir: ./pack/
          server-dir: /TestBuilds/Editor-3d/tools/
 
-
   macOS-Build:
     if: |
-       contains(github.event.comment.body, '@cocos-build xxx')
+      contains(github.event.comment.body, '@cocos-build')
     runs-on: mac-build
     steps:
       - name: Get PR Number
@@ -136,24 +136,27 @@ jobs:
          server-dir: /TestBuilds/Editor-3d/tools/
 
 
-
   CreatePullRequest:
+    defaults:
+     run:
+      working-directory: ./cocos-editor  
     runs-on: mac-build
     needs: [Win-Build, macOS-Build]
     steps:
       - name: Get PR
         id: get_branch
         run: |
-          submit_branch=`echo ${{ github.event.comment.body }} | grep submit | awk '{print $NF}'`
+          submit_branch=`echo ${{ github.event.comment.body }} | awk '{print $NF}'`
           # 测试使用固定值 develop
-          #submit_branch="develop"
-          echo "提交到仓库(cocos-engine-external), 分支: ${submit_branch}"
-          echo "::set-output name=submit_branch::$(submit_branch)"          
+          # submit_branch="develop"
+          echo ${{ secrets.PR_TOKEN }}
+          echo "提交到仓库(cocos-editor), 分支: ${submit_branch}"
+          echo "::set-output name=submit_branch::$(submit_branch)"    
 
       - name: Checkout
         uses: actions/checkout@v3
         with:
-          repository: cocos/cocos-editor
+          repository: cocos-robot/cocos-editor
           ref: ${{ steps.get_branch.outputs.submit_branch }}
           path: cocos-editor
           fetch-depth: 0
@@ -162,6 +165,7 @@ jobs:
       - name: Change files
         run: |
           echo '修改文件 ./workflow/repos/editor/.build.config.js'
+          pwd
           datestr=`date +%Y%m%d`
           win_zip="lightmap-tools-win32-${datestr}.zip"
           mac_zip="lightmap-tools-darwin-${datestr}.zip"
@@ -173,4 +177,6 @@ jobs:
         with:
           token: ${{ secrets.PR_TOKEN }}
           repo: cocos-editor
-          repo_owner: cocos-robot   
+          repo_owner: cocos-robot
+          pr_title: "build tools lightmap"
+          pr_body: ${{ github.event.comment.body }}
