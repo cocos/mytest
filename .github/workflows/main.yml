@@ -139,7 +139,7 @@ jobs:
   CreatePullRequest:
     defaults:
      run:
-      working-directory: ./cocos-editor  
+      working-directory: ${{ github.workspace }}/cocos-editor
     runs-on: mac-build
     needs: [Win-Build, macOS-Build]
     steps:
@@ -169,8 +169,8 @@ jobs:
           datestr=`date +%Y%m%d`
           win_zip="lightmap-tools-win32-${datestr}.zip"
           mac_zip="lightmap-tools-darwin-${datestr}.zip"
-          sed -i "s#lightmap-tools-win32-*#${win_zip}/#" ./workflow/repos/editor/.build.config.js
-          sed -i "s#lightmap-tools-darwin-*#${mac_zip}/#" ./workflow/repos/editor/.build.config.js
+          sed -i "s#lightmap-tools-win32-*#${win_zip}/#" ${{ github.workspace }}/cocos-editor/workflow/repos/editor/.build.config.js
+          sed -i "s#lightmap-tools-darwin-*#${mac_zip}/#" ${{ github.workspace }}/cocos-editor/workflow/repos/editor/.build.config.js
 
       - name: Create PR to cocos-editor
         uses: TickX/auto-cross-pr@v0.1.3
