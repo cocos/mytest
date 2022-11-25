@@ -158,7 +158,6 @@ jobs:
         with:
           repository: cocos-robot/cocos-editor
           ref: ${{ steps.get_branch.outputs.submit_branch }}
-          path: cocos-editor
           fetch-depth: 0
           token: ${{ secrets.PR_TOKEN }}
 
