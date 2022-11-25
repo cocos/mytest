@@ -161,6 +161,7 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.PR_TOKEN }}
 
+
       - name: Change files
         run: |
           cd /Users/cocos/Documents/actions-runner/_work/LightFX/LightFX/cocos-editor
