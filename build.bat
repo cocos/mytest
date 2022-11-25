@@ -12,8 +12,8 @@ echo compile solution
 
 cd ..\..\
 echo compress to target
-for /f "tokens=1,* delims= " %%a in ("%date:/=-%") do (
-set datestr=%%a
+for /f "tokens=1,2,* delims= " %%a in ("%date:/=-%") do (
+set datestr=%%b
 )
 set filename=build\lightmap-tools-win32-%datestr%.zip
 build\zip -j %filename% build\win\bin\Release\LightFX.exe
