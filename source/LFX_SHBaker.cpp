@@ -238,6 +238,7 @@ namespace LFX {
 				bool hitSky = false;
 				PathTraceResult sampleResult = SHPathTrace(params, _ctx.Random, hitSky);
 
+				// Calculate direct lightings
 				std::vector<Light*> lights;
 				SHGetLightList(lights, probe->position);
 				for (auto* light : lights) {
@@ -265,8 +266,8 @@ namespace LFX {
 			radianceCoefficients = SH::project(samples, results);
 		}
 
-		// Calculate direct lightings
 #if 0
+		// Calculate direct lightings
 		{
             std::vector<Float3> results;
 			std::vector<Float3> samples;
