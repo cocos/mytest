@@ -237,6 +237,28 @@ namespace LFX {
 
 				bool hitSky = false;
 				PathTraceResult sampleResult = SHPathTrace(params, _ctx.Random, hitSky);
+
+				std::vector<Light*> lights;
+				SHGetLightList(lights, probe->position);
+				for (auto* light : lights) {
+					if (light->Type == Light::DIRECTION) {
+						continue;
+					}
+					if (light->DirectScale <= 0) {
+						continue;
+					}
+
+					Vertex vtx;
+					Material mat;
+
+					vtx.Position = probe->position;
+					vtx.Normal = ray.dir;
+
+					Float3 color;
+					SHCalcDirectLighting(color, vtx, light, &mat);
+					sampleResult.color += color;
+				}
+
 				results.push_back(sampleResult.color);
 			}
 
@@ -244,7 +266,7 @@ namespace LFX {
 		}
 
 		// Calculate direct lightings
-#ifdef COMPUTE_DIRECT_LIHGTINGS
+#if 0
 		{
             std::vector<Float3> results;
 			std::vector<Float3> samples;
