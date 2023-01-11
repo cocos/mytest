@@ -33,6 +33,11 @@ namespace LFX {
 			}
 
 			if (mEntity->GetType() == LFX_TERRAIN) {
+				Terrain* pTerrain = (Terrain*)mEntity;
+				int xblock = mIndex % pTerrain->GetDesc().BlockCount.x;
+				int yblock = mIndex / pTerrain->GetDesc().BlockCount.x;
+				LOGI("Baking terrain %d %d, %dx", xblock, yblock, pTerrain->GetDesc().LMapSize);
+
 				_calcuDirectLightingTerrain();
 				if (hasLightForGI) {
 					_calcuIndirectLightingTerrain();
@@ -41,6 +46,9 @@ namespace LFX {
 				_postProcess();
 			}
 			else if (mEntity->GetType() == LFX_MESH) {
+				Mesh* pMesh = (Mesh*)mEntity;
+				LOGI("Baking Mesh %d, %dx", mIndex, pMesh->GetLightingMapSize());
+
 				_calcuDirectLightingMesh();
 				if (hasLightForGI) {
 					_calcuIndirectLightingMesh();
@@ -49,6 +57,8 @@ namespace LFX {
 				_postProcess();
 			}
 			else if (mEntity->GetType() == LFX_SHPROBE) {
+				LOGI("Baking LightProbe %d", mIndex);
+
 				_calcuSHProbe();
 			}
 			else {

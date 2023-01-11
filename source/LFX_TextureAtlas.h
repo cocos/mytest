@@ -34,14 +34,17 @@ namespace LFX {
 #if LFX_VERSION >= 35
 			float Factor;
 #endif
+			Rectangle<int> Rect;
 		};
+
+		typedef std::pair<Rectangle<int>, Rectangle<float> > RectanglePair;
 
 		struct Atlas
 		{
 			int Width, Height;
 			std::vector<unsigned char> Pixels;
 			std::vector<Rectangle<int> > Regions;
-			std::vector<Rectangle<float> > Items;
+			std::vector<RectanglePair> Items;
 
 			bool Extend(int w, int h, int channels);
 		};
@@ -55,9 +58,9 @@ namespace LFX {
 		std::vector<Atlas *> & GetAtlasArray();
 
 	protected:
-		const Rectangle<float> * _AtlasInsert(Atlas * pAtlas, unsigned char * pixels, int w, int h, int uborder, int vborder);
+		const RectanglePair* _AtlasInsert(Atlas * pAtlas, unsigned char * pixels, int w, int h, int uborder, int vborder);
 		const Rectangle<int> * _AtlasIntersect(Atlas * pAtlas, const Rectangle<int> & region);
-		const Rectangle<float> * _AtlasAppend(Atlas * pAtlas, unsigned char * pixels, const Rectangle<int> & region, int uborder, int vborder);
+		const RectanglePair* _AtlasAppend(Atlas * pAtlas, unsigned char * pixels, const Rectangle<int> & region, int uborder, int vborder);
 
 	protected:
 		Options mOptions;

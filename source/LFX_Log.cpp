@@ -1,9 +1,12 @@
 #include "LFX_Log.h"
+#include "LFX_Thread.h"
 #include <time.h>
 
 namespace LFX {
 
 	ImplementSingleton(Log);
+
+	Mutex GLogMutex;
 
 	Log::Log(const char * filename, const char * mode)
 		: mFile(NULL)
@@ -31,13 +34,17 @@ namespace LFX {
 		return vsprintf(str, format, args);
 	}
 
-	void Log::Print(int channel, const char * text)
+	void Log::Print(int channel, const char* text)
 	{
 		if (mFile) {
-			PrintTime(mFile, true);
-			fprintf(mFile, text);
-			fprintf(mFile, "\n");
-			fflush(mFile);
+			GLogMutex.Lock();
+			{
+				PrintTime(mFile, true);
+				fprintf(mFile, text);
+				fprintf(mFile, "\n");
+				fflush(mFile);
+			}
+			GLogMutex.Unlock();
 		}
 	}
 

@@ -236,7 +236,10 @@ namespace LFX {
 				params.diffuseScale = _ctx.LightingScale;
 
 				bool hitSky = false;
-				PathTraceResult sampleResult = SHPathTrace(params, _ctx.Random, hitSky);
+				PathTraceResult sampleResult;
+				if (params.diffuseScale > 0) {
+					sampleResult = SHPathTrace(params, _ctx.Random, hitSky);
+				}
 
 				// Calculate direct lightings
 				std::vector<Light*> lights;
@@ -265,45 +268,6 @@ namespace LFX {
 
 			radianceCoefficients = SH::project(samples, results);
 		}
-
-#if 0
-		// Calculate direct lightings
-		{
-            std::vector<Float3> results;
-			std::vector<Float3> samples;
-
-			std::vector<Light*> lights;
-			SHGetLightList(lights, probe->position);
-			for (auto* light : lights) {
-				if (light->Type == Light::DIRECTION) {
-					continue;
-				}
-				if (light->DirectScale <= 0) {
-					continue;
-				}
-
-				Vertex vtx;
-				Material mat;
-
-				vtx.Position = probe->position;
-				vtx.Normal = Float3::Normalize(light->Position - probe->position);
-
-				Float3 result;
-				SHCalcDirectLighting(result, vtx, light, &mat);
-				results.push_back(result);
-				samples.push_back(vtx.Normal);
-			}
-
-			if (!samples.empty()) {
-				auto directRadianceCoefficients = SH::project(samples, results);
-				assert(radianceCoefficients.size() == directRadianceCoefficients.size());
-
-				for (auto i = 0; i < directRadianceCoefficients.size(); i++) {
-					radianceCoefficients[i] += directRadianceCoefficients[i];
-				}
-			}
-		}
-#endif
 
 		auto irradianceCoefficients = SH::convolveCosine(radianceCoefficients);
 		probe->coefficients = irradianceCoefficients;

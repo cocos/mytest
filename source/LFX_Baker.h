@@ -21,7 +21,7 @@ namespace LFX {
 		virtual void Run();
 
 		bool IsCompeleted() { return mCompeleted; }
-		void Enqueue(Entity * entity, int index);
+		void Enqueue(Entity* entity, int index);
 
 	protected:
 		void _calcuDirectLightingMesh();

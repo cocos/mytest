@@ -48,9 +48,9 @@ namespace LFX {
 		Float3 _doDirectLighting(const Vertex& v, int mtlId, Light* pLight, float& shadowMask);
 
 		void GetLightingMap(std::vector<RGBE> & colors);
-		void GetLightingMap(std::vector<Float4> & colors);
+		void GetLightingMap(std::vector<LightmapValue> & colors);
 		void GetGeometry(Vertex * pVertex, int * pIndex);
-		std::vector<Float4> & _getLightingMap();
+		std::vector<LightmapValue> & _getLightingMap();
 
 		void GetLightList(std::vector<Light *> & lights, bool forGI);
 
@@ -73,7 +73,7 @@ namespace LFX {
 		bool mCastShadow;
 		bool mReceiveShadow;
 		int mLightingMapSize;
-		std::vector<Float4> mLightingMap;
+		std::vector<LightmapValue> mLightingMap;
 	};
 
 }

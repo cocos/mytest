@@ -6,6 +6,20 @@
 
 namespace LFX {
 
+	struct LFX_ENTRY LightmapValue
+	{
+		Float3 Diffuse;
+		float Shadow;
+		float AO;
+
+		LightmapValue()
+			: Diffuse(0, 0, 0)
+			, Shadow(1)
+			, AO(1)
+		{
+		}
+	};
+
 	struct LFX_ENTRY Light
 	{
 		enum {

@@ -86,7 +86,7 @@ namespace LFX {
 			mLightingMap.resize(mLightingMapSize * mLightingMapSize);
 			for (int i = 0; i < mLightingMapSize * mLightingMapSize; ++i)
 			{
-				mLightingMap[i] = Float4(0, 0, 0, 1);
+				mLightingMap[i] = LightmapValue();
 			}
 		}
 	}
@@ -471,7 +471,8 @@ namespace LFX {
 				Float4 color = lmap[index];
 				float mask = mmap[index];
 				//color = Float4(1, 1, 1, 1);
-				mLightingMap[index] = Float4(color.x, color.y, color.z, mask);
+				mLightingMap[index].Diffuse = Float3(color.x, color.y, color.z);
+				mLightingMap[index].Shadow = mask;
 			}
 		}
 	}
@@ -495,7 +496,7 @@ namespace LFX {
 		baker.Run(this, rasterizer->_width, rasterizer->_height, rasterizer->_rchart);
 
 		int index = 0;
-		std::vector<LFX::Float4> & ilm = this->_getLightingMap();
+		auto& ilm = this->_getLightingMap();
 		for (int j = 0; j < lm_height; ++j)
 		{
 			for (int i = 0; i < lm_width; ++i)
@@ -517,9 +518,9 @@ namespace LFX {
 				color /= (float)msaa * msaa;
 
 				auto& outColor = ilm[index++];
-				outColor.x += color.x;
-				outColor.y += color.y;
-				outColor.z += color.z;
+				outColor.Diffuse.x += color.x;
+				outColor.Diffuse.y += color.y;
+				outColor.Diffuse.z += color.z;
 			}
 		}
 
@@ -551,17 +552,18 @@ namespace LFX {
 						int x = i * msaa + m;
 						int y = j * msaa + n;
 
-						const auto& p = rasterizer->_rchart[y * rasterizer->_width + x];
-						color += baker.Calc(p, LFX_MESH | LFX_TERRAIN, this);
+						const auto& v = rasterizer->_rchart[y * rasterizer->_width + x];
+						color += baker.Calc(v, LFX_MESH | LFX_TERRAIN, this);
 					}
 				}
 
 				color /= (float)msaa * msaa;
 
 				auto& outColor = mLightingMap[j * mLightingMapSize + i];
-				outColor.x *= color.x;
-				outColor.y *= color.y;
-				outColor.z *= color.z;
+				outColor.Diffuse.x *= color.x;
+				outColor.Diffuse.y *= color.y;
+				outColor.Diffuse.z *= color.z;
+				outColor.AO = (color.x + color.y + color.z) / 3.0f;
 			}
 		}
 
@@ -617,11 +619,11 @@ namespace LFX {
 
 		for (int i = 0; i < colors.size(); ++i)
 		{
-			colors[i] = RGBE_FROM(Float3(mLightingMap[i].x, mLightingMap[i].y, mLightingMap[i].z));
+			colors[i] = RGBE_FROM(mLightingMap[i].Diffuse);
 		}
 	}
 
-	void Mesh::GetLightingMap(std::vector<Float4> & colors)
+	void Mesh::GetLightingMap(std::vector<LightmapValue> & colors)
 	{
 		assert(mLightingMapSize > 0);
 
@@ -648,7 +650,7 @@ namespace LFX {
 		}
 	}
 
-	std::vector<Float4> & Mesh::_getLightingMap()
+	std::vector<LightmapValue> & Mesh::_getLightingMap()
 	{
 		return mLightingMap;
 	}

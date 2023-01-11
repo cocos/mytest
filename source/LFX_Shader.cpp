@@ -32,8 +32,8 @@ namespace LFX {
 
 	float GetDistAtt(float distSqr, float invSqrAttRadius)
 	{
-		//float attenuation = 1.0f / std::max(distSqr, 0.01f * 0.01f);
-		float attenuation = 1.0f / std::max(distSqr, 0.1f);
+		float attenuation = 1.0f / std::max(distSqr, 0.01f * 0.01f);
+		//float attenuation = 1.0f / std::max(distSqr, 0.1f);
 		attenuation *= SmoothDistAtt(distSqr, invSqrAttRadius);
 		return attenuation;
 	}
@@ -160,7 +160,7 @@ namespace LFX {
 			color = kl * diffuse / Pi * light->Color;
 			 
 			if (specular) {
-				const float metallic = mtl->GetSurfaceMetallic(v.UV.x, v.UV.y);
+				const float metallic = 0.0f;//mtl->GetSurfaceMetallic(v.UV.x, v.UV.y);
 				const float roughness = mtl->GetSurfaceRoughness(v.UV.x, v.UV.y);
 				const float roughnessContributes = std::pow(roughness * metallic, 1.5f);
 				const float s = Saturate(roughnessContributes + (1.0f - metallic));

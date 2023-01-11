@@ -157,13 +157,11 @@ namespace LFX {
 	Float3 AOBaker::Calc(const Vertex& v, int flags, void* entity)
 	{
 		const auto* settings = World::Instance()->GetSetting();
-		//const float scale = settings->AOStrength;
-		const float scale = 1.0f;
+		const float scale = 1.0f; // settings->AOStrength;
 		const float radius = settings->AORadius;
 		const float slope = 120.0f;
 		const int32 samples = 15 * 15;
-		//const Float3 color = settings->AOColor;
-		const Float3 color = Float3(0.25f, 0.25f, 0.25f);
+		const Float3 color = settings->AOColor;
 
 		if (radius <= 0) {
 			return Float3(1, 1, 1);

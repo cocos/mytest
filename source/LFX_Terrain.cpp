@@ -117,8 +117,10 @@ namespace LFX {
 		mLightingMap.resize(mDesc.BlockCount.x * mDesc.BlockCount.y);
 		for (int i = 0; i < mLightingMap.size(); ++i)
 		{
-			mLightingMap[i] = new Float4[mapSize * mapSize];
-			memset(mLightingMap[i], 0, sizeof(Float4) * mapSize * mapSize);
+			mLightingMap[i] = new LightmapValue[mapSize * mapSize];
+			for (int j = 0; j < mapSize * mapSize; ++j) {
+				mLightingMap[i][j] = LightmapValue();
+			}
 		}
 
 		mBlockValid.resize(mDesc.BlockCount.x * mDesc.BlockCount.y);
@@ -409,7 +411,7 @@ namespace LFX {
 
 		int sx = mapSize * xblock;
 		int sy = mapSize * yblock;
-		Float4* lmap = mLightingMap[yblock * mDesc.BlockCount.x + xblock];
+		auto* lmap = mLightingMap[yblock * mDesc.BlockCount.x + xblock];
 
 		for (int line = 0; line < mapSize; ++line)
 		{
@@ -449,10 +451,10 @@ namespace LFX {
 				shadowMask /= (float)msaa * msaa;
 
 				auto& outColor = lmap[(j - sy) * mapSize + (i - sx)];
-				outColor.x = color.x + World::Instance()->GetSetting()->Ambient.x;
-				outColor.y = color.y + World::Instance()->GetSetting()->Ambient.y;
-				outColor.z = color.z + World::Instance()->GetSetting()->Ambient.z;
-				outColor.w = shadowMask;
+				outColor.Diffuse.x = color.x + World::Instance()->GetSetting()->Ambient.x;
+				outColor.Diffuse.y = color.y + World::Instance()->GetSetting()->Ambient.y;
+				outColor.Diffuse.z = color.z + World::Instance()->GetSetting()->Ambient.z;
+				outColor.Shadow = shadowMask;
 			}
 		}
 	}
@@ -511,7 +513,7 @@ namespace LFX {
 		ILBakerRaytrace baker;
 		baker.Run(this, mapSize * msaa, mapSize * msaa, rchart);
 
-		Float4* lmap = mLightingMap[yblock * mDesc.BlockCount.x + xblock];
+		auto* lmap = mLightingMap[yblock * mDesc.BlockCount.x + xblock];
 		for (int j = 0; j < mapSize; ++j)
 		{
 			for (int i = 0; i < mapSize; ++i)
@@ -532,18 +534,18 @@ namespace LFX {
 				color /= (float)msaa * msaa;
 
 				auto& outColor = lmap[(j - 0) * mapSize + (i - 0)];
-				outColor.x += color.x;
-				outColor.y += color.y;
-				outColor.z += color.z;
+				outColor.Diffuse.x += color.x;
+				outColor.Diffuse.y += color.y;
+				outColor.Diffuse.z += color.z;
 			}
 		}
 	}
 
-	void Terrain::GetLightingMap(int i, int j, std::vector<Float4>& colors)
+	void Terrain::GetLightingMap(int i, int j, std::vector<LightmapValue>& colors)
 	{
 		int mapSize = mDesc.LMapSize;
 		int lmapSize = mapSize - Terrain::kLMapBorder * 2;
-		Float4* lmap = mLightingMap[j * mDesc.BlockCount.x + i];
+		LightmapValue* lmap = mLightingMap[j * mDesc.BlockCount.x + i];
 
 		int index = 0;
 		for (int y = 0; y < mapSize; ++y)
@@ -561,7 +563,7 @@ namespace LFX {
 		}
 	}
 
-	Float4 * Terrain::_getLightingMap(int xBlock, int zBlock)
+	LightmapValue* Terrain::_getLightingMap(int xBlock, int zBlock)
 	{
 		return mLightingMap[zBlock * mDesc.BlockCount.x + xBlock];
 	}
@@ -689,7 +691,7 @@ namespace LFX {
 		int sx = mapSize * xblock;
 		int sy = mapSize * yblock;
 
-		Float4* lmap = mLightingMap[yblock * mDesc.BlockCount.x + xblock];
+		auto* lmap = mLightingMap[yblock * mDesc.BlockCount.x + xblock];
 		for (int l = 0; l < mapSize; ++l)
 		{
 			int j = sy + l;
@@ -727,16 +729,17 @@ namespace LFX {
 				color /= (float)msaa * msaa;
 
 				auto& outColor = lmap[(j - 0) * mapSize + (i - 0)];
-				outColor.x *= color.x;
-				outColor.y *= color.y;
-				outColor.z *= color.z;
+				outColor.Diffuse.x *= color.x;
+				outColor.Diffuse.y *= color.y;
+				outColor.Diffuse.z *= color.z;
+				outColor.AO = (color.x + color.y + color.z) / 3.0f;
 			}
 		}
 	}
 
 	void Terrain::PostProcess(int xblock, int yblock)
 	{
-#if 1
+#if 0
 		Float4* lmap = mLightingMap[yblock * mDesc.BlockCount.x + xblock];
 		int mapSize = mDesc.LMapSize - Terrain::kLMapBorder * 2;
 

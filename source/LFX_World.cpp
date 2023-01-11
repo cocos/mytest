@@ -2,6 +2,7 @@
 #include "LFX_Image.h"
 #include "LFX_Stream.h"
 #include "LFX_TextureAtlas.h"
+#include "LFX_TexturePacker.h"
 #include "LFX_DeviceStats.h"
 #include "LFX_EmbreeScene.h"
 
@@ -68,6 +69,7 @@ namespace LFX {
 		stream >> mSetting.BakeLightMap;
 		stream >> mSetting.BakeLightProbe;
 		//mSetting.GIScale = 1.0f;
+		mSetting.Highp = false;
 		// disable gamma correction
 		mSetting.Gamma = 1;
 		// Disable sky lighting
@@ -225,43 +227,89 @@ namespace LFX {
 		return true;
 	}
 
-	void ConvertColor(Image& image, float& factor, std::vector<Float4>& colors, const World::Settings& settings)
+	struct PackedLightmapItem
+	{
+		TextureAtlasPacker::Item atlasItem;
+		Image hpart;
+		Image lpart;
+		float factor;
+
+		PackedLightmapItem() : factor(1)
+		{
+		}
+	};
+
+	void ConvertColor(PackedLightmapItem* item, int w, int h, std::vector<LightmapValue>& colors, const World::Settings& settings)
 	{
 #if LFX_ENABLE_GAMMA
 		if (settings.Gamma != 1.0f) {
-			for (int k = 0; k < colors.size(); ++k)
-			{
+			for (int k = 0; k < colors.size(); ++k) {
 				colors[k] = Pow(colors[k], 1.0f / settings.Gamma);
 			}
 		}
 #endif
+		item->hpart.width = w;
+		item->hpart.height = h;
+		item->hpart.channels = 4;
+		item->hpart.pixels.resize(w * h * 4);
 
-		image.pixels.resize(image.width * image.height * image.channels);
+		if (settings.Highp) {
+			item->lpart.width = item->hpart.width;
+			item->lpart.height = item->hpart.height;
+			item->lpart.channels = item->hpart.channels;
+			item->lpart.pixels.resize(w * h * 4);
+		}
+
 		if (!settings.RGBEFormat) {
-			for (int k = 0; k < colors.size(); ++k)
-			{
-				factor = std::max(colors[k].x, factor);
-				factor = std::max(colors[k].y, factor);
-				factor = std::max(colors[k].z, factor);
+			float factor = item->factor;
+			for (int k = 0; k < colors.size(); ++k) {
+				factor = std::max(colors[k].Diffuse.x, factor);
+				factor = std::max(colors[k].Diffuse.y, factor);
+				factor = std::max(colors[k].Diffuse.z, factor);
 			}
+			item->factor = factor;
 
-			for (int k = 0; k < colors.size(); ++k)
-			{
-				Float3 color = Float3(colors[k].x, colors[k].y, colors[k].z);
-				color /= factor;
-				color.saturate();
+			if (!settings.Highp) {
+				auto& hpart = item->hpart;
+				for (int k = 0; k < colors.size(); ++k) {
+					Float3 color = colors[k].Diffuse;
+					color /= factor;
+					color.saturate();
 
-				image.pixels[k * 4 + 0] = (uint8_t)std::min(int(color.x * 255), 255);
-				image.pixels[k * 4 + 1] = (uint8_t)std::min(int(color.y * 255), 255);
-				image.pixels[k * 4 + 2] = (uint8_t)std::min(int(color.z * 255), 255);
-				image.pixels[k * 4 + 3] = (uint8_t)std::min(int(colors[k].w * 255), 255);
+					hpart.pixels[k * 4 + 0] = (uint8_t)std::min(int(color.x * 255), 255);
+					hpart.pixels[k * 4 + 1] = (uint8_t)std::min(int(color.y * 255), 255);
+					hpart.pixels[k * 4 + 2] = (uint8_t)std::min(int(color.z * 255), 255);
+					hpart.pixels[k * 4 + 3] = (uint8_t)std::min(int(colors[k].Shadow * 255), 255);
+				}
+			}
+			else {
+				auto& lpart = item->lpart;
+				auto& hpart = item->hpart;
+				for (int k = 0; k < colors.size(); ++k) {
+					Float3 color = colors[k].Diffuse;
+					color /= factor;
+					color.saturate();
+
+					uint16_t r = (uint16_t)std::min(int(color.x * 65535), 65535);
+					uint16_t g = (uint16_t)std::min(int(color.y * 65535), 65535);
+					uint16_t b = (uint16_t)std::min(int(color.z * 65535), 65535);
+
+					hpart.pixels[k * 4 + 0] = (uint8_t)((r >> 8) & 0xFF);
+					hpart.pixels[k * 4 + 1] = (uint8_t)((g >> 8) & 0xFF);
+					hpart.pixels[k * 4 + 2] = (uint8_t)((b >> 8) & 0xFF);
+					hpart.pixels[k * 4 + 3] = (uint8_t)std::min(int(colors[k].Shadow * 255), 255);
+
+					lpart.pixels[k * 4 + 0] = (uint8_t)((r >> 0) & 0xFF);
+					lpart.pixels[k * 4 + 1] = (uint8_t)((g >> 0) & 0xFF);
+					lpart.pixels[k * 4 + 2] = (uint8_t)((b >> 0) & 0xFF);
+					lpart.pixels[k * 4 + 3] = (uint8_t)std::min(int(colors[k].AO * 255), 255);
+				}
 			}
 		}
 		else {
-			for (int k = 0; k < colors.size(); ++k)
-			{
-				RGBE rgbe = RGBE_FROM(Float3(colors[k].x, colors[k].y, colors[k].z));
-
+			auto& image = item->hpart;
+			for (int k = 0; k < colors.size(); ++k) {
+				RGBE rgbe = RGBE_FROM(colors[k].Diffuse);
 				image.pixels[k * 4 + 0] = rgbe.r;
 				image.pixels[k * 4 + 1] = rgbe.g;
 				image.pixels[k * 4 + 2] = rgbe.b;
@@ -272,13 +320,10 @@ namespace LFX {
 
 	void CopyImage(Image& dst, const Image& src, int x, int y)
 	{
-		for (int j = 0; j < src.height; ++j)
-		{
-			for (int i = 0; i < src.width; ++i)
-			{
+		for (int j = 0; j < src.height; ++j) {
+			for (int i = 0; i < src.width; ++i) {
 				const int dstIndex = (y + j) * dst.width + x + i;
 				const int srcIndex = j * src.width + i;
-
 				dst.pixels[dstIndex * dst.channels + 0] = src.pixels[srcIndex * src.channels + 0];
 				dst.pixels[dstIndex * dst.channels + 1] = src.pixels[srcIndex * src.channels + 1];
 				dst.pixels[dstIndex * dst.channels + 2] = src.pixels[srcIndex * src.channels + 2];
@@ -289,12 +334,25 @@ namespace LFX {
 		}
 	}
 
+	void SaveImage(const Image& image, const char* filename)
+	{
+		LOGD("Save lighting map %s", filename);
+		FILE* fp = fopen(filename, "wb");
+		if (fp == nullptr) {
+			LOGE("Save lighting map failed!!!");
+			return;
+		}
+
+		LFX::PNG_Save(fp, image);
+		fclose(fp);
+	}
+
 	int GetLightmapChannels()
 	{
 		//mSetting.RGBEFormat ? 4 : 3;
 		return 4; // rgb and shadow mask
 	}
-
+	
 	void SaveLightmaps(FILE* fp, const String& path)
 	{
 		const auto* settings = World::Instance()->GetSetting();
@@ -314,102 +372,107 @@ namespace LFX {
 			fwrite(&nblocks, 4, 1, fp);
 
 			float lmap_factor = 1;
-			for (int y = 0; y < terrain->GetDesc().BlockCount.y; ++y)
-			{
-				for (int x = 0; x < terrain->GetDesc().BlockCount.x; ++x)
-				{
-					std::vector<Float4> colors;
+			for (int y = 0; y < terrain->GetDesc().BlockCount.y; ++y) {
+				for (int x = 0; x < terrain->GetDesc().BlockCount.x; ++x) {
+					std::vector<LightmapValue> colors;
 					colors.resize(lmap_size * lmap_size);
 					terrain->GetLightingMap(x, y, colors);
-					if (!settings->RGBEFormat)
-					{
-						for (int k = 0; k < colors.size(); ++k)
-						{
-							lmap_factor = std::max(colors[k].x, lmap_factor);
-							lmap_factor = std::max(colors[k].y, lmap_factor);
-							lmap_factor = std::max(colors[k].z, lmap_factor);
+					if (!settings->RGBEFormat) {
+						for (int k = 0; k < colors.size(); ++k) {
+							lmap_factor = std::max(colors[k].Diffuse.x, lmap_factor);
+							lmap_factor = std::max(colors[k].Diffuse.y, lmap_factor);
+							lmap_factor = std::max(colors[k].Diffuse.z, lmap_factor);
 						}
 					}
 				}
 			}
 
-			for (int y = 0; y < terrain->GetDesc().BlockCount.y; y += ntiles)
-			{
-				for (int x = 0; x < terrain->GetDesc().BlockCount.x; x += ntiles)
-				{
-					const int w = std::min(ntiles, terrain->GetDesc().BlockCount.x - x);
-					const int h = std::min(ntiles, terrain->GetDesc().BlockCount.y - y);
-					const int dims = std::max(w * lmap_size, h * lmap_size);
+			for (int by = 0; by < terrain->GetDesc().BlockCount.y; by += ntiles) {
+				for (int bx = 0; bx < terrain->GetDesc().BlockCount.x; bx += ntiles) {
+					const int bw = std::min(ntiles, terrain->GetDesc().BlockCount.x - bx);
+					const int bh = std::min(ntiles, terrain->GetDesc().BlockCount.y - by);
+					const int dims = std::max(bw * lmap_size, bh * lmap_size);
 					const int channels = GetLightmapChannels();
 
-					LFX::Image image;
-					image.pixels.resize(dims * dims * channels);
-					image.width = dims;
-					image.height = dims;
-					image.channels = channels;
-					memset(image.pixels.data(), 0, dims * dims * channels);
+					LFX::Image hpart, lpart;
 
-					LOGD("Pack terrain %d blocks %d %d %d %d", t, x, y, w, h);
-					std::vector<TextureAtlasPacker::Item> packed_items;
-					for (int j = 0; j < h; ++j)
-					{
-						for (int i = 0; i < w; ++i)
-						{
-							std::vector<Float4> colors;
+					hpart.width = dims;
+					hpart.height = dims;
+					hpart.channels = channels;
+					hpart.pixels.resize(dims * dims * channels);
+					memset(hpart.pixels.data(), 0, dims * dims * channels);
+
+					LOGD("Pack terrain %d blocks %d %d %d %d", t, bx, by, bw, bh);
+					std::vector<PackedLightmapItem*> packedItems;
+					for (int j = 0; j < bh; ++j) {
+						for (int i = 0; i < bw; ++i) {
+							std::vector<LightmapValue> colors;
 							colors.resize(lmap_size * lmap_size);
-							terrain->GetLightingMap(x + i, y + j, colors);
+							terrain->GetLightingMap(bx + i, by + j, colors);
 
-							float factor = lmap_factor;
-							Image temp;
-							temp.width = lmap_size;
-							temp.height = lmap_size;
-							temp.channels = channels;
-							ConvertColor(temp, factor, colors, *settings);
-
-							TextureAtlasPacker::Item item;
+							PackedLightmapItem* item = new PackedLightmapItem();
+							item->factor = lmap_factor;
+							ConvertColor(item, dims, dims, colors, *settings);
 #if LFX_VERSION >= 35
-							item.Factor = factor;
+							item->atlasItem.Factor = item->factor;
 #endif
-							item.OffsetU = i * lmap_size / (float)dims;
-							item.OffsetV = j * lmap_size / (float)dims;
-							item.ScaleU = lmap_size / (float)dims;
-							item.ScaleV = lmap_size / (float)dims;
-							CopyImage(image, temp, i * lmap_size, j * lmap_size);
-							packed_items.push_back(item);
+							item->atlasItem.OffsetU = i * lmap_size / (float)dims;
+							item->atlasItem.OffsetV = j * lmap_size / (float)dims;
+							item->atlasItem.ScaleU = lmap_size / (float)dims;
+							item->atlasItem.ScaleV = lmap_size / (float)dims;
+							CopyImage(hpart, item->hpart, i * lmap_size, j * lmap_size);
+							if (!item->lpart.pixels.empty()) {
+								CopyImage(lpart, item->lpart, i * lmap_size, j * lmap_size);
+							}
+							packedItems.push_back(item);
 						}
+					}
+
+					if (settings->Highp) {
+						HTexturePacker hPacker0(hpart.channels);
+						hPacker0.Insert(hpart.pixels.data(), hpart.width, hpart.height);
+						hPacker0.Insert(lpart.pixels.data(), lpart.width, lpart.height);
+
+						hpart.width = hPacker0.GetWidth();
+						hpart.height = hPacker0.GetHeight();
+						hpart.pixels = hPacker0.GetBuffer();
 					}
 
 					char filename[256];
 					sprintf(filename, "%s/LFX_Terrain_%04d.png", path.c_str(), lmap_index);
-					LOGD("Save lighting map %s", filename);
-					FILE* tfp = fopen(filename, "wb");
-					LFX::PNG_Save(tfp, image);
-					fclose(tfp);
+					SaveImage(hpart, filename);
 
-					for (int j = 0; j < h; ++j)
-					{
-						for (int i = 0; i < w; ++i)
-						{
-							int block_index = (y + j) * terrain->GetDesc().BlockCount.x + (x + i);
+					for (int j = 0; j < bh; ++j) {
+						for (int i = 0; i < bw; ++i) {
+							int blockIndex = (by + j) * terrain->GetDesc().BlockCount.x + (bx + i);
 
-							const auto& item = packed_items[j * w + i];
+							const auto& item = packedItems[j * bw + i];
 							float offset = Terrain::kLMapBorder / (float)(lmap_size);
 							float scale = 1 - offset * 2;
 
 							LightMapInfo remapInfo;
 							remapInfo.MapIndex = lmap_index;
-							remapInfo.Offset[0] = item.OffsetU + offset * item.ScaleU;
-							remapInfo.Offset[1] = item.OffsetV + offset * item.ScaleV;
-							remapInfo.Scale = item.ScaleU * scale;
+							remapInfo.Offset[0] = item->atlasItem.OffsetU + offset * item->atlasItem.ScaleU;
+							remapInfo.Offset[1] = item->atlasItem.OffsetV + offset * item->atlasItem.ScaleV;
+							remapInfo.Scale = item->atlasItem.ScaleU * scale;
+							if (settings->Highp) {
+								remapInfo.Scale *= 0.5f;
+								remapInfo.Offset *= 0.5f;
+							}
 #if LFX_VERSION >= 35
-							remapInfo.Factor = item.Factor;
+							remapInfo.Factor = item->atlasItem.Factor;
 #else
 							remapInfo.ScaleV = item.ScaleV * scale;
 #endif
-							fwrite(&block_index, sizeof(int), 1, fp);
+							fwrite(&blockIndex, sizeof(int), 1, fp);
 							fwrite(&remapInfo, sizeof(LightMapInfo), 1, fp);
 						}
 					}
+
+					for (auto* item : packedItems) {
+						delete item;
+					}
+					packedItems.clear();
 
 					++lmap_index;
 				}
@@ -425,9 +488,8 @@ namespace LFX {
 		options.Space = 0;
 		TextureAtlasPacker packer(options);
 
-		std::vector<TextureAtlasPacker::Item> packed_items;
-		for (int i = 0; i < meshes.size(); ++i)
-		{
+		std::vector<PackedLightmapItem*> packedItems;
+		for (int i = 0; i < meshes.size(); ++i) {
 			LFX::Mesh* mesh = meshes[i];
 			if (mesh->GetLightingMapSize() == 0) {
 				continue;
@@ -436,49 +498,148 @@ namespace LFX {
 			LOGD("Pack mesh %d", i);
 
 			const int dims = mesh->GetLightingMapSize();
-			std::vector<Float4>& colors = mesh->_getLightingMap();
+			auto& colors = mesh->_getLightingMap();
 
-			float factor = 1.0f;
-			LFX::Image image;
-			image.width = dims;
-			image.height = dims;
-			image.channels = options.Channels;
-			ConvertColor(image, factor, colors, *settings);
+			PackedLightmapItem* item = new PackedLightmapItem();
+			ConvertColor(item, dims, dims, colors, *settings);
 			colors.clear();
 #if 0
 			// test
 			char filename[256];
 			sprintf(filename, "%s/LFX_Mesh_111.png", path.c_str(), i);
-			FILE* tfp = fopen(filename, "wb");
-			LFX::PNG_Save(tfp, image);
-			fclose(tfp);
+			SaveImage(image, filename);
 #endif
-			TextureAtlasPacker::Item item;
 #if LFX_VERSION >= 35
-			item.Factor = factor;
+			item->atlasItem.Factor = item->factor;
 #endif
-			packer.Insert(image.pixels.data(), image.width, image.height, item);
-			packed_items.push_back(item);
+			packer.Insert(item->hpart.pixels.data(), dims, dims, item->atlasItem);
+			packedItems.push_back(item);
 		}
 
-		auto atlas = packer.GetAtlasArray();
-		for (int i = 0; i < atlas.size(); ++i) {
-			LFX::Image image;
-			image.pixels = atlas[i]->Pixels;
-			image.width = atlas[i]->Width;
-			image.height = atlas[i]->Height;
-			image.channels = options.Channels;
+		const auto& atlases = packer.GetAtlasArray();
+		for (int i = 0; i < atlases.size(); ++i) {
+			LFX::Image hparts[2], lparts[2];
+
+			if (1) {
+				LFX::Image& hpart = hparts[0];
+				LFX::Image& lpart = lparts[0];
+
+				hpart.pixels = atlases[i]->Pixels;
+				hpart.width = atlases[i]->Width;
+				hpart.height = atlases[i]->Height;
+				hpart.channels = options.Channels;
+				if (settings->Highp) {
+					lpart.width = hpart.width;
+					lpart.height = hpart.height;
+					lpart.channels = hpart.channels;
+					lpart.pixels.resize(lpart.width * lpart.height * lpart.channels, 0);
+
+					for (const auto* packItem : packedItems) {
+						if (packItem->atlasItem.Index != i) {
+							continue;
+						}
+						if (packItem->lpart.pixels.empty()) {
+							continue;
+						}
+
+						for (int v = 0; v < packItem->lpart.height; ++v) {
+							for (int u = 0; u < packItem->lpart.width; ++u) {
+								assert(packItem->atlasItem.Rect.w == packItem->lpart.width
+									&& packItem->atlasItem.Rect.h == packItem->lpart.height);
+								const int du = packItem->atlasItem.Rect.x + u;
+								const int dv = packItem->atlasItem.Rect.y + v;
+
+								const int srcIndex = v * packItem->lpart.width + u;
+								const int dstIndex = dv * lpart.width + du;
+								lpart.pixels[dstIndex * 4 + 0] = packItem->lpart.pixels[srcIndex * 4 + 0];
+								lpart.pixels[dstIndex * 4 + 1] = packItem->lpart.pixels[srcIndex * 4 + 1];
+								lpart.pixels[dstIndex * 4 + 2] = packItem->lpart.pixels[srcIndex * 4 + 2];
+								lpart.pixels[dstIndex * 4 + 3] = packItem->lpart.pixels[srcIndex * 4 + 3];
+							}
+						}
+					}
+				}
+			}
+
+			int mapIdx = i;
+#if LFX_HPMAP_MERGE
+			if (settings->Highp) {
+				LFX::Image& hpart = hparts[1];
+				LFX::Image& lpart = lparts[1];
+
+				hpart.width = atlases[i]->Width;
+				hpart.height = atlases[i]->Height;
+				hpart.channels = options.Channels;
+				hpart.pixels.resize(hpart.width * hpart.height* hpart.channels, 0);
+
+				lpart.width = hpart.width;
+				lpart.height = hpart.height;
+				lpart.channels = hpart.channels;
+				lpart.pixels.resize(lpart.width * lpart.height * lpart.channels, 0);
+
+				if (++i < (int)atlases.size()) {
+					hpart.pixels = atlases[i]->Pixels;
+					for (const auto* packItem : packedItems) {
+						if (packItem->atlasItem.Index != i) {
+							continue;
+						}
+						if (packItem->lpart.pixels.empty()) {
+							continue;
+						}
+
+						for (int v = 0; v < packItem->lpart.height; ++v) {
+							for (int u = 0; u < packItem->lpart.width; ++u) {
+								assert(packItem->atlasItem.Rect.w == packItem->lpart.width
+									&& packItem->atlasItem.Rect.h == packItem->lpart.height);
+								const int du = packItem->atlasItem.Rect.x + u;
+								const int dv = packItem->atlasItem.Rect.y + v;
+
+								const int srcIndex = v * packItem->lpart.width + u;
+								const int dstIndex = dv * lpart.width + du;
+								lpart.pixels[dstIndex * 4 + 0] = packItem->lpart.pixels[srcIndex * 4 + 0];
+								lpart.pixels[dstIndex * 4 + 1] = packItem->lpart.pixels[srcIndex * 4 + 1];
+								lpart.pixels[dstIndex * 4 + 2] = packItem->lpart.pixels[srcIndex * 4 + 2];
+								lpart.pixels[dstIndex * 4 + 3] = packItem->lpart.pixels[srcIndex * 4 + 3];
+							}
+						}
+					}
+				}
+
+				mapIdx /= 2;
+			}
+#endif
+			
+			if (settings->Highp) {
+				HTexturePacker hPacker0(hparts[0].channels);
+				hPacker0.Insert(hparts[0].pixels.data(), hparts[0].width, hparts[0].height);
+				hPacker0.Insert(lparts[0].pixels.data(), lparts[0].width, lparts[0].height);
+
+#if LFX_HPMAP_MERGE
+				HTexturePacker hPacker1(hparts[1].channels);
+				hPacker1.Insert(hparts[1].pixels.data(), hparts[1].width, hparts[1].height);
+				hPacker1.Insert(lparts[1].pixels.data(), lparts[1].width, lparts[1].height);
+
+				VTexturePacker vPacker(hparts[0].channels);
+				vPacker.Insert(hPacker0.GetBuffer().data(), hPacker0.GetWidth(), hPacker0.GetHeight());
+				vPacker.Insert(hPacker1.GetBuffer().data(), hPacker1.GetWidth(), hPacker1.GetHeight());
+
+				hparts[0].width = vPacker.GetWidth();
+				hparts[0].height = vPacker.GetHeight();
+				hparts[0].pixels = vPacker.GetBuffer();
+#else
+				hparts[0].width = hPacker0.GetWidth();
+				hparts[0].height = hPacker0.GetHeight();
+				hparts[0].pixels = hPacker0.GetBuffer();
+#endif
+			}
 
 			char filename[256];
-			sprintf(filename, "%s/LFX_Mesh_%04d.png", path.c_str(), i);
-			LOGD("Save lighting map %s", filename);
-			FILE* tfp = fopen(filename, "wb");
-			LFX::PNG_Save(tfp, image);
-			fclose(tfp);
+			sprintf(filename, "%s/LFX_Mesh_%04d.png", path.c_str(), mapIdx);
+			SaveImage(hparts[0], filename);
 		}
 
 		// chunk
-		int numPackItems = packed_items.size();
+		int numPackItems = packedItems.size();
 		if (numPackItems > 0) {
 			fwrite(&LFX_FILE_MESH, sizeof(int), 1, fp);
 			fwrite(&numPackItems, sizeof(int), 1, fp);
@@ -490,18 +651,30 @@ namespace LFX {
 					continue;
 				}
 
-				const TextureAtlasPacker::Item& item = packed_items[packIndex++];
-				int size = mesh->GetLightingMapSize();
-				float offset = LMAP_BORDER / (float)size;
+				const auto* item = packedItems[packIndex++];
+				const int size = mesh->GetLightingMapSize();
+				float offset = /*LMAP_BORDER*/0 / (float)size;
 				float scale = 1 - offset * 2;
 
 				LightMapInfo remapInfo;
-				remapInfo.MapIndex = item.Index;
-				remapInfo.Offset[0] = item.OffsetU + offset * item.ScaleU;
-				remapInfo.Offset[1] = item.OffsetV + offset * item.ScaleV;
-				remapInfo.Scale = item.ScaleU * scale;
+				remapInfo.MapIndex = item->atlasItem.Index;
+				remapInfo.Offset[0] = item->atlasItem.OffsetU + offset * item->atlasItem.ScaleU;
+				remapInfo.Offset[1] = item->atlasItem.OffsetV + offset * item->atlasItem.ScaleV;
+				remapInfo.Scale = item->atlasItem.ScaleU * scale;
+				if (settings->Highp) {
+					remapInfo.Scale *= 0.5f;
+					remapInfo.Offset *= 0.5f;
+#if LFX_HPMAP_MERGE
+					// 下半部分要偏移0.5
+					if (remapInfo.MapIndex & 2) {
+						remapInfo.Offset.y += 0.5f;
+					}
+					remapInfo.MapIndex /= 2;
+#endif
+				}
+
 #if LFX_VERSION >= 35
-				remapInfo.Factor = item.Factor;
+				remapInfo.Factor = item->atlasItem.Factor;
 #else
 				remapInfo.ScaleV = item.ScaleV * scale;
 #endif
@@ -509,13 +682,18 @@ namespace LFX {
 				fwrite(&remapInfo, sizeof(LightMapInfo), 1, fp);
 			}
 		}
+
+		for (auto* item : packedItems) {
+			delete item;
+		}
+		packedItems.clear();
 	}
 
 	void SaveLightProbes(FILE* fp)
 	{
 		const auto& probes = World::Instance()->SHProbes();
 
-		int numSHProbes = probes.size();
+		const int numSHProbes = probes.size();
 		if (numSHProbes > 0) {
 			fwrite(&LFX_FILE_SHPROBE, sizeof(int), 1, fp);
 			fwrite(&numSHProbes, sizeof(int), 1, fp);
@@ -722,22 +900,20 @@ namespace LFX {
 
 	Aabb _World_Optimize(BSPTree<Mesh *>::Node * node)
 	{
-		if (node->child[0] == NULL)
-		{
+		if (node->child[0] == NULL) {
 			if (node->elems.size() > 0) {
-				Aabb bound = node->elems[0]->GetBound();
+				Aabb bounds = node->elems[0]->GetBound();
 				for (size_t i = 1; i < node->elems.size(); ++i) {
-					bound.Merge(node->elems[i]->GetBound());
+					bounds.Merge(node->elems[i]->GetBound());
 				}
 
-				node->aabb = bound;
+				node->aabb = bounds;
 			}
 		}
-		else
-		{
-			Aabb bound = _World_Optimize(node->child[0]);
-			bound.Merge(_World_Optimize(node->child[1]));
-			node->aabb = bound;
+		else {
+			Aabb bounds = _World_Optimize(node->child[0]);
+			bounds.Merge(_World_Optimize(node->child[1]));
+			node->aabb = bounds;
 		}
 
 		return node->aabb;
@@ -745,7 +921,7 @@ namespace LFX {
 
 	void World::Build()
 	{
-		LOGI("-:Building meshes");
+		LOGI("-: Building meshes %d", (int)mMeshes.size());
 		for (size_t i = 0; i < mMeshes.size(); ++i) {
 			mMeshes[i]->Build();
 		}
@@ -757,17 +933,17 @@ namespace LFX {
 			}
 		}
 
-		LOGI("-:Building terrain");
+		LOGI("-: Building terrain %d", (int)mTerrains.size());
 		for (int i = 0; i < mTerrains.size(); ++i) {
 			mTerrains[i]->Build();
 		}
 
 //#undef LFX_USE_EMBREE_SCENE
 #ifdef LFX_USE_EMBREE_SCENE
-		LOGI("-:Building embree scene");
+		LOGI("-: Building embree scene");
 		mScene = new EmbreeScene;
 #else
-		LOGI("-:Building scene");
+		LOGI("-: Building scene");
 		mScene = new Scene;
 #endif
 		mScene->Build();
@@ -788,6 +964,7 @@ namespace LFX {
 #elif LFX_MULTI_THREAD
 		DeviceStats stats = DeviceStats::GetStats();
 		mSetting.Threads = std::max(1, stats.Processors - 2);
+		//mSetting.Threads = std::max(1, stats.Processors / 2);
 #endif
 		//mSetting.Threads = 1;
 		for (int i = 0; i < mSetting.Threads; ++i) {
@@ -796,28 +973,34 @@ namespace LFX {
 
 		mTasks.clear();
 		if (mSetting.BakeLightMap) {
+			int numMeshTasks = 0;
 			for (size_t i = 0; i < mMeshes.size(); ++i) {
 				if (mMeshes[i]->GetLightingMapSize()) {
+					++numMeshTasks;
 					mTasks.push_back({ mMeshes[i], (int)i });
 				}
 			}
+			LOGI("-: Mesh tasks %d", numMeshTasks);
 
-			for (auto terrain : mTerrains) {
+			int numTerrainTasks = 0;
+			for (auto* terrain : mTerrains) {
 				for (int i = 0; i < terrain->GetDesc().BlockCount.x * terrain->GetDesc().BlockCount.y; ++i) {
 					if (terrain->_getBlockValids()[i]) {
+						++numTerrainTasks;
 						mTasks.push_back({ terrain, i });
 					}
 				}
 			}
+			LOGI("-: Terrain tasks %d", numTerrainTasks);
 		}
 		
 		if (mSetting.BakeLightProbe) {
 			for (size_t i = 0; i < mSHProbes.size(); ++i) {
 				mTasks.push_back({ &mSHProbes[i], (int)i });
 			}
+			LOGI("-: Probe tasks %d", (int)mSHProbes.size());
 		}
 		
-
 		for (size_t i = 0; i < mThreads.size(); ++i) {
 			LOGI("-: Starting thread %d", i);
 			mThreads[i]->Start();

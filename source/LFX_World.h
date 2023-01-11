@@ -39,6 +39,7 @@ namespace LFX {
 			int EdgeAA;
 #endif
 			int Size;			// 128, 256, 512, 1024, 2048
+			bool Highp;
 			float Gamma;
 
 			float GIScale;
@@ -69,6 +70,7 @@ namespace LFX {
 				EdgeAA = 0;
 #endif
 				Size = 512;
+				Highp = false;
 				Gamma = 1.0f;
 
 				GIScale = 1.0f;

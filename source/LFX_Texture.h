@@ -68,7 +68,7 @@ namespace LFX {
 				return true;
 			}
 			else if (channels == 1) {
-				r = data[(y * width + x) * 3 + 0];
+				r = data[y * width + x];
 
 				c.x = r / 255.0f;
 				c.y = r / 255.0f;

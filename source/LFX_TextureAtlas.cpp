@@ -29,10 +29,10 @@ namespace LFX {
 		// recalc texcoord
 		float scale = (float)w / (float)ow;
 		for (auto& i : Items) {
-			i.x *= scale;
-			i.y *= scale;
-			i.w *= scale;
-			i.h *= scale;
+			i.second.x *= scale;
+			i.second.y *= scale;
+			i.second.w *= scale;
+			i.second.h *= scale;
 		}
 
 		return true;
@@ -53,17 +53,18 @@ namespace LFX {
 
 	int TextureAtlasPacker::Insert(unsigned char* pixels, int w, int h, Item& item)
 	{
-		const Rectangle<float>* pItem = NULL;
+		const RectanglePair* pItem = NULL;
 		for (size_t i = 0; i < mAtlasArray.size(); ++i)
 		{
 			pItem = _AtlasInsert(mAtlasArray[i], pixels, w, h, mOptions.Border, mOptions.Border);
 			if (pItem != NULL)
 			{
 				item.Index = i;
-				item.OffsetU = pItem->x;
-				item.OffsetV = pItem->y;
-				item.ScaleU = pItem->w;
-				item.ScaleV = pItem->h;
+				item.Rect = pItem->first;
+				item.OffsetU = pItem->second.x;
+				item.OffsetV = pItem->second.y;
+				item.ScaleU = pItem->second.w;
+				item.ScaleV = pItem->second.h;
 				return i;
 			}
 		}
@@ -90,15 +91,17 @@ namespace LFX {
 		pItem = _AtlasInsert(pNewAtlas, pixels, w, h, uborder, vborder);
 
 		item.Index = mAtlasArray.size() - 1;
-		item.OffsetU = pItem->x;
-		item.OffsetV = pItem->y;
-		item.ScaleU = pItem->w;
-		item.ScaleV = pItem->h;
+		item.Rect = pItem->first;
+		item.OffsetU = pItem->second.x;
+		item.OffsetV = pItem->second.y;
+		item.ScaleU = pItem->second.w;
+		item.ScaleV = pItem->second.h;
 
 		return mAtlasArray.size() - 1;
 	}
 
-	const Rectangle<float> * TextureAtlasPacker::_AtlasInsert(Atlas * pAtlas, unsigned char * pixels, int w, int h, int uborder, int vborder)
+	const TextureAtlasPacker::RectanglePair* TextureAtlasPacker::_AtlasInsert(
+		Atlas * pAtlas, unsigned char * pixels, int w, int h, int uborder, int vborder)
 	{
 		int tw = w;
 		int th = h;
@@ -134,8 +137,7 @@ namespace LFX {
 
 	const Rectangle<int> * TextureAtlasPacker::_AtlasIntersect(Atlas * pAtlas, const Rectangle<int> & region)
 	{
-		for (size_t i = 0; i < pAtlas->Regions.size(); ++i)
-		{
+		for (size_t i = 0; i < pAtlas->Regions.size(); ++i) {
 			const Rectangle<int> & ri = pAtlas->Regions[i];
 			const Rectangle<int> & rect = ri & region;
 			if (rect.w > 0 && rect.h > 0)
@@ -145,16 +147,15 @@ namespace LFX {
 		return NULL;
 	}
 
-	const Rectangle<float> * TextureAtlasPacker::_AtlasAppend(Atlas * pAtlas, unsigned char * pixels, const Rectangle<int> & region, int uborder, int vborder)
+	const TextureAtlasPacker::RectanglePair* TextureAtlasPacker::_AtlasAppend(
+		Atlas * pAtlas, unsigned char * pixels, const Rectangle<int> & region, int uborder, int vborder)
 	{
 		int width = region.w - uborder * 2;
 		int height = region.h - vborder * 2;
 		int channels = mOptions.Channels;
 
-		for (int j = 0; j < region.w; ++j)
-		{
-			for (int i = 0; i < region.h; ++i)
-			{
+		for (int j = 0; j < region.w; ++j) {
+			for (int i = 0; i < region.h; ++i) {
 				int su = Clamp<int>(i - uborder, 0, width - 1);
 				int sv = Clamp<int>(j - vborder, 0, height - 1);
 				int srcIndex = j * width + i;
@@ -172,12 +173,16 @@ namespace LFX {
 			}
 		}
 
-		Rectangle<float> ai;
-		ai.x = (region.x + uborder) / (float)pAtlas->Width;
-		ai.y = (region.y + vborder) / (float)pAtlas->Height;
-		ai.w = width / (float)pAtlas->Width;
-		ai.h = height / (float)pAtlas->Height;
-		pAtlas->Items.push_back(ai);
+		RectanglePair item;
+		item.first.x = region.x;
+		item.first.y = region.y;
+		item.first.w = width;
+		item.first.h = height;
+		item.second.x = (region.x + uborder) / (float)pAtlas->Width;
+		item.second.y = (region.y + vborder) / (float)pAtlas->Height;
+		item.second.w = width / (float)pAtlas->Width;
+		item.second.h = height / (float)pAtlas->Height;
+		pAtlas->Items.push_back(item);
 
 		Rectangle<int> rcWithSpace = region;
 		rcWithSpace.w += mOptions.Space;
@@ -187,7 +192,7 @@ namespace LFX {
 		return &pAtlas->Items[pAtlas->Items.size() - 1];
 	}
 
-	std::vector<TextureAtlasPacker::Atlas *> & TextureAtlasPacker::GetAtlasArray()
+	std::vector<TextureAtlasPacker::Atlas*>& TextureAtlasPacker::GetAtlasArray()
 	{
 		return mAtlasArray;
 	}
