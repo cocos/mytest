@@ -245,9 +245,11 @@ namespace LFX {
 				std::vector<Light*> lights;
 				SHGetLightList(lights, probe->position);
 				for (auto* light : lights) {
+#if 0
 					if (light->Type == Light::DIRECTION) {
 						continue;
 					}
+#endif
 					if (light->DirectScale <= 0) {
 						continue;
 					}
