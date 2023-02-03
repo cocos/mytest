@@ -55,6 +55,7 @@ namespace LFX {
 #endif
 		stream >> mSetting.Size;
 		stream >> mSetting.Gamma;
+		stream >> mSetting.Highp;
 		stream >> mSetting.GIScale;
 		stream >> mSetting.GISamples;
 		stream >> mSetting.GIPathLength;
@@ -68,10 +69,10 @@ namespace LFX {
 		stream >> mSetting.Threads;
 		stream >> mSetting.BakeLightMap;
 		stream >> mSetting.BakeLightProbe;
-		//mSetting.GIScale = 1.0f;
-		mSetting.Highp = false;
 		// disable gamma correction
 		mSetting.Gamma = 1;
+		// Force set gi scale
+		//mSetting.GIScale = 1.0f;
 		// Disable sky lighting
 		mSetting.SkyRadiance = Float3(0, 0, 0);
 
@@ -352,62 +353,36 @@ namespace LFX {
 		//mSetting.RGBEFormat ? 4 : 3;
 		return 4; // rgb and shadow mask
 	}
-	
-	void SaveLightmaps(FILE* fp, const String& path)
+
+	void SaveLowpTerrainLightmap(FILE* fp, const String& path, Terrain* terrain, int terrainIdx, float lmap_factor)
 	{
 		const auto* settings = World::Instance()->GetSetting();
-		const auto& terrains = World::Instance()->Terrains();
-		const auto& meshes = World::Instance()->Meshes();
+		const int lmapSize = terrain->GetDesc().LMapSize;
+		const int ntiles = std::max(1, settings->Size / lmapSize);
 
-		// Pack and save terrain lightmap
-		for (int t = 0; t < terrains.size() && !settings->Selected; ++t) {
-			Terrain* terrain = terrains[t];
-			int lmap_index = 0;
-			int lmap_size = terrain->GetDesc().LMapSize;
-			int ntiles = std::max(1, settings->Size / lmap_size);
-			int nblocks = terrain->GetDesc().BlockCount.x * terrain->GetDesc().BlockCount.y;
+		int lmapIndex = 0;
+		for (int by = 0; by < terrain->GetDesc().BlockCount.y; by += ntiles) {
+			for (int bx = 0; bx < terrain->GetDesc().BlockCount.x; bx += ntiles) {
+				const int bw = std::min(ntiles, terrain->GetDesc().BlockCount.x - bx);
+				const int bh = std::min(ntiles, terrain->GetDesc().BlockCount.y - by);
+				const int dims = std::max(bw * lmapSize, bh * lmapSize);
+				const int channels = GetLightmapChannels();
 
-			fwrite(&LFX_FILE_TERRAIN, 4, 1, fp);
-			fwrite(&t, 4, 1, fp); // index
-			fwrite(&nblocks, 4, 1, fp);
+				LFX::Image hpart;
+				std::vector<PackedLightmapItem*> packedItems;
 
-			float lmap_factor = 1;
-			for (int y = 0; y < terrain->GetDesc().BlockCount.y; ++y) {
-				for (int x = 0; x < terrain->GetDesc().BlockCount.x; ++x) {
-					std::vector<LightmapValue> colors;
-					colors.resize(lmap_size * lmap_size);
-					terrain->GetLightingMap(x, y, colors);
-					if (!settings->RGBEFormat) {
-						for (int k = 0; k < colors.size(); ++k) {
-							lmap_factor = std::max(colors[k].Diffuse.x, lmap_factor);
-							lmap_factor = std::max(colors[k].Diffuse.y, lmap_factor);
-							lmap_factor = std::max(colors[k].Diffuse.z, lmap_factor);
-						}
-					}
-				}
-			}
-
-			for (int by = 0; by < terrain->GetDesc().BlockCount.y; by += ntiles) {
-				for (int bx = 0; bx < terrain->GetDesc().BlockCount.x; bx += ntiles) {
-					const int bw = std::min(ntiles, terrain->GetDesc().BlockCount.x - bx);
-					const int bh = std::min(ntiles, terrain->GetDesc().BlockCount.y - by);
-					const int dims = std::max(bw * lmap_size, bh * lmap_size);
-					const int channels = GetLightmapChannels();
-
-					LFX::Image hpart, lpart;
-
+				if (1) {
 					hpart.width = dims;
 					hpart.height = dims;
 					hpart.channels = channels;
 					hpart.pixels.resize(dims * dims * channels);
 					memset(hpart.pixels.data(), 0, dims * dims * channels);
 
-					LOGD("Pack terrain %d blocks %d %d %d %d", t, bx, by, bw, bh);
-					std::vector<PackedLightmapItem*> packedItems;
+					LOGD("Pack terrain %d blocks %d %d %d %d", terrainIdx, bx, by, bw, bh);
 					for (int j = 0; j < bh; ++j) {
 						for (int i = 0; i < bw; ++i) {
 							std::vector<LightmapValue> colors;
-							colors.resize(lmap_size * lmap_size);
+							colors.resize(lmapSize * lmapSize);
 							terrain->GetLightingMap(bx + i, by + j, colors);
 
 							PackedLightmapItem* item = new PackedLightmapItem();
@@ -416,13 +391,102 @@ namespace LFX {
 #if LFX_VERSION >= 35
 							item->atlasItem.Factor = item->factor;
 #endif
-							item->atlasItem.OffsetU = i * lmap_size / (float)dims;
-							item->atlasItem.OffsetV = j * lmap_size / (float)dims;
-							item->atlasItem.ScaleU = lmap_size / (float)dims;
-							item->atlasItem.ScaleV = lmap_size / (float)dims;
-							CopyImage(hpart, item->hpart, i * lmap_size, j * lmap_size);
+							item->atlasItem.OffsetU = i * lmapSize / (float)dims;
+							item->atlasItem.OffsetV = j * lmapSize / (float)dims;
+							item->atlasItem.ScaleU = lmapSize / (float)dims;
+							item->atlasItem.ScaleV = lmapSize / (float)dims;
+							CopyImage(hpart, item->hpart, i * lmapSize, j * lmapSize);
+							packedItems.push_back(item);
+						}
+					}
+				}
+
+				LFX::Image& image = hpart;
+				char filename[256];
+				sprintf(filename, "%s/LFX_Terrain_%04d.png", path.c_str(), lmapIndex);
+				SaveImage(image, filename);
+
+				for (int j = 0; j < bh; ++j) {
+					for (int i = 0; i < bw; ++i) {
+						int blockIndex = (by + j) * terrain->GetDesc().BlockCount.x + (bx + i);
+
+						const auto& item = packedItems[j * bw + i];
+						float offset = Terrain::kLMapBorder / (float)(lmapSize);
+						float scale = 1 - offset * 2;
+
+						LightMapInfo remapInfo;
+						remapInfo.MapIndex = lmapIndex;
+						remapInfo.Offset[0] = item->atlasItem.OffsetU + offset * item->atlasItem.ScaleU;
+						remapInfo.Offset[1] = item->atlasItem.OffsetV + offset * item->atlasItem.ScaleV;
+						remapInfo.Scale = item->atlasItem.ScaleU * scale;
+#if LFX_VERSION >= 35
+						remapInfo.Factor = item->atlasItem.Factor;
+#else
+						remapInfo.ScaleV = item.ScaleV * scale;
+#endif
+						fwrite(&blockIndex, sizeof(int), 1, fp);
+						fwrite(&remapInfo, sizeof(LightMapInfo), 1, fp);
+					}
+				}
+
+				for (auto* item : packedItems) {
+					delete item;
+				}
+				packedItems.clear();
+
+				++lmapIndex;
+			}
+		}
+	}
+
+	void SaveHighpTerrainLightmap(FILE* fp, const String& path, Terrain* terrain, int terrainIdx, float lmap_factor)
+	{
+		const auto* settings = World::Instance()->GetSetting();
+		const int lmapSize = terrain->GetDesc().LMapSize;
+		const int ntiles = std::max(1, settings->Size / lmapSize);
+
+		int lmapIndex = 0;
+		for (int by = 0; by < terrain->GetDesc().BlockCount.y; by += ntiles) {
+			for (int bx = 0; bx < terrain->GetDesc().BlockCount.x; bx += ntiles) {
+				const int bw = std::min(ntiles, terrain->GetDesc().BlockCount.x - bx);
+				const int bh = std::min(ntiles, terrain->GetDesc().BlockCount.y - by);
+				const int dims = std::max(bw * lmapSize, bh * lmapSize);
+				const int channels = GetLightmapChannels();
+
+				LFX::Image hparts[2], lparts[2];
+				std::vector<PackedLightmapItem*> packedItems;
+
+				// part 1
+				if (1) {
+					LFX::Image& hpart = hparts[0];
+					LFX::Image& lpart = lparts[0];
+
+					hpart.width = dims;
+					hpart.height = dims;
+					hpart.channels = channels;
+					hpart.pixels.resize(dims * dims * channels);
+					memset(hpart.pixels.data(), 0, dims * dims * channels);
+
+					LOGD("Pack terrain %d blocks %d %d %d %d", terrainIdx, bx, by, bw, bh);
+					for (int j = 0; j < bh; ++j) {
+						for (int i = 0; i < bw; ++i) {
+							std::vector<LightmapValue> colors;
+							colors.resize(lmapSize * lmapSize);
+							terrain->GetLightingMap(bx + i, by + j, colors);
+
+							PackedLightmapItem* item = new PackedLightmapItem();
+							item->factor = lmap_factor;
+							ConvertColor(item, dims, dims, colors, *settings);
+#if LFX_VERSION >= 35
+							item->atlasItem.Factor = item->factor;
+#endif
+							item->atlasItem.OffsetU = i * lmapSize / (float)dims;
+							item->atlasItem.OffsetV = j * lmapSize / (float)dims;
+							item->atlasItem.ScaleU = lmapSize / (float)dims;
+							item->atlasItem.ScaleV = lmapSize / (float)dims;
+							CopyImage(hpart, item->hpart, i * lmapSize, j * lmapSize);
 							if (!item->lpart.pixels.empty()) {
-								CopyImage(lpart, item->lpart, i * lmap_size, j * lmap_size);
+								CopyImage(lpart, item->lpart, i * lmapSize, j * lmapSize);
 							}
 							packedItems.push_back(item);
 						}
@@ -437,45 +501,87 @@ namespace LFX {
 						hpart.height = hPacker0.GetHeight();
 						hpart.pixels = hPacker0.GetBuffer();
 					}
+				}
 
-					char filename[256];
-					sprintf(filename, "%s/LFX_Terrain_%04d.png", path.c_str(), lmap_index);
-					SaveImage(hpart, filename);
+				LFX::Image& image = hparts[0];
+				char filename[256];
+				sprintf(filename, "%s/LFX_Terrain_%04d.png", path.c_str(), lmapIndex);
+				SaveImage(image, filename);
 
-					for (int j = 0; j < bh; ++j) {
-						for (int i = 0; i < bw; ++i) {
-							int blockIndex = (by + j) * terrain->GetDesc().BlockCount.x + (bx + i);
+				for (int j = 0; j < bh; ++j) {
+					for (int i = 0; i < bw; ++i) {
+						int blockIndex = (by + j) * terrain->GetDesc().BlockCount.x + (bx + i);
 
-							const auto& item = packedItems[j * bw + i];
-							float offset = Terrain::kLMapBorder / (float)(lmap_size);
-							float scale = 1 - offset * 2;
+						const auto& item = packedItems[j * bw + i];
+						float offset = Terrain::kLMapBorder / (float)(lmapSize);
+						float scale = 1 - offset * 2;
 
-							LightMapInfo remapInfo;
-							remapInfo.MapIndex = lmap_index;
-							remapInfo.Offset[0] = item->atlasItem.OffsetU + offset * item->atlasItem.ScaleU;
-							remapInfo.Offset[1] = item->atlasItem.OffsetV + offset * item->atlasItem.ScaleV;
-							remapInfo.Scale = item->atlasItem.ScaleU * scale;
-							if (settings->Highp) {
-								remapInfo.Scale *= 0.5f;
-								remapInfo.Offset *= 0.5f;
-							}
+						LightMapInfo remapInfo;
+						remapInfo.MapIndex = lmapIndex;
+						remapInfo.Offset[0] = item->atlasItem.OffsetU + offset * item->atlasItem.ScaleU;
+						remapInfo.Offset[1] = item->atlasItem.OffsetV + offset * item->atlasItem.ScaleV;
+						remapInfo.Scale = item->atlasItem.ScaleU * scale;
+						if (settings->Highp) {
+							remapInfo.Scale *= 0.5f;
+							remapInfo.Offset.x *= 0.5f;
+						}
 #if LFX_VERSION >= 35
-							remapInfo.Factor = item->atlasItem.Factor;
+						remapInfo.Factor = item->atlasItem.Factor;
 #else
-							remapInfo.ScaleV = item.ScaleV * scale;
+						remapInfo.ScaleV = item.ScaleV * scale;
 #endif
-							fwrite(&blockIndex, sizeof(int), 1, fp);
-							fwrite(&remapInfo, sizeof(LightMapInfo), 1, fp);
+						fwrite(&blockIndex, sizeof(int), 1, fp);
+						fwrite(&remapInfo, sizeof(LightMapInfo), 1, fp);
+					}
+				}
+
+				for (auto* item : packedItems) {
+					delete item;
+				}
+				packedItems.clear();
+
+				++lmapIndex;
+			}
+		}
+	}
+	
+	void SaveLightmaps(FILE* fp, const String& path)
+	{
+		const auto* settings = World::Instance()->GetSetting();
+		const auto& terrains = World::Instance()->Terrains();
+		const auto& meshes = World::Instance()->Meshes();
+
+		// Pack and save terrain lightmap
+		for (int t = 0; t < terrains.size() && !settings->Selected; ++t) {
+			Terrain* terrain = terrains[t];
+			const int lmapSize = terrain->GetDesc().LMapSize;
+			const int numBlocks = terrain->GetDesc().BlockCount.x * terrain->GetDesc().BlockCount.y;
+
+			fwrite(&LFX_FILE_TERRAIN, 4, 1, fp);
+			fwrite(&t, 4, 1, fp); // index
+			fwrite(&numBlocks, 4, 1, fp);
+
+			float lmap_factor = 1;
+			for (int y = 0; y < terrain->GetDesc().BlockCount.y; ++y) {
+				for (int x = 0; x < terrain->GetDesc().BlockCount.x; ++x) {
+					std::vector<LightmapValue> colors;
+					colors.resize(lmapSize * lmapSize);
+					terrain->GetLightingMap(x, y, colors);
+					if (!settings->RGBEFormat) {
+						for (int k = 0; k < colors.size(); ++k) {
+							lmap_factor = std::max(colors[k].Diffuse.x, lmap_factor);
+							lmap_factor = std::max(colors[k].Diffuse.y, lmap_factor);
+							lmap_factor = std::max(colors[k].Diffuse.z, lmap_factor);
 						}
 					}
-
-					for (auto* item : packedItems) {
-						delete item;
-					}
-					packedItems.clear();
-
-					++lmap_index;
 				}
+			}
+
+			if (settings->Highp) {
+				SaveHighpTerrainLightmap(fp, path, terrain, t, lmap_factor);
+			}
+			else {
+				SaveLowpTerrainLightmap(fp, path, terrain, t, lmap_factor);
 			}
 		}
 
@@ -663,8 +769,9 @@ namespace LFX {
 				remapInfo.Scale = item->atlasItem.ScaleU * scale;
 				if (settings->Highp) {
 					remapInfo.Scale *= 0.5f;
-					remapInfo.Offset *= 0.5f;
+					remapInfo.Offset.x *= 0.5f;
 #if LFX_HPMAP_MERGE
+					remapInfo.Offset.y *= 0.5f;
 					// 下半部分要偏移0.5
 					if (remapInfo.MapIndex & 2) {
 						remapInfo.Offset.y += 0.5f;

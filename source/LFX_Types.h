@@ -51,6 +51,9 @@
 // Enable/Disable multi-thread
 #define LFX_MULTI_THREAD 1
 
+// Enable merge highp lightmap for two object 
+#define LFX_HPMAP_MERGE 1
+
 namespace LFX {
 
 #ifndef FLT_MIN
