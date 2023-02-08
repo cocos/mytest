@@ -89,8 +89,7 @@ namespace LFX {
 	{
 		float kd = 0, ks = 0, ka = 0;
 
-		switch (light->Type)
-		{
+		switch (light->Type) {
 		case Light::DIRECTION: {
 			kd = v.Normal.dot(-light->Direction);
 			kd = Clamp<float>(kd, 0, 1);
@@ -128,7 +127,7 @@ namespace LFX {
 			ka = (length - pLight->AttenStart) / (light->AttenEnd - light->AttenStart);
 			ka = std::pow(1 - Clamp<float>(ka, 0, 1), light->AttenFallOff);
 #else
-			ka = CalcLightAtten(spotDir.lenSqr(), light->Range, light->Size);
+			ka = CalcLightAtten(spotDir.lenSqr(), light->Size, light->Range);
 #endif
 
 			spotDir.normalize();

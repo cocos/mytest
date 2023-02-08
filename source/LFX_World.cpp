@@ -35,7 +35,8 @@ namespace LFX {
 		// Check verison
 		int version;
 		stream >> version;
-		if (version != LFX_FILE_VERSION) {
+		if (version != LFX_FILE_VERSION &&
+			version != LFX_FILE_VERSION_372) {
 			LOGE("file head invalid");
 			return false;
 		}
@@ -55,7 +56,9 @@ namespace LFX {
 #endif
 		stream >> mSetting.Size;
 		stream >> mSetting.Gamma;
-		stream >> mSetting.Highp;
+		if (version >= LFX_FILE_VERSION_372) {
+			stream >> mSetting.Highp;
+		}
 		stream >> mSetting.GIScale;
 		stream >> mSetting.GISamples;
 		stream >> mSetting.GIPathLength;
