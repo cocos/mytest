@@ -776,7 +776,7 @@ namespace LFX {
 #if LFX_HPMAP_MERGE
 					remapInfo.Offset.y *= 0.5f;
 					// 下半部分要偏移0.5
-					if (remapInfo.MapIndex & 2) {
+					if (remapInfo.MapIndex % 2) {
 						remapInfo.Offset.y += 0.5f;
 					}
 					remapInfo.MapIndex /= 2;
