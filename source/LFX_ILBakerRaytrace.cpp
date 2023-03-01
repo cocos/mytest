@@ -73,11 +73,11 @@ namespace LFX {
 	};
 
 	//
-	float RTCalcuLighting(Float3& diffuse, const Vertex & V, Light * L, const Material * M)
+	float RTCalcuLighting(Float3& diffuse, const Float3& E, const Vertex & V, Light * L, const Material * M)
 	{
 		float kl = 0;
 		Float3 color;
-		World::Instance()->GetShader()->DoLighting(color, kl, V, L, M, true, true);
+		World::Instance()->GetShader()->DoLighting(color, kl, E, V, L, M, true, true);
 		if (kl >= 0) {
 			float len = 0;
 			Ray ray;
@@ -119,7 +119,7 @@ namespace LFX {
 		}
 	}
 
-	bool RTPathTraceFunc(Float3& result, const PathTraceParams& params, const Vertex& vtx, const Material* mtl, bool hitSky)
+	bool RTPathTraceFunc(Float3& result, const PathTraceParams& params, const Ray& from, const Vertex& vtx, const Material* mtl, bool hitSky)
 	{
 		if (hitSky) {
 			result += params.skyRadiance;
@@ -127,15 +127,19 @@ namespace LFX {
 		}
 
 		float kl = 0;
+		Float3 lighting(0, 0, 0);
+
 		std::vector<Light*> lights;
 		RTGetLightList(lights, vtx.Position);
 		for (size_t i = 0; i < lights.size(); ++i) {
 			Float3 diffuse;
-			kl += RTCalcuLighting(diffuse, vtx, lights[i], mtl);
-			result += diffuse * params.diffuseScale;
+			kl += RTCalcuLighting(diffuse, from.orig, vtx, lights[i], mtl);
+			lighting += diffuse * params.diffuseScale;
 		}
 
-		return kl > 0;
+		lighting += mtl->GetSurfaceEmissive(vtx.UV.x, vtx.UV.y);
+		result += lighting;
+		return lighting.lenSqr() > 0;
 	}
 
 	Float4 ILBakerRaytrace::_doLighting(const Vertex& bakePoint, int texelIdxX, int texelIdxY)

@@ -65,7 +65,12 @@ namespace LFX { namespace ILBaker {
 		Float3 color = Float3(0, 0, 0);
 	};
 
-	typedef bool (*PathTraceFunc)(Float3& diffuse, const PathTraceParams& params, const Vertex& vtx, const Material* mtl, bool hitSky);
+	typedef bool (*PathTraceFunc)(Float3& diffuse,
+								const PathTraceParams& params,
+								const Ray& from,
+								const Vertex& vtx,
+								const Material* mtl,
+								bool hitSky);
 
 	PathTraceResult PathTrace(const PathTraceParams& params, PathTraceFunc func, Random& rand, bool& hitSky);
 

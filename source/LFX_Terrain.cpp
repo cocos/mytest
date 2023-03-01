@@ -645,7 +645,9 @@ namespace LFX {
 
 		if (pLight->DirectScale > 0 || pLight->SaveShadowMask)
 		{
-			World::Instance()->GetShader()->DoLighting(color, kl, v, pLight, &mMaterial, false, false);
+			World::Instance()->GetShader()->DoLighting(
+				color, kl, Float3(0, 0, 0), v, pLight, &mMaterial, false, false
+			);
 			if (kl >= 0 && pLight->CastShadow)
 			{
 				float len = 0;

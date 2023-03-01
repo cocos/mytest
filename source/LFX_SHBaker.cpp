@@ -9,7 +9,7 @@ namespace LFX {
 	{
 		float kl = 0;
 		Float3 color;
-		World::Instance()->GetShader()->DoLighting(color, kl, V, L, M, false, false);
+		World::Instance()->GetShader()->DoLighting(color, kl, Float3(0, 0, 0), V, L, M, false, false);
 		if (kl >= 0 && L->CastShadow) {
 			float len = 0;
 			Ray ray;
@@ -37,11 +37,11 @@ namespace LFX {
 		result += kl > 0 ? color * L->DirectScale : Float3(0, 0, 0);
 	}
 
-	float SHCalcIndirectLighting(Float3& result, const Vertex& V, Light* L, const Material* M)
+	float SHCalcIndirectLighting(Float3& result, const Ray& from, const Vertex& V, Light* L, const Material* M)
 	{
 		float kl = 0;
 		Float3 color;
-		World::Instance()->GetShader()->DoLighting(color, kl, V, L, M, true, true);
+		World::Instance()->GetShader()->DoLighting(color, kl, from.orig, V, L, M, true, true);
 		if (kl > 0 && L->CastShadow) {
 			float len = 0;
 			Ray ray;
@@ -85,7 +85,7 @@ namespace LFX {
 
 	using namespace ILBaker;
 
-	bool SHPathTraceFunc(Float3& result, const PathTraceParams& params, const Vertex& vtx, const Material* mtl, bool hitSky)
+	bool SHPathTraceFunc(Float3& result, const PathTraceParams& params, const Ray& ray, const Vertex& vtx, const Material* mtl, bool hitSky)
 	{
 		if (hitSky) {
 			result += params.skyRadiance;
@@ -97,9 +97,11 @@ namespace LFX {
 		SHGetLightList(lights, vtx.Position);
 		for (size_t i = 0; i < lights.size(); ++i) {
 			Float3 diffuse;
-			kl += SHCalcIndirectLighting(diffuse, vtx, lights[i], mtl);
+			kl += SHCalcIndirectLighting(diffuse, ray, vtx, lights[i], mtl);
 			result += diffuse * params.diffuseScale;
 		}
+
+		result += mtl->GetSurfaceEmissive(vtx.UV.x, vtx.UV.y);
 
 		return kl > 0;
 	}
@@ -147,7 +149,7 @@ namespace LFX {
 				Material* mtl = (Material*)contact.mtl;
 
 				Float3 diffuse;
-				if (!SHPathTraceFunc(diffuse, params, vtx, mtl, false)) {
+				if (!SHPathTraceFunc(diffuse, params, ray, vtx, mtl, false)) {
 					break;
 				}
 
@@ -193,7 +195,7 @@ namespace LFX {
 			}
 			else {
 				Float3 diffuse;
-				if (SHPathTraceFunc(diffuse, params, Vertex(), nullptr, true)) {
+				if (SHPathTraceFunc(diffuse, params, ray, Vertex(), nullptr, true)) {
 					result.color += diffuse * throughput;
 				}
 				hitSky = true;

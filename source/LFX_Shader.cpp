@@ -83,15 +83,48 @@ namespace LFX {
 		return std::pow(roughness * metallic, 1.5f);
 	}
 
+	float GGXMobile(float roughness, float NoH, Float3 H, Float3 N)
+	{
+		Float3 NxH = Float3::Cross(N, H);
+		float OneMinusNoHSqr = Float3::Dot(NxH, NxH);
+		float a = roughness * roughness;
+		float n = NoH * a;
+		float p = a / (OneMinusNoHSqr + n * n);
+		return p * p;
+	}
+
+	Float3 BRDFApprox(Float3 specular, float roughness, float NoV)
+	{
+		const Float4 c0 = Float4(-1.0f, -0.0275f, -0.572f, 0.022f);
+		const Float4 c1 = Float4(1.0f, 0.0425f, 1.04f, -0.04f);
+		Float4 r = roughness * c0 + c1;
+		float a004 = std::min(r.x * r.x, exp2(-9.28f * NoV)) * r.x + r.y;
+		Float2 AB = Float2(-1.04f, 1.04f) * a004 + Float2(r.z, r.w);
+		AB.y *= Clamp(50.0f * specular.y, 0.0f, 1.0f);
+		return specular * AB.x + AB.y;
+	}
+
+	float CalcSpecular(float roughness, float NoH, Float3 H, Float3 N)
+	{
+		return (roughness * 0.25f + 0.25f) * GGXMobile(roughness, NoH, H, N);
+	}
+
 	void Shader::DoLighting(Float3& color, float& kl, 
-		const Vertex& v, const Light* light,
-		const Material* mtl, bool sampler, bool specular)
+		const Float3& eye, const Vertex& vertex, const Light* light,
+		const Material* material, bool sampler, bool specular)
 	{
 		float kd = 0, ks = 0, ka = 0;
+		const Float3 E = eye;
+		const Float3 P = vertex.Position;
+		const Float3 N = vertex.Normal;
+		const Float2 UV = vertex.UV;
+		Float3 L;
 
 		switch (light->Type) {
 		case Light::DIRECTION: {
-			kd = v.Normal.dot(-light->Direction);
+			L = -light->Direction;
+
+			kd = N.dot(L);
 			kd = Clamp<float>(kd, 0, 1);
 
 			ks = 1;
@@ -101,16 +134,16 @@ namespace LFX {
 		break;
 
 		case Light::POINT: {
-			Float3 lightDir = light->Position - v.Position;
+			L = light->Position - P;
 #if LFX_VERSION < 30
-			float length = lightDir.len();
+			float length = L.len();
 			ka = (length - light->AttenStart) / (light->AttenEnd - light->AttenStart);
 			ka = std::pow(1 - Clamp<float>(ka, 0, 1), light->AttenFallOff);
 #else
-			ka = CalcLightAtten(lightDir.lenSqr(), light->Size, light->Range);
+			ka = CalcLightAtten(L.lenSqr(), light->Size, light->Range);
 #endif
-			lightDir.normalize();
-			kd = v.Normal.dot(lightDir);
+			L.normalize();
+			kd = vertex.Normal.dot(L);
 			kd = Clamp<float>(kd, 0, 1);
 
 			ks = 1;
@@ -118,10 +151,12 @@ namespace LFX {
 		break;
 
 		case Light::SPOT: {
-			Float3 spotDir = light->Position - v.Position;
+			L = -light->Direction;
 
-			kd = v.Normal.dot(-light->Direction);
+			kd = vertex.Normal.dot(L);
 			kd = Clamp<float>(kd, 0, 1);
+
+			Float3 spotDir = light->Position - P;
 #if LFX_VERSION < 30
 			float length = spotDir.len();
 			ka = (length - pLight->AttenStart) / (light->AttenEnd - light->AttenStart);
@@ -132,14 +167,14 @@ namespace LFX {
 
 			spotDir.normalize();
 #if LFX_VERSION < 30
-			ks = (spotDir.dot(-pLight->Direction) - light->SpotOuter) / (light->SpotInner - light->SpotOuter);
+			ks = (spotDir.dot(L) - light->SpotOuter) / (light->SpotInner - light->SpotOuter);
 			ks = std::pow(Clamp<float>(ks, 0, 1), light->SpotFallOff);
 #else
-			float cosInner = std::max(spotDir.dot(-light->Direction), 0.01f);
+			float cosInner = std::max(spotDir.dot(L), 0.01f);
 			float cosOuter = light->SpotOuter;
 			float litAngleScale = 1.0f / std::max(0.001f, cosInner - cosOuter);
 			float litAngleOffset = -cosOuter * litAngleScale;
-			ks = GetAngleAtt(spotDir, -light->Direction, litAngleScale, litAngleOffset);
+			ks = GetAngleAtt(spotDir, L, litAngleScale, litAngleOffset);
 #endif
 		}
 		break;
@@ -147,10 +182,10 @@ namespace LFX {
 
 		kl = kd * ks * ka;
 		if (kl > 0) {
-			Float3 diffuse = mtl->Diffuse;
-			if (sampler && mtl->DiffuseMap != nullptr) {
+			Float3 diffuse = material->Diffuse;
+			if (sampler && material->DiffuseMap != nullptr) {
 				Float4 textureColor(1, 1, 1, 1);
-				textureColor = mtl->DiffuseMap->SampleColor(v.UV.x, v.UV.y, true);
+				textureColor = material->DiffuseMap->SampleColor(UV.x, UV.y, true);
 				diffuse.x *= textureColor.x;
 				diffuse.y *= textureColor.y;
 				diffuse.z *= textureColor.z;
@@ -158,13 +193,29 @@ namespace LFX {
 
 			color = kl * diffuse / Pi * light->Color;
 			 
+#if 0
 			if (specular) {
-				const float metallic = 0.0f;//mtl->GetSurfaceMetallic(v.UV.x, v.UV.y);
-				const float roughness = mtl->GetSurfaceRoughness(v.UV.x, v.UV.y);
+				const float metallic = material->GetSurfaceMetallic(UV.x, UV.y);
+				const float roughness = material->GetSurfaceRoughness(UV.x, UV.y);
 				const float roughnessContributes = std::pow(roughness * metallic, 1.5f);
 				const float s = Saturate(roughnessContributes + (1.0f - metallic));
+				
 				color *= s;
+
+				Float3 V = Float3::Normalize(E - P);
+				Float3 H = Float3::Normalize(L + V);
+				float NL = std::max(std::abs(Float3::Dot(N, L)), 0.0f);
+				float NV = std::max(std::abs(Float3::Dot(N, V)), 0.0f);
+				float NH = std::max(Float3::Dot(N, H), 0.0f);
+
+				Float3 F0 = Float3(0.04f, 0.04f, 0.04f);
+				Float3 specularColor = Float3::Lerp(F0, diffuse, metallic);
+				specularColor = BRDFApprox(specularColor, roughness, NV);
+				specularColor *= CalcSpecular(roughness, NH, H, N);
+
+				color += ks * ka * specularColor;
 			}
+#endif
 		}
 		else {
 			color = Float3(0, 0, 0);

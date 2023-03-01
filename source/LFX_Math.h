@@ -10,8 +10,8 @@
 
 namespace LFX {
 
-#define DEG_TO_RAD_FACTORY (Pi / 180.0f)
-#define RAD_TO_DEG_FACTORY (180.0f / Pi)
+	#define DEG_TO_RAD_FACTORY (Pi / 180.0f)
+	#define RAD_TO_DEG_FACTORY (180.0f / Pi)
 
 	// Constants
 	const float Pi = 3.141592654f;
@@ -102,6 +102,21 @@ namespace LFX {
 	inline T Lerp(const T & a, const T & b, float t)
 	{
 		return a + (b - a) * t;
+	}
+
+	inline float Acos(float x)
+	{
+		if (x > -1.0f) {
+			if (x < 1.0f) {
+				return std::acos(x);
+			}
+			else {
+				return 0.0f;
+			}
+		}
+		else {
+			return Pi;
+		}
 	}
 
 	inline float DegreeToRadian(float degree)

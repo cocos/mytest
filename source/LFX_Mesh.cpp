@@ -419,7 +419,7 @@ namespace LFX {
 		}
 
 		RasterizerScan2 rs(this, width, height, msaa, border);
-		rs.F = [this, &lmap, &mmap, width, msaa, &lights](const Float2& texel, const Vertex& v, int mtlId) {
+		rs.F = [this, &lmap, &mmap, width, &lights](const Float2& texel, const Vertex& v, int mtlId) {
 			int x = static_cast<int>(texel.x);
 			int y = static_cast<int>(texel.y);
 
@@ -531,33 +531,53 @@ namespace LFX {
 	{
 		AOBaker baker;
 
-		int msaa = World::Instance()->GetSetting()->MSAA;
-		int width = msaa * mLightingMapSize;
-		int height = msaa * mLightingMapSize;
+#if 0
+		const int msaa = World::Instance()->GetSetting()->MSAA;
+		const int width = msaa * mLightingMapSize;
+		const int height = msaa * mLightingMapSize;
+#else
+		const int msaa = 1;
+		const int width = mLightingMapSize;
+		const int height = mLightingMapSize;
+		const int border = LMAP_BORDER;
+#endif
 
-		RasterizerSoft* rasterizer = new RasterizerSoft(this, width, height);
+		std::vector<Float4> colorBuffer(width * height);
 
-		rasterizer->DoRasterize();
+		RasterizerScan2 rs(this, width, height, msaa, border);
+		rs.F = [this, &baker, &colorBuffer, width, msaa](const Float2& texel, const Vertex& v, int mtlId) {
+			int x = static_cast<int>(texel.x);
+			int y = static_cast<int>(texel.y);
+
+			Float3 color = baker.Calc(v, LFX_MESH | LFX_TERRAIN, this);
+			colorBuffer[y * width + x] += Float4(color.x, color.y, color.z, 1/*samples*/);
+		};
+		rs.DoRasterize();
+
+		for (int y = 0; y < height; ++y)
+		{
+			for (int x = 0; x < width; ++x)
+			{
+				Float4 c = colorBuffer[y * width + x];
+				if (c.w > 1) {
+					float invSampels = 1.0f / c.w;
+					c.x *= invSampels;
+					c.y *= invSampels;
+					c.z *= invSampels;
+					colorBuffer[y * width + x] = c;
+				}
+			}
+		}
+
+		if (LMAP_OPTIMIZE_PX > 0) {
+			Rasterizer::Optimize(&colorBuffer[0], width, height, LMAP_OPTIMIZE_PX);
+		}
 
 		for (int j = 0; j < mLightingMapSize; ++j)
 		{
 			for (int i = 0; i < mLightingMapSize; ++i)
 			{
-				Float3 color = Float3(0, 0, 0);
-
-				for (int n = 0; n < msaa; ++n)
-				{
-					for (int m = 0; m < msaa; ++m)
-					{
-						int x = i * msaa + m;
-						int y = j * msaa + n;
-
-						const auto& v = rasterizer->_rchart[y * rasterizer->_width + x];
-						color += baker.Calc(v, LFX_MESH | LFX_TERRAIN, this);
-					}
-				}
-
-				color /= (float)msaa * msaa;
+				const Float4& color = colorBuffer[j * mLightingMapSize + i];
 
 				auto& outColor = mLightingMap[j * mLightingMapSize + i];
 				outColor.Diffuse.x *= color.x;
@@ -566,8 +586,6 @@ namespace LFX {
 				outColor.AO = (color.x + color.y + color.z) / 3.0f;
 			}
 		}
-
-		delete rasterizer;
 	}
 
 	Float3 Mesh::_doDirectLighting(const Vertex& v, int mtlId, Light* pLight, float& shadowMask)
@@ -577,7 +595,9 @@ namespace LFX {
 
 		if (pLight->DirectScale > 0 || pLight->SaveShadowMask)
 		{
-			World::Instance()->GetShader()->DoLighting(color, kl, v, pLight, &mMtlBuffer[mtlId], false, false);
+			World::Instance()->GetShader()->DoLighting(
+				color, kl, Float3(0, 0, 0), v, pLight, &mMtlBuffer[mtlId], false, false
+			);
 			if (kl >= 0 && pLight->CastShadow && mReceiveShadow)
 			{
 				float len = 0;

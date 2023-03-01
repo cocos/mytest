@@ -157,10 +157,10 @@ namespace LFX {
 	Float3 AOBaker::Calc(const Vertex& v, int flags, void* entity)
 	{
 		const auto* settings = World::Instance()->GetSetting();
-		const float scale = 1.0f; // settings->AOStrength;
+		const float strength = 2.0f;// settings->AOStrength;
 		const float radius = settings->AORadius;
-		const float slope = 120.0f;
-		const int32 samples = 15 * 15;
+		const float slope = 180.0f;
+		const int32 samples = settings->AOLevel == 1 ? 15 * 15 : 25 * 25;
 		const Float3 color = settings->AOColor;
 
 		if (radius <= 0) {
@@ -173,6 +173,8 @@ namespace LFX {
 		tangentToWorld.SetZBasis(v.Normal);
 
 		float ao = 0;
+		const float hr = radius / 2;
+		const float hs = slope / 2;
 		for (int s = 0; s < samples; ++s) {
 			Float2 rd = Random.RandomFloat2();
 
@@ -186,7 +188,7 @@ namespace LFX {
 			ray.dir = sampleDir;
 
 			Contact contact;
-			if (!World::Instance()->GetScene()->RayCheck(contact, ray, radius * 2, flags)) {
+			if (!World::Instance()->GetScene()->RayCheck(contact, ray, radius, flags)) {
 				continue;
 			}
 
@@ -195,19 +197,20 @@ namespace LFX {
 			}
 
 			float ka = Clamp(contact.vhit.Normal.dot(-v.Normal), -1.0f, 1.0f);
-			ka = RadianToDegree(acos(ka));
-			ka = 1 - std::min(1.0f, ka / slope);
+			ka = RadianToDegree(Acos(ka));
+			ka = (ka <= hs) ? 1.0f : (1 - std::min((ka - hs) / (slope - hs), 1.0f));
 
-			float kd = contact.td / radius;
-			kd = 1 - Clamp(kd, 0.0f, 1.0f);
+			float kd = (contact.td <= hr) ? 1.0f : (1 - std::min((contact.td - hr) / (radius - hr), 1.0f));
+			kd = Clamp(kd, 0.0f, 1.0f);
 
 			ao += ka * kd;
 		}
 
-		ao = ao * scale / samples;
-		ao = Clamp(ao, 0.0f, 1.0f);
+		ao = ao / samples;
+		ao = 1.0f - Clamp(ao, 0.0f, 1.0f);
+		ao = std::powf(ao, strength);
 
-		return Float3::Lerp(color, Float3(1, 1, 1), 1 - ao);
+		return Float3::Lerp(color, Float3(1, 1, 1), ao);
 	}
 
 }

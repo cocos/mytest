@@ -178,10 +178,21 @@ namespace LFX {
 		item.first.y = region.y;
 		item.first.w = width;
 		item.first.h = height;
-		item.second.x = (region.x + uborder) / (float)pAtlas->Width;
-		item.second.y = (region.y + vborder) / (float)pAtlas->Height;
-		item.second.w = width / (float)pAtlas->Width;
-		item.second.h = height / (float)pAtlas->Height;
+#if 1
+		const float invAtlasWidth = 1.0f / (float)pAtlas->Width;
+		const float invAtlasHeight = 1.0f / (float)pAtlas->Height;
+		item.second.x = (region.x + uborder) * invAtlasWidth;
+		item.second.y = (region.y + vborder) * invAtlasHeight;
+		item.second.w = width * invAtlasWidth;
+		item.second.h = height * invAtlasHeight;
+#else
+		const float invAtlasWidth = 1.0f / (float)(pAtlas->Width - 1);
+		const float invAtlasHeight = 1.0f / (float)(pAtlas->Height - 1);
+		item.second.x = (region.x + uborder) * invAtlasWidth;
+		item.second.y = (region.y + vborder) * invAtlasHeight;
+		item.second.w = (width - 1) * invAtlasWidth;
+		item.second.h = (height - 1) * invAtlasHeight;
+#endif
 		pAtlas->Items.push_back(item);
 
 		Rectangle<int> rcWithSpace = region;

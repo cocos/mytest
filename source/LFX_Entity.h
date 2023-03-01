@@ -15,6 +15,8 @@ namespace LFX {
 		float Metallic;
 		float Roughness;
 		Float3 Diffuse;
+		Float3 Emissive;
+		Texture* EmissiveMap;
 		Texture* DiffuseMap;
 		Texture* MetallicMap;
 		Texture* RoughnessMap;
@@ -25,10 +27,23 @@ namespace LFX {
 			Metallic = 0;
 			Roughness = 0;
 			Diffuse = Float3(1, 1, 1);
+			Emissive = Float3(0, 0, 0);
+			EmissiveMap = NULL;
 			DiffuseMap = NULL;
 			MetallicMap = NULL;
 			RoughnessMap = NULL;
 			PBRMap = NULL;
+		}
+
+		Float3 GetSurfaceEmissive(float u, float v) const
+		{
+			Float3 value = Emissive;
+
+			if (EmissiveMap != nullptr) {
+				value = value * EmissiveMap->SampleColor3(u, v);
+			}
+
+			return value;
 		}
 
 		float GetSurfaceMetallic(float u, float v) const

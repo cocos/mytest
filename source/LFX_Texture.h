@@ -33,7 +33,7 @@ namespace LFX {
 			return height;
 		}
 
-		bool GetColor(Float4 & c, int x, int y) const
+		bool GetColor(Float4& c, int x, int y) const
 		{
 			assert(x < width && y < height);
 
@@ -139,6 +139,12 @@ namespace LFX {
 			Float4 c5 = c2 + (c3 - c2) * du;
 
 			return c4 + (c5 - c4) * dv;
+		}
+
+		Float3 SampleColor3(float u, float v, bool repeat = true)
+		{
+			Float4 c = SampleColor(u, v, repeat);
+			return Float3(c.x, c.y, c.z);
 		}
 	};
 

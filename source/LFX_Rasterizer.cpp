@@ -122,8 +122,7 @@ namespace LFX {
 
 						Float4 lc = lmap[cy * w + cx];
 						if (lc.w > 0) {
-							const int d = std::max(1, std::max(abs(j), abs(i)));
-
+							const int d = 1;//std::max(1, std::max(abs(j), abs(i)));
 							color += Float3(lc.x, lc.y, lc.z) / (float)d;
 							samples += 1.0f / (float)d;
 						}

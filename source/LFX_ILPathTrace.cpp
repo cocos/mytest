@@ -47,7 +47,7 @@ namespace LFX { namespace ILBaker {
 				Material* mtl = (Material*)contact.mtl;
 
 				Float3 diffuse;
-				if (!func(diffuse, params, vtx, mtl, false)) {
+				if (!func(diffuse, params, ray, vtx, mtl, false)) {
 					break;
 				}
 
@@ -93,7 +93,7 @@ namespace LFX { namespace ILBaker {
 			}
 			else {
 				Float3 diffuse;
-				if (func(diffuse, params, Vertex(), nullptr, true)) {
+				if (func(diffuse, params, ray, Vertex(), nullptr, true)) {
 					result.color += diffuse * throughput;
 				}
 				hitSky = true;

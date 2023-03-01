@@ -36,7 +36,8 @@ namespace LFX {
 		int version;
 		stream >> version;
 		if (version != LFX_FILE_VERSION &&
-			version != LFX_FILE_VERSION_372) {
+			version != LFX_FILE_VERSION_372 &&
+			version != LFX_FILE_VERSION_372_2) {
 			LOGE("file head invalid");
 			return false;
 		}
@@ -75,7 +76,9 @@ namespace LFX {
 		// disable gamma correction
 		mSetting.Gamma = 1;
 		// Force set gi scale
-		//mSetting.GIScale = 1.0f;
+		//mSetting.GIScale = 0;
+		// Force set ao level
+		//mSetting.AOLevel = 0;
 		// Disable sky lighting
 		mSetting.SkyRadiance = Float3(0, 0, 0);
 
@@ -142,6 +145,10 @@ namespace LFX {
 					stream >> mtl[i].Metallic;
 					stream >> mtl[i].Roughness;
 					stream >> mtl[i].Diffuse;
+					if (version >= LFX_FILE_VERSION_372_2) {
+						stream >> mtl[i].Emissive;
+					}
+
 					String diffuseMap = stream.ReadString();
 					if (diffuseMap != "") {
 						mtl[i].DiffuseMap = LoadTexture(diffuseMap);
@@ -149,6 +156,12 @@ namespace LFX {
 					String pbrMap = stream.ReadString();
 					if (pbrMap != "") {
 						mtl[i].PBRMap = LoadTexture(pbrMap);
+					}
+					if (version >= LFX_FILE_VERSION_372_2) {
+						String emissiveMap = stream.ReadString();
+						if (emissiveMap != "") {
+							mtl[i].EmissiveMap = LoadTexture(emissiveMap);
+						}
 					}
 				}
 				m->Unlock();
@@ -390,7 +403,7 @@ namespace LFX {
 
 							PackedLightmapItem* item = new PackedLightmapItem();
 							item->factor = lmap_factor;
-							ConvertColor(item, dims, dims, colors, *settings);
+							ConvertColor(item, lmapSize, lmapSize, colors, *settings);
 #if LFX_VERSION >= 35
 							item->atlasItem.Factor = item->factor;
 #endif
@@ -479,7 +492,7 @@ namespace LFX {
 
 							PackedLightmapItem* item = new PackedLightmapItem();
 							item->factor = lmap_factor;
-							ConvertColor(item, dims, dims, colors, *settings);
+							ConvertColor(item, lmapSize, lmapSize, colors, *settings);
 #if LFX_VERSION >= 35
 							item->atlasItem.Factor = item->factor;
 #endif
@@ -762,8 +775,8 @@ namespace LFX {
 
 				const auto* item = packedItems[packIndex++];
 				const int size = mesh->GetLightingMapSize();
-				float offset = /*LMAP_BORDER*/0 / (float)size;
-				float scale = 1 - offset * 2;
+				const float offset = LMAP_BORDER / (float)size;
+				const float scale = 1 - offset * 2;
 
 				LightMapInfo remapInfo;
 				remapInfo.MapIndex = item->atlasItem.Index;

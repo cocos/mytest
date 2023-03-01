@@ -14,6 +14,7 @@ namespace LFX {
 
 	static const int LFX_FILE_VERSION = 0x2000;
 	static const int LFX_FILE_VERSION_372 = 0x2001;
+	static const int LFX_FILE_VERSION_372_2 = 0x2002;
 	static const int LFX_FILE_TERRAIN = 0x01;
 	static const int LFX_FILE_MESH = 0x02;
 	static const int LFX_FILE_LIGHT = 0x03;

@@ -16,8 +16,8 @@ namespace LFX {
 		static Float3 ACESToneMap(const Float3& color);
 
 		virtual void DoLighting(Float3& color, float& kl, 
-			const Vertex& v, const Light* light,
-			const Material* mtl, bool sampler, bool specular);
+			const Float3& eye, const Vertex& vertex, const Light* light,
+			const Material* material, bool sampler, bool specular);
 	};
 
 }

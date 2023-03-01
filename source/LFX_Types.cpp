@@ -14,7 +14,7 @@ namespace LFX {
 		}
 	}
 
-	unsigned int RandomEngine::RandomUint()
+	uint32 RandomEngine::RandomUint()
 	{
 		return engine();
 	}

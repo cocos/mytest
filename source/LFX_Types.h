@@ -68,7 +68,7 @@ namespace LFX {
 
 #define UNIT_LEN 1.0f
 #define LMAP_BORDER 1
-#define LMAP_OPTIMIZE_PX 1
+#define LMAP_OPTIMIZE_PX 2
 #define LMAP_RGBE_EXPONENT_MAX 8.0f
 
 #define d_assert assert
@@ -128,7 +128,7 @@ namespace LFX {
 	public:
 		RandomEngine(unsigned int seed = 0);
 
-		unsigned int RandomUint();
+		uint32 RandomUint();
 		float RandomFloat();
 		float UniformDistribution();
 
