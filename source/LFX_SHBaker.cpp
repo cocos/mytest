@@ -11,27 +11,9 @@ namespace LFX {
 		Float3 color;
 		World::Instance()->GetShader()->DoLighting(color, kl, Float3(0, 0, 0), V, L, M, false, false);
 		if (kl >= 0 && L->CastShadow) {
-			float len = 0;
-			Ray ray;
-
-			if (L->Type != Light::DIRECTION) {
-				ray.dir = L->Position - V.Position;
-				len = ray.dir.len();
-				ray.dir.normalize();
-			}
-			else {
-				ray.dir = -L->Direction;
-				len = FLT_MAX;
-			}
-
-			ray.orig = V.Position + ray.dir * UNIT_LEN * 0.01f;
-
-			if (len > 0.01f * UNIT_LEN) {
-				Contact contract;
-				if (World::Instance()->GetScene()->Occluded(ray, len, LFX_TERRAIN | LFX_MESH)) {
-					kl = 0;
-				}
-			}
+			float s = CalcShadowMask(V.Position, L, LFX_MESH | LFX_TERRAIN);
+			kl *= s;
+			color *= s;
 		}
 
 		result += kl > 0 ? color * L->DirectScale : Float3(0, 0, 0);
@@ -43,27 +25,9 @@ namespace LFX {
 		Float3 color;
 		World::Instance()->GetShader()->DoLighting(color, kl, from.orig, V, L, M, true, true);
 		if (kl > 0 && L->CastShadow) {
-			float len = 0;
-			Ray ray;
-
-			if (L->Type != Light::DIRECTION) {
-				ray.dir = L->Position - V.Position;
-				len = ray.dir.len();
-				ray.dir.normalize();
-			}
-			else {
-				ray.dir = -L->Direction;
-				len = FLT_MAX;
-			}
-
-			ray.orig = V.Position + ray.dir * UNIT_LEN * 0.01f;
-
-			if (len > 0.01f * UNIT_LEN) {
-				Contact contract;
-				if (World::Instance()->GetScene()->Occluded(ray, len, LFX_TERRAIN | LFX_MESH)) {
-					kl = 0;
-				}
-			}
+			float s = CalcShadowMask(V.Position, L, LFX_MESH | LFX_TERRAIN);
+			kl *= s;
+			color *= s;
 		}
 
 		result += kl > 0 ? color * L->IndirectScale : Float3(0, 0, 0);

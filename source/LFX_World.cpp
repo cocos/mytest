@@ -37,7 +37,8 @@ namespace LFX {
 		stream >> version;
 		if (version != LFX_FILE_VERSION &&
 			version != LFX_FILE_VERSION_372 &&
-			version != LFX_FILE_VERSION_372_2) {
+			version != LFX_FILE_VERSION_372_2 &&
+			version != LFX_FILE_VERSION_372_3) {
 			LOGE("file head invalid");
 			return false;
 		}
@@ -222,6 +223,9 @@ namespace LFX {
 				stream >> l->IndirectScale;
 				stream >> l->GIEnable;
 				stream >> l->CastShadow;
+				if (version >= LFX_FILE_VERSION_372_3) {
+					stream >> l->ShadowMask;
+				}
 				if (l->Type == Light::DIRECTION && l->DirectScale == 0) {
 					l->SaveShadowMask = true;
 				}

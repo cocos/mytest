@@ -59,6 +59,7 @@ namespace LFX {
 		bool GIEnable;
 		bool CastShadow;
 		bool SaveShadowMask;
+		float ShadowMask;
 
 		Light()
 		{
@@ -82,11 +83,13 @@ namespace LFX {
 			GIEnable = true;
 			CastShadow = false;
 			SaveShadowMask = false;
+			ShadowMask = 0.0f;
 		}
 	};
 
 	LFX_ENTRY bool IsLightVisible(Light* pLight, const Aabb& bound);
 	LFX_ENTRY bool IsLightVisible(Light* pLight, const Float3& point);
+	LFX_ENTRY float CalcShadowMask(const Float3& pos, Light* pLight, int queryFlags);
 
 	struct LFX_ENTRY SkyLight
 	{

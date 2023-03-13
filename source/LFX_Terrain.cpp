@@ -650,31 +650,9 @@ namespace LFX {
 			);
 			if (kl >= 0 && pLight->CastShadow)
 			{
-				float len = 0;
-				Ray ray;
-
-				if (pLight->Type != Light::DIRECTION)
-				{
-					ray.dir = pLight->Position - v.Position;
-					len = ray.dir.len();
-					ray.dir.normalize();
-				}
-				else
-				{
-					ray.dir = -pLight->Direction;
-					len = FLT_MAX;
-				}
-
-				ray.orig = v.Position + ray.dir * UNIT_LEN * 0.01f;
-
-				if (len > 0.01f * UNIT_LEN)
-				{
-					if (World::Instance()->GetScene()->Occluded(ray, len, LFX_MESH))
-					{
-						kl = 0;
-						shadowMask = 0;
-					}
-				}
+				float s = CalcShadowMask(v.Position, pLight, LFX_MESH | LFX_TERRAIN);
+				kl *= s;
+				color *= s;
 			}
 		}
 
