@@ -133,7 +133,7 @@ namespace LFX {
 					Float2 uv = uv0 * (1 - tu - tv) + uv1 * tu + uv2 * tv;
 
 					Float4 color = m.DiffuseMap->SampleColor(uv.x, uv.y);
-					if (color.w < 0.5f)
+					if (color.w < m.alphaCutoff)
 						continue;
 				}
 
@@ -187,7 +187,7 @@ namespace LFX {
 					Float2 uv = uv0 * (1 - tu - tv) + uv1 * tu + uv2 * tv;
 
 					Float4 color = m.DiffuseMap->SampleColor(uv.x, uv.y);
-					if (color.w < 0.5f) {
+					if (color.w < m.alphaCutoff) {
 						continue;
 					}
 

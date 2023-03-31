@@ -191,7 +191,7 @@ namespace LFX {
 						Float2 uv = uv0 * (1 - r.u - r.v) + uv1 * r.u + uv2 * r.v;
 
 						Float4 color = m->DiffuseMap->SampleColor(uv.x, uv.y);
-						if (color.w < 0.5f)
+						if (color.w < m->alphaCutoff)
 						{
 							orig += (r.tfar + 0.01f) * ray.dir;
 							len -= r.tfar;
@@ -278,7 +278,7 @@ namespace LFX {
 						Float2 uv = uv0 * (1 - r.u - r.v) + uv1 * r.u + uv2 * r.v;
 
 						Float4 color = m->DiffuseMap->SampleColor(uv.x, uv.y);
-						if (color.w < 0.5f)
+						if (color.w < m->alphaCutoff)
 						{
 							orig += (r.tfar + 0.01f) * ray.dir;
 							len -= r.tfar;

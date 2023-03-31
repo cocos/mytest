@@ -5,15 +5,13 @@ namespace LFX {
 
 	bool IsLightVisible(Light * pLight, const Aabb & bound)
 	{
-		if (pLight->Type == Light::POINT || pLight->Type == Light::SPOT)
-		{
+		if (pLight->Type == Light::POINT || pLight->Type == Light::SPOT) {
 			Float3 lightExtend = Float3(pLight->AttenEnd, pLight->AttenEnd, pLight->AttenEnd);
 
-			Aabb lightBound;
-			lightBound.minimum = pLight->Position - lightExtend;
-			lightBound.maximum = pLight->Position + lightExtend;
-
-			return lightBound.Intersect(bound);
+			Aabb lightBounds;
+			lightBounds.minimum = pLight->Position - lightExtend;
+			lightBounds.maximum = pLight->Position + lightExtend;
+			return lightBounds.Intersect(bound);
 		}
 
 		return true;
@@ -21,15 +19,13 @@ namespace LFX {
 
 	bool IsLightVisible(Light * pLight, const Float3 & point)
 	{
-		if (pLight->Type == Light::POINT || pLight->Type == Light::SPOT)
-		{
+		if (pLight->Type == Light::POINT || pLight->Type == Light::SPOT) {
 			Float3 lightExtend = Float3(pLight->AttenEnd, pLight->AttenEnd, pLight->AttenEnd);
 
-			Aabb lightBound;
-			lightBound.minimum = pLight->Position - lightExtend;
-			lightBound.maximum = pLight->Position + lightExtend;
-
-			return lightBound.Contain(point);
+			Aabb lightBounds;
+			lightBounds.minimum = pLight->Position - lightExtend;
+			lightBounds.maximum = pLight->Position + lightExtend;
+			return lightBounds.Contain(point);
 		}
 
 		return true;
@@ -40,14 +36,12 @@ namespace LFX {
 		float len = 0;
 		Ray ray;
 
-		if (pLight->Type != Light::DIRECTION)
-		{
+		if (pLight->Type != Light::DIRECTION) {
 			ray.dir = pLight->Position - pos;
 			len = ray.dir.len();
 			ray.dir.normalize();
 		}
-		else
-		{
+		else {
 			ray.dir = -pLight->Direction;
 			len = FLT_MAX;
 		}
@@ -55,8 +49,7 @@ namespace LFX {
 		ray.orig = pos + ray.dir * UNIT_LEN * 0.01f;
 
 		if (len > 0.01f * UNIT_LEN) {
-			if (World::Instance()->GetScene()->Occluded(ray, len, queryFlags))
-			{
+			if (World::Instance()->GetScene()->Occluded(ray, len, queryFlags)) {
 				return pLight->ShadowMask;
 			}
 		}

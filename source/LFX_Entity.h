@@ -12,6 +12,7 @@ namespace LFX {
 
 	struct LFX_ENTRY Material
 	{
+		float alphaCutoff;
 		float Metallic;
 		float Roughness;
 		Float3 Diffuse;
@@ -24,6 +25,7 @@ namespace LFX {
 
 		Material()
 		{
+			alphaCutoff = 0.5f;
 			Metallic = 0;
 			Roughness = 0;
 			Diffuse = Float3(1, 1, 1);

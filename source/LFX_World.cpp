@@ -22,6 +22,18 @@ namespace LFX {
 		delete mShader;
 	}
 
+	static const int LFX_FILE_VERSION = 0x2000;
+	static const int LFX_FILE_VERSION_372 = 0x2001;
+	static const int LFX_FILE_VERSION_372_2 = 0x2002;
+	static const int LFX_FILE_VERSION_372_3 = 0x2003;
+	static const int LFX_FILE_VERSION_373 = 0x3730;
+
+	static const int LFX_FILE_TERRAIN = 0x01;
+	static const int LFX_FILE_MESH = 0x02;
+	static const int LFX_FILE_LIGHT = 0x03;
+	static const int LFX_FILE_SHPROBE = 0x04;
+	static const int LFX_FILE_EOF = 0x00;
+
 	bool World::Load()
 	{
 		String filename = "tmp/lfx.in";
@@ -38,7 +50,8 @@ namespace LFX {
 		if (version != LFX_FILE_VERSION &&
 			version != LFX_FILE_VERSION_372 &&
 			version != LFX_FILE_VERSION_372_2 &&
-			version != LFX_FILE_VERSION_372_3) {
+			version != LFX_FILE_VERSION_372_3 &&
+			version != LFX_FILE_VERSION_373) {
 			LOGE("file head invalid");
 			return false;
 		}
@@ -143,6 +156,9 @@ namespace LFX {
 				stream.Read(tri, sizeof(Triangle) * numTris);
 
 				for (auto i = 0; i < numMtls; ++i) {
+					if (version >= LFX_FILE_VERSION_373) {
+						stream >> mtl[i].alphaCutoff;
+					}
 					stream >> mtl[i].Metallic;
 					stream >> mtl[i].Roughness;
 					stream >> mtl[i].Diffuse;
