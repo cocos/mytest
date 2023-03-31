@@ -50,7 +50,7 @@ namespace LFX {
 		return false;
 	}
 
-	Float4 Texture::SampleColor(float u, float v, bool repeat = true)
+	Float4 Texture::SampleColor(float u, float v, bool repeat)
 	{
 		if (repeat) {
 			if (u < 0.0f || u > 1.0f) {
@@ -110,7 +110,7 @@ namespace LFX {
 		return c4 + (c5 - c4) * dv;
 	}
 
-	Float3 Texture::SampleColor3(float u, float v, bool repeat = true)
+	Float3 Texture::SampleColor3(float u, float v, bool repeat)
 	{
 		Float4 c = SampleColor(u, v, repeat);
 		return Float3(c.x, c.y, c.z);
@@ -128,7 +128,7 @@ namespace LFX {
 
 	std::pair<int, Float2> _getCubemapTexcoordFromNormal(const Float3& normal)
 	{
-		const float mag = std::max(abs(normal.x), abs(normal.y), abs(normal.z));
+		const float mag = std::max(std::max(abs(normal.x), abs(normal.y)), abs(normal.z));
 
 		if (mag == abs(normal.x)) {
 			if (normal.x > 0) {
