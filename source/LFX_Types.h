@@ -33,7 +33,13 @@
 //#define LFX_VERSION 35
 //#define LFX_VERSION 36
 //#define LFX_VERSION 370
-#define LFX_VERSION 371
+//#define LFX_VERSION 371
+//#define LFX_VERSION 372
+/**
+* Support shadow mask
+* Support alpha cutoff
+*/
+#define LFX_VERSION 373
 
 #if LFX_VERSION < 35
 #define LFX_FORCE_RGBE 1
