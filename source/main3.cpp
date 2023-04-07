@@ -9,7 +9,7 @@
 
 #include "LFX_Log.h"
 #include "LFX_World.h"
-#include "LFX_Stream.h"
+#include "LFX_Renderer.h"
 
 enum {
 	E_STARTING = 1,
@@ -22,6 +22,7 @@ std::atomic<int> GStatus(0);
 int GProgress = 0;
 LFX::Log* GLog = NULL;
 LFX::World* GWorld = NULL;
+LFX::IRenderer* GRenderer = NULL;
 
 time_t GetTicks()
 {
@@ -78,8 +79,9 @@ int remote_main(int argc, char* argv[])
 
 		GWorld = new LFX::World;
 		if (GWorld->Load()) {
-			GWorld->Build();
-			GWorld->Start();
+			GRenderer = new LFX::CRenderer;
+			GRenderer->Build();
+			GRenderer->Start();
 			GStatus = E_STARTING;
 		}
 		else {
@@ -89,12 +91,14 @@ int remote_main(int argc, char* argv[])
 	});
 
 	h.socket()->on("Stop", [](sio::event &) {
+		SAFE_DELETE(GRenderer);
 		SAFE_DELETE(GWorld);
 		GStatus = E_STOPPED;
 	});
 
 	h.socket()->on("disconnect", [](sio::event &) {
 		LOGE("?: Disconnect");
+		SAFE_DELETE(GRenderer);
 		SAFE_DELETE(GWorld);
 		GStatus = E_STOPPED;
 	});
@@ -105,7 +109,7 @@ int remote_main(int argc, char* argv[])
 	}
 
 	// start
-	if (GStatus == E_STARTING && GWorld != NULL) {
+	if (GStatus == E_STARTING && GRenderer != NULL) {
 		const char* text = progress_format("Start", 0);
 		LOGI(text);
 		h.socket()->emit("Start", std::string(text));
@@ -114,8 +118,8 @@ int remote_main(int argc, char* argv[])
 	}
 
 	// bake
-	while (GStatus == E_BAKING && GWorld != NULL) {
-		float kp = (GWorld->GetProgress() + 1) / (float)(GWorld->GetTaskCount() + 1);
+	while (GStatus == E_BAKING && GRenderer != NULL) {
+		float kp = (GRenderer->GetProgress() + 1) / (float)(GRenderer->GetTaskCount() + 1);
 		int progress = (int)(kp * 100);
 
 		if (GProgress != progress) {
@@ -134,14 +138,17 @@ int remote_main(int argc, char* argv[])
 		}
 #endif
 
-		GWorld->UpdateTask();
+		GRenderer->Update();
 
-		if (GWorld->End()) {
+		if (GRenderer->End()) {
 			if (GProgress != 100) {
 				const char* text = progress_format("Build lighting", 100);
 				LOGI(text);
 				h.socket()->emit("Progress", std::string(text));
 			}
+
+			LOGI("Delete renderer");
+			SAFE_DELETE(GRenderer);
 
 			LOGI("Save world...");
 			GWorld->Save();
@@ -153,7 +160,7 @@ int remote_main(int argc, char* argv[])
 
 			LOGI("Emit finished");
 			h.socket()->emit("Finished");
-
+			
 			LOGI("Delete world");
 			SAFE_DELETE(GWorld);
 			GStatus = E_FINISHED;
@@ -184,8 +191,8 @@ int local_main(int argc, char* argv[])
 
 	GWorld = new LFX::World;
 	if (GWorld->Load()) {
-		GWorld->Build();
-		GWorld->Start();
+		GRenderer->Build();
+		GRenderer->Start();
 		GStatus = E_STARTING;
 	}
 	else {
@@ -193,8 +200,8 @@ int local_main(int argc, char* argv[])
 		LOGE("?: Load scene failed");
 	}
 
-	while (GWorld != NULL) {
-		float kp = (GWorld->GetProgress() + 1) / (float)(GWorld->GetTaskCount() + 1);
+	while (GRenderer != NULL) {
+		float kp = (GRenderer->GetProgress() + 1) / (float)(GRenderer->GetTaskCount() + 1);
 		int progress = (int)(kp * 100);
 
 		if (GProgress != progress) {
@@ -204,13 +211,16 @@ int local_main(int argc, char* argv[])
 			LOGI(text);
 		}
 
-		GWorld->UpdateTask();
+		GRenderer->Update();
 
-		if (GWorld->End()) {
+		if (GRenderer->End()) {
 			if (GProgress != 100) {
 				const char* text = progress_format("Build lighting", 100);
 				LOGI(text);
 			}
+
+			LOGI("Delete renderer");
+			SAFE_DELETE(GRenderer);
 
 			LOGI("Save world...");
 			GWorld->Save();

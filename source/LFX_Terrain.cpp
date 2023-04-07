@@ -626,13 +626,12 @@ namespace LFX {
 		bound.minimum += mDesc.Position;
 		bound.maximum += mDesc.Position;
 
-		for (Light* light : World::Instance()->Lights())
-		{
-			if (forGI && !light->GIEnable)
+		for (Light* light : World::Instance()->GetLights()) {
+			if (forGI && !light->GIEnable) {
 				continue;
+			}
 
-			if (IsLightVisible(light, bound))
-			{
+			if (IsLightVisible(light, bound)) {
 				lights.push_back(light);
 			}
 		}

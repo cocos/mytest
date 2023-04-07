@@ -3,7 +3,6 @@
 #include "LFX_Stream.h"
 #include "LFX_TextureAtlas.h"
 #include "LFX_TexturePacker.h"
-#include "LFX_DeviceStats.h"
 #include "LFX_EmbreeScene.h"
 
 namespace LFX {
@@ -584,8 +583,8 @@ namespace LFX {
 	void SaveLightmaps(FILE* fp, const String& path)
 	{
 		const auto* settings = World::Instance()->GetSetting();
-		const auto& terrains = World::Instance()->Terrains();
-		const auto& meshes = World::Instance()->Meshes();
+		const auto& terrains = World::Instance()->GetTerrains();
+		const auto& meshes = World::Instance()->GetMeshes();
 
 		// Pack and save terrain lightmap
 		for (int t = 0; t < terrains.size() && !settings->Selected; ++t) {
@@ -834,7 +833,7 @@ namespace LFX {
 
 	void SaveLightProbes(FILE* fp)
 	{
-		const auto& probes = World::Instance()->SHProbes();
+		const auto& probes = World::Instance()->GetSHProbes();
 
 		const int numSHProbes = probes.size();
 		if (numSHProbes > 0) {
@@ -886,13 +885,6 @@ namespace LFX {
 
 	void World::Clear()
 	{
-		for (auto i = 0; i < mThreads.size(); ++i)
-		{
-			mThreads[i]->Stop();
-			delete mThreads[i];
-		}
-		mThreads.clear();
-
 		for (auto i = 0; i < mTextures.size(); ++i) {
 			delete mTextures[i];
 		}
@@ -927,35 +919,43 @@ namespace LFX {
 		}
 
 		Image img;
-		FileStream fs(filename.c_str());
+		FileStream stream(filename.c_str());
 
-		if (PNG_Test(fs)) {
-			PNG_Load(img, fs);
+		if (PNG_Test(stream)) {
+			PNG_Load(img, stream);
 		}
-		else if (JPG_Test(fs)) {
-			JPG_Load(img, fs);
+		else if (JPG_Test(stream)) {
+			JPG_Load(img, stream);
 		}
-		else if (TGA_Test(fs)) {
-			TGA_Load(img, fs);
+		else if (TGA_Test(stream)) {
+			TGA_Load(img, stream);
 		}
-		else if (BMP_Test(fs)) {
-			BMP_Load(img, fs);
+		else if (BMP_Test(stream)) {
+			BMP_Load(img, stream);
 		}
 
 		if (img.pixels.empty()) {
-			LOGW("Load Texture '%s' failed", filename.c_str());
-			return NULL;
+			LOGI("Texture '%s' loaded", filename.c_str());
+			tex = new Texture;
+			tex->name = filename;
+			tex->width = img.width;
+			tex->height = img.height;
+			tex->channels = img.channels;
+			tex->data = img.pixels;
+			mTextures.push_back(tex);
 		}
-
-		LOGW("Texture '%s' loaded", filename.c_str());
-
-		tex = new Texture;
-		tex->name = filename;
-		tex->width = img.width;
-		tex->height = img.height;
-		tex->channels = img.channels;
-		tex->data = img.pixels;
-		mTextures.push_back(tex);
+		else {
+			LOGW("Load Texture '%s' failed", filename.c_str());
+			// create dummy texture
+			tex = new Texture;
+			tex->name = filename;
+			tex->width = 4;
+			tex->height = 4;
+			tex->channels = 3;
+			tex->data.resize(3 * 4 * 4);
+			memset(tex->data.data(), 0, tex->data.size());
+			mTextures.push_back(tex);
+		}
 
 		return tex;
 	}
@@ -1062,149 +1062,33 @@ namespace LFX {
 		return node->aabb;
 	}
 
-	void World::Build()
+	void World::BuildScene()
 	{
 		LOGI("-: Building meshes %d", (int)mMeshes.size());
-		for (size_t i = 0; i < mMeshes.size(); ++i) {
-			mMeshes[i]->Build();
+		for (auto* mesh : mMeshes) {
+			mesh->Build();
 		}
 
 		for (size_t i = 0; i < mMeshes.size(); ++i) {
 			if (!mMeshes[i]->Valid()) {
-				delete mMeshes[i];
 				mMeshes.erase(mMeshes.begin() + i--);
 			}
 		}
 
 		LOGI("-: Building terrain %d", (int)mTerrains.size());
-		for (int i = 0; i < mTerrains.size(); ++i) {
-			mTerrains[i]->Build();
+		for (auto* terrain : mTerrains) {
+			terrain->Build();
 		}
 
-//#undef LFX_USE_EMBREE_SCENE
+		//#undef LFX_USE_EMBREE_SCENE
 #ifdef LFX_USE_EMBREE_SCENE
 		LOGI("-: Building embree scene");
-		mScene = new EmbreeScene;
+		mScene = new EmbreeScene();
 #else
 		LOGI("-: Building scene");
-		mScene = new Scene;
+		mScene = new Scene();
 #endif
 		mScene->Build();
-	}
-
-	void World::Start()
-	{
-		for (size_t i = 0; i < mThreads.size(); ++i) {
-			delete[] mThreads[i];
-		}
-		mThreads.clear();
-
-		mTaskIndex = 0;
-		mProgress = 0;
-
-#ifdef _DEBUG
-		mSetting.Threads = 1;
-#elif LFX_MULTI_THREAD
-		DeviceStats stats = DeviceStats::GetStats();
-		mSetting.Threads = std::max(1, stats.Processors - 2);
-		//mSetting.Threads = std::max(1, stats.Processors / 2);
-#endif
-		//mSetting.Threads = 1;
-		for (int i = 0; i < mSetting.Threads; ++i) {
-			mThreads.push_back(new STBaker(i));
-		}
-
-		mTasks.clear();
-		if (mSetting.BakeLightMap) {
-			int numMeshTasks = 0;
-			for (size_t i = 0; i < mMeshes.size(); ++i) {
-				if (mMeshes[i]->GetLightingMapSize()) {
-					++numMeshTasks;
-					mTasks.push_back({ mMeshes[i], (int)i });
-				}
-			}
-			LOGI("-: Mesh tasks %d", numMeshTasks);
-
-			int numTerrainTasks = 0;
-			for (auto* terrain : mTerrains) {
-				for (int i = 0; i < terrain->GetDesc().BlockCount.x * terrain->GetDesc().BlockCount.y; ++i) {
-					if (terrain->_getBlockValids()[i]) {
-						++numTerrainTasks;
-						mTasks.push_back({ terrain, i });
-					}
-				}
-			}
-			LOGI("-: Terrain tasks %d", numTerrainTasks);
-		}
-		
-		if (mSetting.BakeLightProbe) {
-			for (size_t i = 0; i < mSHProbes.size(); ++i) {
-				mTasks.push_back({ &mSHProbes[i], (int)i });
-			}
-			LOGI("-: Probe tasks %d", (int)mSHProbes.size());
-		}
-		
-		for (size_t i = 0; i < mThreads.size(); ++i) {
-			LOGI("-: Starting thread %d", i);
-			mThreads[i]->Start();
-		}
-	}
-
-	bool World::End()
-	{
-		return mThreads.empty();
-	}
-
-	void World::UpdateTask()
-	{
-		STBaker* thread = GetFreeThread();
-		if (thread == nullptr) {
-			return;
-		}
-
-		STBaker::Task task;
-		if (GetNextTask(task)) {
-			thread->Enqueue(task.entity, task.index);
-			return;
-		}
-
-		// ensure all task finished
-		for (size_t i = 0; i < mThreads.size(); ++i) {
-			if (!mThreads[i]->IsCompeleted()) {
-				return;
-			}
-		}
-
-		// end
-		for (size_t i = 0; i < mThreads.size(); ++i) {
-			mThreads[i]->Stop();
-			delete mThreads[i];
-		}
-		mThreads.clear();
-
-		mTasks.clear();
-		mTaskIndex = 0;
-	}
-
-	bool World::GetNextTask(STBaker::Task& task)
-	{
-		if (mTaskIndex < mTasks.size()) {
-			task = mTasks[mTaskIndex++];
-			return true;
-		}
-
-		return false;
-	}
-
-	STBaker* World::GetFreeThread()
-	{
-		for (size_t i = 0; i < mThreads.size(); ++i) {
-			if (mThreads[i]->IsCompeleted()) {
-				return mThreads[i];
-			}
-		}
-
-		return nullptr;
 	}
 
 }

@@ -34,6 +34,9 @@
 //#define LFX_VERSION 36
 //#define LFX_VERSION 370
 //#define LFX_VERSION 371
+/**
+* Modify AO algorithm
+* /
 //#define LFX_VERSION 372
 /**
 * Support shadow mask
@@ -75,6 +78,7 @@ namespace LFX {
 #define UNIT_LEN 1.0f
 #define LMAP_BORDER 1
 #define LMAP_OPTIMIZE_PX 2
+#define LMAP_BLUR_TEXELS 2
 #define LMAP_RGBE_EXPONENT_MAX 8.0f
 
 #define d_assert assert

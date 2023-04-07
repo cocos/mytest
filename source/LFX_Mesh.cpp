@@ -78,7 +78,7 @@ namespace LFX {
 			assert(hr);
 		}
 
-		_calcuTangent();
+		_generateTangent();
 		_optimize(mBSPTree.RootNode());
 
 		if (mLightingMapSize > 0)
@@ -99,7 +99,6 @@ namespace LFX {
 	const Aabb & Mesh::GetBound()
 	{
 		assert(Valid());
-
 		return mBSPTree.RootNode()->aabb;
 	}
 
@@ -265,7 +264,7 @@ namespace LFX {
 		return false;
 	}
 
-	void Mesh::_calcuTangent()
+	void Mesh::_generateTangent()
 	{
 		struct FaceSt
 		{
@@ -463,6 +462,8 @@ namespace LFX {
 			Rasterizer::Optimize(&lmap[0], width, height, LMAP_OPTIMIZE_PX);
 		}
 
+		Rasterizer::Blur(&lmap[0], width, height, width, 2);
+
 		for (int j = 0; j < height; ++j)
 		{
 			for (int i = 0; i < width; ++i)
@@ -656,14 +657,13 @@ namespace LFX {
 
 	void Mesh::GetLightList(std::vector<Light *> & lights, bool forGI)
 	{
-		for (Light* light : World::Instance()->Lights())
+		for (Light* light : World::Instance()->GetLights())
 		{
 			if (forGI && !light->GIEnable) {
 				continue;
 			}
 
-			if (IsLightVisible(light, GetBound()))
-			{
+			if (IsLightVisible(light, GetBound())) {
 				lights.push_back(light);
 			}
 		}

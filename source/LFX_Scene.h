@@ -2,6 +2,7 @@
 
 #include "LFX_Types.h"
 #include "LFX_Mesh.h"
+#include "LFX_Terrain.h"
 
 namespace LFX {
 

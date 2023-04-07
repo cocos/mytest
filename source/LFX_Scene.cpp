@@ -62,18 +62,15 @@ namespace LFX {
 		Aabb worldBound;
 
 		worldBound.Invalid();
-		for (auto mesh : World::Instance()->Meshes())
-		{
+		for (auto mesh : World::Instance()->GetMeshes()) {
 			Aabb bound = mesh->GetBound();
 			worldBound.Merge(bound);
 		}
 
 		mBVTree.Clear();
-		if (worldBound.Valid())
-		{
+		if (worldBound.Valid()) {
 			mBVTree.Build(worldBound, LFX_BVH_LEVELS);
-			for (auto mesh : World::Instance()->Meshes())
-			{
+			for (auto mesh : World::Instance()->GetMeshes()) {
 				BVT_AddMesh(mBVTree.RootNode(), mesh);
 			}
 
@@ -90,23 +87,21 @@ namespace LFX {
 	{
 		float dist = 0;
 
-		if (!Intersect(ray, &dist, node->aabb))
+		if (!Intersect(ray, &dist, node->aabb)) {
 			return false;
+		}
 
-		for (size_t i = 0; i < node->elems.size(); ++i)
-		{
+		for (size_t i = 0; i < node->elems.size(); ++i) {
 			if (node->elems[i]->Occluded(ray, len))
 				return true;
 		}
 
-		if (node->child[0] != NULL)
-		{
+		if (node->child[0] != NULL) {
 			if (_occluded(node->child[0], ray, len))
 				return true;
 		}
 
-		if (node->child[1] != NULL)
-		{
+		if (node->child[1] != NULL) {
 			if (_occluded(node->child[1], ray, len))
 				return true;
 		}
@@ -129,7 +124,7 @@ namespace LFX {
 	{
 		if ((flags & LFX_MESH) && mBVTree.RootNode() != NULL && _occluded(mBVTree.RootNode(), ray, len))
 			return true;
-		if ((flags & LFX_TERRAIN) && _occluded(World::Instance()->Terrains(), ray, len))
+		if ((flags & LFX_TERRAIN) && _occluded(World::Instance()->GetTerrains(), ray, len))
 			return true;
 
 		return false;
@@ -182,8 +177,8 @@ namespace LFX {
 		if ((flags & LFX_MESH) && mBVTree.RootNode() != NULL) {
 			_rayCheck(contact, mBVTree.RootNode(), ray, len);
 		}
-		if ((flags & LFX_TERRAIN) && World::Instance()->Terrains().size() > 0) {
-			_rayCheck(contact, World::Instance()->Terrains(), ray, len);
+		if ((flags & LFX_TERRAIN) && World::Instance()->GetTerrains().size() > 0) {
+			_rayCheck(contact, World::Instance()->GetTerrains(), ray, len);
 		}
 
 		if (contact.entity != NULL) {

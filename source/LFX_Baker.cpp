@@ -1,10 +1,12 @@
 #include "LFX_Baker.h"
+#include "LFX_Renderer.h"
 #include "LFX_World.h"
 
 namespace LFX {
 
-	STBaker::STBaker(int id)
+	STBaker::STBaker(CRenderer* renderer, int id)
 	{
+		mRenderer = renderer;
 		mId = id;
 		mEntity = NULL;
 		mIndex = 0;
@@ -25,7 +27,7 @@ namespace LFX {
 				continue;
 
 			bool hasLightForGI = false;
-			for (auto* light : World::Instance()->Lights()) {
+			for (auto* light : World::Instance()->GetLights()) {
 				if (light->GIEnable) {
 					hasLightForGI = true;
 					break;
@@ -65,7 +67,7 @@ namespace LFX {
 				assert(0 && "Invalid entity!");
 			}
 
-			World::Instance()->_onThreadCompeleted();
+			mRenderer->_onThreadCompeleted();
 
 			mCompeleted = true;
 		}
@@ -85,7 +87,7 @@ namespace LFX {
 		if (pMesh->GetLightingMapSize())
 		{
 			std::vector<Light *> lights;
-			for (auto* light: World::Instance()->Lights())
+			for (auto* light: World::Instance()->GetLights())
 			{
 				if (IsLightVisible(light, pMesh->GetBound()))
 				{
@@ -119,7 +121,7 @@ namespace LFX {
 		bound.maximum += pTerrain->GetDesc().Position;
 
 		std::vector<Light *> lights;
-		for (auto* light : World::Instance()->Lights())
+		for (auto* light : World::Instance()->GetLights())
 		{
 			if (IsLightVisible(light, bound))
 			{
@@ -135,7 +137,7 @@ namespace LFX {
 	void STBaker::_calcuIndirectLightingMesh()
 	{
 		if (World::Instance()->GetSetting()->GIScale > 0) {
-			Mesh* pMesh = World::Instance()->Meshes()[mIndex];
+			Mesh* pMesh = World::Instance()->GetMeshes()[mIndex];
 
 			if (pMesh->GetLightingMapSize()) {
 				pMesh->CalcuIndirectLighting();
@@ -159,7 +161,7 @@ namespace LFX {
 	void STBaker::_calcuAmbientOcclusionMesh()
 	{
 		if (World::Instance()->GetSetting()->AOLevel > 0) {
-			Mesh* pMesh = World::Instance()->Meshes()[mIndex];
+			Mesh* pMesh = World::Instance()->GetMeshes()[mIndex];
 
 			if (pMesh->GetLightingMapSize() > 0) {
 				pMesh->CalcuAmbientOcclusion();
@@ -182,13 +184,19 @@ namespace LFX {
 
 	void STBaker::_postProcess()
 	{
-		if (mEntity->GetType() == LFX_TERRAIN)
-		{
-			Terrain * pTerrain = (Terrain*)mEntity;
+		if (mEntity->GetType() == LFX_TERRAIN) {
+			Terrain* pTerrain = (Terrain*)mEntity;
 			int xblock = mIndex % pTerrain->GetDesc().BlockCount.x;
 			int yblock = mIndex / pTerrain->GetDesc().BlockCount.x;
 
 			pTerrain->PostProcess(xblock, yblock);
+		}
+		else if (mEntity->GetType() == LFX_MESH) {
+			Mesh* pMesh = (Mesh*)mEntity;
+			auto& lmap = pMesh->_getLightingMap();
+			int size = pMesh->GetLightingMapSize();
+
+			//Rasterizer::Blur(&lmap[0], size, size, size, 2);
 		}
 	}
 

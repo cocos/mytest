@@ -6,7 +6,6 @@
 #include "LFX_Terrain.h"
 #include "LFX_Scene.h"
 #include "LFX_Shader.h"
-#include "LFX_Baker.h"
 #include "LFX_SHBaker.h"
 #include "LFX_Rasterizer.h"
 
@@ -91,7 +90,6 @@ namespace LFX {
 		void Save();
 		void Clear();
 
-		Scene* GetScene() { return mScene; }
 		Shader* GetShader() { return mShader; }
 
 		Texture* LoadTexture(const String& filename);
@@ -103,38 +101,23 @@ namespace LFX {
 		SHProbe* CreateSHProbe();
 		Terrain* CreateTerrain(float* heightfield, const Terrain::Desc& desc);
 		Light* GetMainLight() const; // main direction light
-		const std::vector<Mesh*>& Meshes() const { return mMeshes; }
-		const std::vector<Light*>& Lights() const { return mLights; }
-		const std::vector<SHProbe>& SHProbes() const { return mSHProbes; }
-		const std::vector<Terrain*>& Terrains() const { return mTerrains; }
+		const std::vector<Mesh*>& GetMeshes() const { return mMeshes; }
+		const std::vector<Light*>& GetLights() const { return mLights; }
+		const std::vector<SHProbe>& GetSHProbes() const { return mSHProbes; }
+		const std::vector<Terrain*>& GetTerrains() const { return mTerrains; }
 
-		void Build();
-		void Start();
-		bool End();
-		void UpdateTask();
-		int GetProgress() { return mProgress; }
-		int GetTaskCount() { return mTasks.size(); }
-		STBaker* GetThread(int i) { return mThreads[i]; }
-		void _onThreadCompeleted() { mProgress += 1; }
-
-	protected:
-		bool GetNextTask(STBaker::Task& task);
-		STBaker* GetFreeThread();
+		void BuildScene();
+		Scene* GetScene() { return mScene; }
 
 	protected:
 		Settings mSetting;
 
-		Scene* mScene;
 		Shader* mShader;
 		std::vector<Texture *> mTextures;
 		std::vector<Light *> mLights;
 		std::vector<Mesh *> mMeshes;
 		std::vector<Terrain *> mTerrains;
 		std::vector<SHProbe> mSHProbes;
-
-		std::vector<STBaker::Task> mTasks;
-		int mTaskIndex;
-		int mProgress;
-		std::vector<STBaker *> mThreads;
+		Scene* mScene;
 	};
 }

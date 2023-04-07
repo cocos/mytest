@@ -5,6 +5,8 @@
 
 namespace LFX {
 
+	class CRenderer;
+
 	class LFX_ENTRY STBaker : public Thread
 	{
 	public:
@@ -15,7 +17,7 @@ namespace LFX {
 		};
 
 	public:
-		STBaker(int id);
+		STBaker(CRenderer* renderer, int id);
 		virtual ~STBaker();
 
 		virtual void Run();
@@ -34,6 +36,7 @@ namespace LFX {
 		void _postProcess();
 
 	protected:
+		CRenderer* mRenderer;
 		int mId;
 		Entity* mEntity;
 		int mIndex;

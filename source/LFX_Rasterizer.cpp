@@ -26,7 +26,43 @@ namespace LFX {
 		return t;
 	}
 
-	void Rasterizer::Blur(Float3* data, int w, int h, int stride)
+	void Rasterizer::Blur(float* data, int w, int h, int stride, int texels)
+	{
+		float* temp = new float[w * h];
+
+		int index = 0;
+		for (int v = 0; v < h; ++v)
+		{
+			for (int u = 0; u < w; ++u)
+			{
+				float color;
+
+				for (int y = -texels; y <= texels; ++y)
+				{
+					for (int x = -texels; x <= texels; ++x)
+					{
+						int s = Clamp<int>(u + x, 0, w - 1);
+						int t = Clamp<int>(v + y, 0, h - 1);
+
+						color += data[(t * stride) + s];
+					}
+				}
+
+				color /= 9.0f;
+
+				temp[index++] = color;
+			}
+		}
+
+		for (int i = 0; i < h; ++i)
+		{
+			memcpy(data + i * stride, temp + i * w, w * sizeof(float));
+		}
+
+		delete[] temp;
+	}
+
+	void Rasterizer::Blur(Float3* data, int w, int h, int stride, int texels)
 	{
 		Float3* temp = new Float3[w * h];
 
@@ -37,9 +73,9 @@ namespace LFX {
 			{
 				Float3 color(0, 0, 0);
 
-				for (int y = -1; y <= 1; ++y)
+				for (int y = -texels; y <= texels; ++y)
 				{
-					for (int x = -1; x <= 1; ++x)
+					for (int x = -texels; x <= texels; ++x)
 					{
 						int s = Clamp<int>(u + x, 0, w - 1);
 						int t = Clamp<int>(v + y, 0, h - 1);
@@ -62,7 +98,7 @@ namespace LFX {
 		delete[] temp;
 	}
 
-	void Rasterizer::Blur(Float4* data, int w, int h, int stride)
+	void Rasterizer::Blur(Float4* data, int w, int h, int stride, int texels)
 	{
 		Float4* temp = new Float4[w * h];
 
@@ -73,9 +109,9 @@ namespace LFX {
 			{
 				Float4 color(0, 0, 0, 0);
 
-				for (int y = -1; y <= 1; ++y)
+				for (int y = -texels; y <= texels; ++y)
 				{
-					for (int x = -1; x <= 1; ++x)
+					for (int x = -texels; x <= texels; ++x)
 					{
 						int s = Clamp<int>(u + x, 0, w - 1);
 						int t = Clamp<int>(v + y, 0, h - 1);
@@ -93,6 +129,49 @@ namespace LFX {
 		for (int i = 0; i < h; ++i)
 		{
 			memcpy(data + i * stride, temp + i * w, w * sizeof(Float4));
+		}
+
+		delete[] temp;
+	}
+
+	void Rasterizer::Blur(LightmapValue* data, int w, int h, int stride, int texels)
+	{
+		LightmapValue* temp = new LightmapValue[w * h];
+
+		int index = 0;
+		for (int v = 0; v < h; ++v)
+		{
+			for (int u = 0; u < w; ++u)
+			{
+				LightmapValue color;
+				color.Diffuse.zero();
+				color.Shadow = 0;
+				color.AO = 0;
+
+				for (int y = -texels; y <= texels; ++y)
+				{
+					for (int x = -texels; x <= texels; ++x)
+					{
+						int s = Clamp<int>(u + x, 0, w - 1);
+						int t = Clamp<int>(v + y, 0, h - 1);
+
+						color.Diffuse += data[(t * stride) + s].Diffuse;
+						color.Shadow += data[(t * stride) + s].Shadow;
+						color.AO += data[(t * stride) + s].AO;
+					}
+				}
+
+				color.Diffuse /= 9.0f;
+				color.Shadow /= 9.0f;
+				color.AO /= 9.0f;
+
+				temp[index++] = color;
+			}
+		}
+
+		for (int i = 0; i < h; ++i)
+		{
+			memcpy(data + i * stride, temp + i * w, w * sizeof(LightmapValue));
 		}
 
 		delete[] temp;

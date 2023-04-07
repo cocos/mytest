@@ -56,7 +56,7 @@ namespace LFX {
 
 	protected:
 		bool _addTri(BSPTree<int>::Node * node, int triIndex);
-		void _calcuTangent();
+		void _generateTangent();
 		Aabb _optimize(BSPTree<int>::Node * node);
 
 		void _rayCheckImp(Contact & contract, BSPTree<int>::Node * node, const Ray & ray, float length);

@@ -108,7 +108,7 @@ namespace LFX {
 
 	void RTGetLightList(std::vector<Light*>& lights, const Float3& point)
 	{
-		for (auto* light : World::Instance()->Lights()) {
+		for (auto* light : World::Instance()->GetLights()) {
 			if (!light->GIEnable) {
 				continue;
 			}
