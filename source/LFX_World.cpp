@@ -477,6 +477,63 @@ namespace LFX {
 		}
 	}
 
+	struct HPTerrainImageSaver
+	{
+		String path;
+		int index = 0;
+		// 上半部分
+		LFX::Image tpart;
+		// 下半部分
+		LFX::Image bpart;
+
+		void Insert(const LFX::Image& img)
+		{
+			if (tpart.pixels.empty()) {
+				tpart = img;
+			}
+			else {
+				bpart = img;
+
+				VTexturePacker vPacker(tpart.channels);
+				vPacker.Insert(tpart.pixels.data(), tpart.width, tpart.height);
+				vPacker.Insert(bpart.pixels.data(), bpart.width, bpart.height);
+
+				LFX::Image image;
+				image.channels = 4;
+				image.width = vPacker.GetWidth();
+				image.height = vPacker.GetHeight();
+				image.pixels = vPacker.GetBuffer();
+
+				char filename[256];
+				sprintf(filename, "%s/LFX_Terrain_%04d.png", path.c_str(), index++);
+				SaveImage(image, filename);
+				Clear();
+			}
+		}
+
+		void PaddingTopPart()
+		{
+			if (tpart.pixels.empty()) {
+				return;
+			}
+
+			LFX::Image padding = tpart;
+			for (int i = 0; i < padding.pixels.size(); i += 4) {
+				padding.pixels[i + 0] = 0;
+				padding.pixels[i + 1] = 0;
+				padding.pixels[i + 2] = 0;
+				padding.pixels[i + 3] = 255;
+			}
+			Insert(padding);
+		}
+
+		void Clear()
+		{
+			tpart = LFX::Image();
+			bpart = LFX::Image();
+		}
+	};
+
 	void SaveHighpTerrainLightmap(FILE* fp, const String& path, Terrain* terrain, int terrainIdx, float lmap_factor)
 	{
 		const auto* settings = World::Instance()->GetSetting();
@@ -484,6 +541,9 @@ namespace LFX {
 		const int ntiles = std::max(1, settings->Size / lmapSize);
 
 		int lmapIndex = 0;
+		HPTerrainImageSaver imageSaver;
+		imageSaver.path = path;
+
 		for (int by = 0; by < terrain->GetDesc().BlockCount.y; by += ntiles) {
 			for (int bx = 0; bx < terrain->GetDesc().BlockCount.x; bx += ntiles) {
 				const int bw = std::min(ntiles, terrain->GetDesc().BlockCount.x - bx);
@@ -546,9 +606,7 @@ namespace LFX {
 				}
 
 				LFX::Image& image = hparts[0];
-				char filename[256];
-				sprintf(filename, "%s/LFX_Terrain_%04d.png", path.c_str(), lmapIndex);
-				SaveImage(image, filename);
+				imageSaver.Insert(image);
 
 				for (int j = 0; j < bh; ++j) {
 					for (int i = 0; i < bw; ++i) {
@@ -566,6 +624,14 @@ namespace LFX {
 						if (settings->Highp) {
 							remapInfo.Scale *= 0.5f;
 							remapInfo.Offset.x *= 0.5f;
+#if LFX_HPMAP_MERGE
+							remapInfo.Offset.y *= 0.5f;
+							// 下半部分要偏移0.5
+							if (remapInfo.MapIndex % 2) {
+								remapInfo.Offset.y += 0.5f;
+							}
+							remapInfo.MapIndex /= 2;
+#endif
 						}
 #if LFX_VERSION >= 35
 						remapInfo.Factor = item->atlasItem.Factor;
@@ -585,6 +651,8 @@ namespace LFX {
 				++lmapIndex;
 			}
 		}
+
+		imageSaver.PaddingTopPart();
 	}
 	
 	void SaveLightmaps(FILE* fp, const String& path)
