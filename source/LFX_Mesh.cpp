@@ -208,16 +208,6 @@ namespace LFX {
 		return false;
 	}
 
-	const Vertex & Mesh::_getVertex(int i)
-	{
-		return mVertexBuffer[i];
-	}
-
-	const Triangle & Mesh::_getTriangle(int i)
-	{
-		return mTriBuffer[i];
-	}
-
 	void Mesh::RayCheck(Contact & contract, const Ray & ray, float length)
 	{
 		assert(Valid());
@@ -462,7 +452,9 @@ namespace LFX {
 			Rasterizer::Optimize(&lmap[0], width, height, LMAP_OPTIMIZE_PX);
 		}
 
-		Rasterizer::Blur(&lmap[0], width, height, width, 2);
+		if (World::Instance()->GetSetting()->Filter) {
+			Rasterizer::Filter(&lmap[0], width, height, width, 2);
+		}
 
 		for (int j = 0; j < height; ++j)
 		{

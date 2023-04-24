@@ -23,9 +23,7 @@ namespace LFX {
 		void SetLightingMapSize(int size) { mLightingMapSize = size;}
 		int GetLightingMapSize() { return mLightingMapSize; }
 
-		int NumOfVertices() { return mVertexBuffer.size(); }
-		int NumOfTriangles() { return mTriBuffer.size(); }
-		int NumOfMaterial() { return mMtlBuffer.size(); }
+	
 
 		void Alloc(int numVertex, int numTriangle, int numMaterial);
 
@@ -36,8 +34,12 @@ namespace LFX {
 		bool Valid();
 		const Aabb & GetBound();
 
-		const Vertex & _getVertex(int i);
-		const Triangle & _getTriangle(int i);
+		int NumOfVertices() { return mVertexBuffer.size(); }
+		int NumOfTriangles() { return mTriBuffer.size(); }
+		int NumOfMaterial() { return mMtlBuffer.size(); }
+		const Vertex& _getVertex(int i) { return mVertexBuffer[i]; }
+		const Triangle& _getTriangle(int i) { return mTriBuffer[i]; }
+		const Material& _getMaterial(int i) { return mMtlBuffer[i]; }
 
 		void RayCheck(Contact & contract, const Ray & ray, float length);
 		bool Occluded(const Ray & ray, float length);

@@ -49,6 +49,7 @@ namespace LFX {
 
 			int Threads;
 
+			bool Filter;
 			bool BakeLightMap;
 			bool BakeLightProbe;
 
@@ -75,6 +76,7 @@ namespace LFX {
 				AOColor = Float3(0.5f, 0.5f, 0.5f);
 
 				Threads = 1;
+				Filter = false;
 				BakeLightMap = true;
 				BakeLightProbe = false;
 			}

@@ -26,7 +26,7 @@ namespace LFX {
 		return t;
 	}
 
-	void Rasterizer::Blur(float* data, int w, int h, int stride, int texels)
+	void Rasterizer::Filter(float* data, int w, int h, int stride, int texels)
 	{
 		float* temp = new float[w * h];
 
@@ -62,7 +62,7 @@ namespace LFX {
 		delete[] temp;
 	}
 
-	void Rasterizer::Blur(Float3* data, int w, int h, int stride, int texels)
+	void Rasterizer::Filter(Float3* data, int w, int h, int stride, int texels)
 	{
 		Float3* temp = new Float3[w * h];
 
@@ -98,7 +98,7 @@ namespace LFX {
 		delete[] temp;
 	}
 
-	void Rasterizer::Blur(Float4* data, int w, int h, int stride, int texels)
+	void Rasterizer::Filter(Float4* data, int w, int h, int stride, int texels)
 	{
 		Float4* temp = new Float4[w * h];
 
@@ -134,7 +134,7 @@ namespace LFX {
 		delete[] temp;
 	}
 
-	void Rasterizer::Blur(LightmapValue* data, int w, int h, int stride, int texels)
+	void Rasterizer::Filter(LightmapValue* data, int w, int h, int stride, int texels)
 	{
 		LightmapValue* temp = new LightmapValue[w * h];
 

@@ -84,6 +84,9 @@ namespace LFX {
 		stream >> mSetting.AORadius;
 		stream >> mSetting.AOColor;
 		stream >> mSetting.Threads;
+		if (version >= LFX_FILE_VERSION_373) {
+			stream >> mSetting.Filter;
+		}
 		stream >> mSetting.BakeLightMap;
 		stream >> mSetting.BakeLightProbe;
 		// disable gamma correction
@@ -521,6 +524,10 @@ namespace LFX {
 							item->atlasItem.ScaleV = lmapSize / (float)dims;
 							CopyImage(hpart, item->hpart, i * lmapSize, j * lmapSize);
 							if (!item->lpart.pixels.empty()) {
+								lpart.width = hpart.width;
+								lpart.height = hpart.height;
+								lpart.channels = hpart.channels;
+								lpart.pixels.resize(lpart.width * lpart.height * lpart.channels, 0);
 								CopyImage(lpart, item->lpart, i * lmapSize, j * lmapSize);
 							}
 							packedItems.push_back(item);

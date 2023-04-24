@@ -10,6 +10,7 @@
 #include "LFX_Log.h"
 #include "LFX_World.h"
 #include "LFX_Renderer.h"
+#include "LFX_CyclesRenderer.h"
 
 enum {
 	E_STARTING = 1,
@@ -191,6 +192,7 @@ int local_main(int argc, char* argv[])
 
 	GWorld = new LFX::World;
 	if (GWorld->Load()) {
+		GRenderer = new LFX::CRenderer;
 		GRenderer->Build();
 		GRenderer->Start();
 		GStatus = E_STARTING;
@@ -239,12 +241,35 @@ int local_main(int argc, char* argv[])
 	return 0;
 }
 
+#ifdef LFX_CYLCES_RENDERER
+int cycles_main(int argc, char* argv[])
+{
+	GLog = new LFX::Log("lfx.log");
+
+	GWorld = new LFX::World;
+	if (GWorld->Load()) {
+		LFX::CylcesRenderer renderer;
+		renderer.ExportScene();
+		GStatus = E_STARTING;
+	}
+	else {
+		GStatus = E_STOPPED;
+		LOGE("?: Load scene failed");
+	}
+
+	return 0;
+}
+#endif
+
 #define LFX_REMOTE_MODE 1
+#define LFX_CYCLES_TEST 0
 
 int main(int argc, char* argv[])
 {
 #if LFX_REMOTE_MODE
 	return remote_main(argc, argv);
+#elif LFX_CYCLES_TEST
+	return cycles_main(argc, argv);
 #else
 	return local_main(argc, argv);
 #endif
