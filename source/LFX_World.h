@@ -71,9 +71,9 @@ namespace LFX {
 				GIPathLength = 2;
 
 				AOLevel = 0;
-				AOStrength = 0.5f;
+				AOStrength = 1.0f;
 				AORadius = 1.0f;
-				AOColor = Float3(0.5f, 0.5f, 0.5f);
+				AOColor = Float3(0.0f, 0.0f, 0.0f);
 
 				Threads = 1;
 				Filter = false;
