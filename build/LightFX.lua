@@ -17,19 +17,24 @@ project "LightFX"
 		"4996", -- deprecation function
 	}
 
-	defines { "EMBREE_STATIC_LIB", }
+	defines { 
+		"EMBREE_STATIC_LIB",
+		"LFX_CYLCES_RENDERER",
+	}
 	sysincludedirs {
 		"../3rd/src/rapidjson/include",
 		"../3rd/src/websocketpp-0.8.2",
 	}
 	includedirs {
 		"../3rd/src/stb",
+		"../3rd/src/tinyxml2",
 		"../3rd/src/lodepng",
 		"../3rd/src/socket.io-client-cpp/src",
 		"../source",
 	}
 	files {
 		"../3rd/src/lodepng/lodepng.cpp",
+		"../3rd/src/tinyxml2/tinyxml2.cpp",
 		--"../3rd/src/socket.io-ext/internal/*.cpp",
 		"../3rd/src/socket.io-client-cpp/src/sio_client.cpp",
 		"../3rd/src/socket.io-client-cpp/src/sio_socket.cpp",
@@ -64,10 +69,11 @@ project "uvunwrap"
 
 	includedirs {
 		"../3rd/src/opennl",
+		"../3rd/src/xatlas/xatlas",
 		"../uvunwrap",
 	}
 	files {
-		
+		"../3rd/src/xatlas/xatlas/**.*",
 		"../uvunwrap/**.*",
 	}
 	links {
