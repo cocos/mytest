@@ -23,6 +23,11 @@ namespace LFX {
 		Texture* RoughnessMap;
 		Texture* PBRMap;
 
+		String _emissiveMapFile;
+		String _diffuseMapFile;
+		String _normalMapFile;
+		String _pbrMapFile;
+
 		Material()
 		{
 			alphaCutoff = 0.5f;
@@ -54,7 +59,7 @@ namespace LFX {
 
 			float m = 1.0f;
 			if (PBRMap != nullptr) {
-				m = PBRMap->SampleColor(u, v).z;
+				m = PBRMap->SampleColor(u, v).x;
 			}
 			else if (MetallicMap != nullptr) {
 				m = MetallicMap->SampleColor(u, v).x;

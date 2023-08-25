@@ -11,6 +11,7 @@
 #include "LFX_World.h"
 #include "LFX_Renderer.h"
 #include "LFX_CyclesRenderer.h"
+#include "LFX_GLTFExp.h"
 
 enum {
 	E_STARTING = 1,
@@ -19,11 +20,22 @@ enum {
 	E_STOPPED,
 };
 
+bool GGLTFExp = false;
 std::atomic<int> GStatus(0);
 int GProgress = 0;
 LFX::Log* GLog = NULL;
 LFX::World* GWorld = NULL;
 LFX::IRenderer* GRenderer = NULL;
+
+LFX::World* CreateEngine()
+{
+	auto* p = new LFX::World();
+	if (GGLTFExp) {
+		p->GetSetting()->LoadTexture = false;
+	}
+
+	return p;
+}
 
 time_t GetTicks()
 {
@@ -78,12 +90,21 @@ int remote_main(int argc, char* argv[])
 		
 		GProgress = 0;
 
-		GWorld = new LFX::World;
+		GWorld = CreateEngine();
 		if (GWorld->Load()) {
-			GRenderer = new LFX::CRenderer;
-			GRenderer->Build();
-			GRenderer->Start();
-			GStatus = E_STARTING;
+			if (GGLTFExp) {
+				LOGD("-: Export to gltf scene");
+				if (!LFX::GLTFExp::Export()) {
+					LOGE("-: Export gltf failed");
+				}
+				GStatus = E_STOPPED;
+			}
+			else {
+				GRenderer = new LFX::CRenderer;
+				GRenderer->Build();
+				GRenderer->Start();
+				GStatus = E_STARTING;
+			}
 		}
 		else {
 			GStatus = E_STOPPED;
@@ -114,7 +135,6 @@ int remote_main(int argc, char* argv[])
 		const char* text = progress_format("Start", 0);
 		LOGI(text);
 		h.socket()->emit("Start", std::string(text));
-
 		GStatus = E_BAKING;
 	}
 
@@ -190,7 +210,7 @@ int local_main(int argc, char* argv[])
 {
 	GLog = new LFX::Log("lfx.log");
 
-	GWorld = new LFX::World;
+	GWorld = CreateEngine();
 	if (GWorld->Load()) {
 		GRenderer = new LFX::CRenderer;
 		GRenderer->Build();
@@ -246,7 +266,7 @@ int cycles_main(int argc, char* argv[])
 {
 	GLog = new LFX::Log("lfx.log");
 
-	GWorld = new LFX::World;
+	GWorld = CreateEngine();
 	if (GWorld->Load()) {
 		LFX::CylcesRenderer renderer;
 		renderer.ExportScene();

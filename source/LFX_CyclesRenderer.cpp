@@ -87,6 +87,7 @@ namespace LFX {
 			};
 			CyclesIntegrator integrator;
 
+			SetAttribute(node, "name", "LightFX");
 			SetAttribute(node, "min_bounce", std::to_string(integrator.min_bounce));
 			SetAttribute(node, "max_bounce", std::to_string(integrator.max_bounce));
 			SetAttribute(node, "max_diffuse_bounce", std::to_string(integrator.max_diffuse_bounce));
@@ -101,11 +102,13 @@ namespace LFX {
 			return node;
 		}
 
-		tinyxml2::XMLNode* WriteMesh(tinyxml2::XMLNode* dom, Mesh* mesh)
+		tinyxml2::XMLNode* WriteMesh(tinyxml2::XMLNode* dom, Mesh* mesh, int index)
 		{
 			tinyxml2::XMLNode* tm = WriteTransform(dom, Float3(0, 0, 0));
 
 			auto* node = CreateNode(tm, "mesh");
+
+			SetAttribute(node, "name", "mesh" + std::to_string(index));
 
 			String P, UV;
 			for (int i = 0; i < mesh->NumOfVertices(); ++i) {
@@ -149,10 +152,11 @@ namespace LFX {
 
 			SetAttribute(node, "verts", verts);
 			SetAttribute(node, "nverts", nverts);
+
 			return node;
 		}
 
-		void WriteLight(tinyxml2::XMLNode* dom, Light* light)
+		void WriteLight(tinyxml2::XMLNode* dom, Light* light, int index)
 		{
 			struct CyclesLight
 			{
@@ -193,6 +197,9 @@ namespace LFX {
 			dom = WriteTransform(dom, light->Position);
 
 			auto* node = CreateNode(dom, "light");
+
+			SetAttribute(node, "name", "light" + std::to_string(index));
+
 			if (light->Type == Light::POINT) {
 				SetAttribute(node, "light_type", "LIGHT_POINT");
 			}
@@ -201,15 +208,21 @@ namespace LFX {
 			}
 			else if (light->Type == Light::DIRECTION) {
 				// ???
+				SetAttribute(node, "light_type", "LIGHT_DISTANT");
 			}
 
 			SetAttribute(node, "co", ToString(light->Color));
 			SetAttribute(node, "dir", ToString(light->Direction));
-			SetAttribute(node, "size", ToString(light->Size));
-			//SetAttribute(node, "angle", ToString(light->Range));
 
+			if (light->Type == Light::POINT || light->Type == Light::SPOT) {
+				SetAttribute(node, "size", ToString(light->Size));
+				// ???
+				//SetAttribute(node, "angle", ToString(light->Range));
+			}
 			if (light->Type == Light::SPOT) {
 				SetAttribute(node, "spot_angle", ToString(std::acosf(light->SpotOuter)));
+				// ???
+				//SetAttribute(node, "spot_smooth", ToString(light->SpotFallOff));
 			}
 
 			SetAttribute(node, "cast_shadow", light->CastShadow ? "true" : "false");
@@ -222,16 +235,20 @@ namespace LFX {
 
 	void CylcesRenderer::ExportScene()
 	{
+		int index = 0;
 		tinyxml2::XMLDocument xdoc;
 		tinyxml2::XMLNode* dom = CreateNode(&xdoc, "cycles");
 
 		WriteIntergrator(dom);
 
+		index = 0;
 		for (auto* light : World::Instance()->GetLights()) {
-			WriteLight(dom, light);
+			WriteLight(dom, light, ++index);
 		}
+
+		index = 0;
 		for (auto* mesh : World::Instance()->GetMeshes()) {
-			WriteMesh(dom, mesh);
+			WriteMesh(dom, mesh, ++index);
 		}
 
 		xdoc.SaveFile("cycles.xml");

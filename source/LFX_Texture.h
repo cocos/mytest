@@ -10,6 +10,7 @@ namespace LFX {
 		int width;
 		int height;
 		int channels;
+		int bitdepth;
 		std::vector<uint8_t> data;
 
 		Texture()
@@ -17,6 +18,7 @@ namespace LFX {
 			channels = 0;
 			width = 0;
 			height = 0;
+			bitdepth = 8;
 		}
 
 		~Texture()

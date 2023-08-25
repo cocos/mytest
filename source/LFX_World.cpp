@@ -31,6 +31,7 @@ namespace LFX {
 	static const int LFX_FILE_MESH = 0x02;
 	static const int LFX_FILE_LIGHT = 0x03;
 	static const int LFX_FILE_SHPROBE = 0x04;
+	static const int LFX_FILE_CAMERA = 0x05;
 	static const int LFX_FILE_EOF = 0x00;
 
 	bool World::Load()
@@ -168,18 +169,18 @@ namespace LFX {
 						stream >> mtl[i].Emissive;
 					}
 
-					String diffuseMap = stream.ReadString();
-					if (diffuseMap != "") {
-						mtl[i].DiffuseMap = LoadTexture(diffuseMap);
+					mtl[i]._diffuseMapFile = stream.ReadString();
+					if (mtl[i]._diffuseMapFile != "") {
+						mtl[i].DiffuseMap = LoadTexture(mtl[i]._diffuseMapFile);
 					}
-					String pbrMap = stream.ReadString();
-					if (pbrMap != "") {
-						mtl[i].PBRMap = LoadTexture(pbrMap);
+					mtl[i]._pbrMapFile = stream.ReadString();
+					if (mtl[i]._pbrMapFile != "") {
+						mtl[i].PBRMap = LoadTexture(mtl[i]._pbrMapFile);
 					}
 					if (version >= LFX_FILE_VERSION_372_2) {
-						String emissiveMap = stream.ReadString();
-						if (emissiveMap != "") {
-							mtl[i].EmissiveMap = LoadTexture(emissiveMap);
+						mtl[i]._emissiveMapFile = stream.ReadString();
+						if (mtl[i]._emissiveMapFile != "") {
+							mtl[i].EmissiveMap = LoadTexture(mtl[i]._emissiveMapFile);
 						}
 					}
 				}
@@ -254,6 +255,19 @@ namespace LFX {
 				SHProbe* p = CreateSHProbe();
 				stream >> p->position;
 				stream >> p->normal;
+				break;
+			}
+
+			case LFX_FILE_CAMERA: {
+				Camera* p = CreateCamera();
+				p->Name = stream.ReadString();
+				stream >> p->fov;
+				stream >> p->zn;
+				stream >> p->zf;
+				stream >> p->transform[0];
+				stream >> p->transform[1];
+				stream >> p->transform[2];
+				stream >> p->transform[3];
 				break;
 			}
 
@@ -983,6 +997,12 @@ namespace LFX {
 		}
 		mTerrains.clear();
 
+		for (int i = 0; i < mCameras.size(); ++i)
+		{
+			delete mCameras[i];
+		}
+		mCameras.clear();
+
 		SAFE_DELETE(mScene);
 	}
 
@@ -993,52 +1013,57 @@ namespace LFX {
 			return tex;
 		}
 
-		Image img;
-		FileStream stream(filename.c_str());
+		if (mSetting.LoadTexture) {
+			FileStream stream(filename.c_str());
 
-		if (PNG_Test(stream)) {
-			PNG_Load(img, stream);
-		}
-		else if (JPG_Test(stream)) {
-			JPG_Load(img, stream);
-		}
-		else if (TGA_Test(stream)) {
-			TGA_Load(img, stream);
-		}
-		else if (BMP_Test(stream)) {
-			BMP_Load(img, stream);
+			Image img;
+			if (PNG_Test(stream)) {
+				PNG_Load(img, stream);
+			}
+			else if (JPG_Test(stream)) {
+				JPG_Load(img, stream);
+			}
+			else if (TGA_Test(stream)) {
+				TGA_Load(img, stream);
+			}
+			else if (BMP_Test(stream)) {
+				BMP_Load(img, stream);
+			}
+
+			if (!img.pixels.empty()) {
+				LOGI("Texture '%s' loaded", filename.c_str());
+				tex = new Texture;
+				tex->name = filename;
+				tex->width = img.width;
+				tex->height = img.height;
+				tex->channels = img.channels;
+				tex->bitdepth = img.bitdepth;
+				tex->data = img.pixels;
+				mTextures.push_back(tex);
+				return tex;
+			}
+			else {
+				LOGW("Load Texture '%s' failed", filename.c_str());
+			}
 		}
 
-		if (img.pixels.empty()) {
-			LOGI("Texture '%s' loaded", filename.c_str());
-			tex = new Texture;
-			tex->name = filename;
-			tex->width = img.width;
-			tex->height = img.height;
-			tex->channels = img.channels;
-			tex->data = img.pixels;
-			mTextures.push_back(tex);
-		}
-		else {
-			LOGW("Load Texture '%s' failed", filename.c_str());
-			// create dummy texture
-			tex = new Texture;
-			tex->name = filename;
-			tex->width = 4;
-			tex->height = 4;
-			tex->channels = 3;
-			tex->data.resize(3 * 4 * 4);
-			memset(tex->data.data(), 0, tex->data.size());
-			mTextures.push_back(tex);
-		}
+		// create dummy texture
+		tex = new Texture;
+		tex->name = filename;
+		tex->width = 4;
+		tex->height = 4;
+		tex->channels = 3;
+		tex->data.resize(3 * 4 * 4);
+		memset(tex->data.data(), 0, tex->data.size());
+		mTextures.push_back(tex);
 
 		return tex;
 	}
 
-	Texture* World::CreateTexture(const String & nam, int w, int h, int channels)
+	Texture* World::CreateTexture(const String & name, int w, int h, int channels)
 	{
 		Texture* t = new Texture;
-		t->name = nam;
+		t->name = name;
 		t->width = w;
 		t->height = h;
 		t->channels = channels;
@@ -1069,6 +1094,13 @@ namespace LFX {
 	{
 		mSHProbes.emplace_back();
 		return &mSHProbes.back();
+	}
+
+	Camera* World::CreateCamera()
+	{
+		Camera* pCamera = new Camera();
+		mCameras.push_back(pCamera);
+		return pCamera;
 	}
 
 	Mesh* World::CreateMesh()

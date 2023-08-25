@@ -9,6 +9,7 @@ namespace LFX {
 		int channels;
 		int width;
 		int height;
+		int bitdepth;
 		std::vector<uint8_t> pixels;
 
 		Image()
@@ -16,6 +17,7 @@ namespace LFX {
 			channels = 0;
 			width = 0;
 			height = 0;
+			bitdepth = 8;
 		}
 
 		Image(int w, int h, int channels)
@@ -32,7 +34,7 @@ namespace LFX {
 	LFX_ENTRY bool BMP_Save(FILE * fp, const Image & image);
 
 	LFX_ENTRY bool PNG_Test(Stream & stream);
-	LFX_ENTRY bool PNG_Load(Image & image, Stream & stream);
+	LFX_ENTRY bool PNG_Load(Image& image, Stream& stream);
 	LFX_ENTRY bool PNG_Save(FILE * fp, const Image & image);
 
 	LFX_ENTRY bool TGA_Test(Stream & stream);

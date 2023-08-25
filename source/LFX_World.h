@@ -3,6 +3,7 @@
 #include "LFX_Log.h"
 #include "LFX_Light.h"
 #include "LFX_Mesh.h"
+#include "LFX_Camera.h"
 #include "LFX_Terrain.h"
 #include "LFX_Scene.h"
 #include "LFX_Shader.h"
@@ -22,6 +23,7 @@ namespace LFX {
 		{
 			bool Selected;
 			bool RGBEFormat;
+			bool LoadTexture;
 
 			Float3 Ambient;
 			Float3 SkyRadiance;
@@ -57,6 +59,7 @@ namespace LFX {
 			{
 				Selected = false;
 				RGBEFormat = false;
+				LoadTexture = true;
 
 				MSAA = 1;
 #ifdef LFX_FEATURE_EDGE_AA
@@ -98,11 +101,13 @@ namespace LFX {
 		Texture* CreateTexture(const String& name, int w, int h, int channels);
 		Texture* GetTexture(const String& name);
 
+		Camera* CreateCamera();
 		Mesh* CreateMesh();
 		Light* CreateLight();
 		SHProbe* CreateSHProbe();
 		Terrain* CreateTerrain(float* heightfield, const Terrain::Desc& desc);
 		Light* GetMainLight() const; // main direction light
+		const std::vector<Camera*>& GetCameras() const { return mCameras; }
 		const std::vector<Mesh*>& GetMeshes() const { return mMeshes; }
 		const std::vector<Light*>& GetLights() const { return mLights; }
 		const std::vector<SHProbe>& GetSHProbes() const { return mSHProbes; }
@@ -116,6 +121,7 @@ namespace LFX {
 
 		Shader* mShader;
 		std::vector<Texture *> mTextures;
+		std::vector<Camera*> mCameras;
 		std::vector<Light *> mLights;
 		std::vector<Mesh *> mMeshes;
 		std::vector<Terrain *> mTerrains;

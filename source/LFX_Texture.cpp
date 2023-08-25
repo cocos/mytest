@@ -37,12 +37,23 @@ namespace LFX {
 			return true;
 		}
 		else if (channels == 1) {
-			r = data[y * width + x];
+			if (bitdepth == 8) {
+				r = data[y * width + x];
 
-			c.x = r / 255.0f;
-			c.y = r / 255.0f;
-			c.z = r / 255.0f;
-			c.w = 1.0f;
+				c.x = r / 255.0f;
+				c.y = r / 255.0f;
+				c.z = r / 255.0f;
+				c.w = 1.0f;
+			}
+			else {
+				uint16* ptr = (uint16*)data.data();
+				uint16 r16 = ptr[y * width + x];
+
+				c.x = r16 / 65535.0f;
+				c.y = r16 / 65535.0f;
+				c.z = r16 / 65535.0f;
+				c.w = 1.0f;
+			}
 
 			return true;
 		}

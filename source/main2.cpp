@@ -1,4 +1,4 @@
-#if 0
+#if 0/*deprecated*/
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
 #include <iostream>

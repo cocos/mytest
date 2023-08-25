@@ -141,37 +141,41 @@ namespace LFX {
 		if (header.width > 4096 || header.height > 4096)
 			return NULL;
 
-		if (header.bitdepth != 8)
+		if (header.bitdepth != 8 && header.bitdepth != 16)
+			return NULL;
+
+		if (header.bitdepth == 16 && header.colortype != LCT_GREY)
 			return NULL;
 
 		image.width = header.width;
 		image.height = header.height;
+		image.bitdepth = header.bitdepth;
 
-		LodePNGColorType colortype = LCT_RGBA;
+		LodePNGColorType ctype = LCT_RGBA;
 		switch (header.colortype)
 		{
 		case 0:
-			colortype = LCT_GREY;
+			ctype = LCT_GREY;
 			image.channels = 1;
 			break;
 
 		case 2:
-			colortype = LCT_RGB;
+			ctype = LCT_RGB;
 			image.channels = 3;
 			break;
 
 		case 3:
-			colortype = LCT_RGBA;
+			ctype = LCT_RGBA;
 			image.channels = 4;
 			break;
 
 		case 4:
-			colortype = LCT_GREY_ALPHA;
+			ctype = LCT_GREY_ALPHA;
 			image.channels = 2;
 			break;
 
 		case 6:
-			colortype = LCT_RGBA;
+			ctype = LCT_RGBA;
 			image.channels = 4;
 			break;
 		}
@@ -182,14 +186,15 @@ namespace LFX {
 		IS.Seek(-nreads, SEEK_CUR);
 
 		//
-		unsigned char * data = (unsigned char *)stream.GetData();
-		int len = stream.Size();
-		unsigned char* pixels = nullptr;
+		unsigned char* data = (unsigned char*)stream.GetData();
+		const int dataLen = stream.Size();
+		unsigned short* pixels = nullptr;
 		unsigned int w = 0, h = 0;
 
-		int err = lodepng_decode_memory(&pixels, &w, &h, data, len, colortype, 8);
+		image.bitdepth = 8;
+		int err = lodepng_decode_memory((uint8**)&pixels, &w, &h, data, dataLen, ctype, image.bitdepth);
 		if (pixels != nullptr) {
-			image.pixels.resize(w * h * image.channels);
+			image.pixels.resize(w * h * image.channels * (image.bitdepth / 8));
 			memcpy(image.pixels.data(), pixels, image.pixels.size());
 			SAFE_DELETE_ARRAY(pixels);
 		}
@@ -219,15 +224,15 @@ namespace LFX {
 			return false;
 		}
 
-		uint8_t * data = NULL;
+		uint8_t* data = NULL;
 		size_t size = 0;
 
 		LodePNGState state;
 		lodepng_state_init(&state);
 		state.info_raw.colortype = colortype;
-		state.info_raw.bitdepth = 8;
+		state.info_raw.bitdepth = image.bitdepth;
 		state.info_png.color.colortype = colortype;
-		state.info_png.color.bitdepth = 8;
+		state.info_png.color.bitdepth = image.bitdepth;
 		state.encoder.auto_convert = false;
 		lodepng_encode(&data, &size, image.pixels.data(), image.width, image.height, &state);
   		lodepng_state_cleanup(&state);

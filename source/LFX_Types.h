@@ -13,9 +13,10 @@
 #include <vector>
 #include <list>
 #include <map>
-#include <algorithm>
 #include <random>
+#include <algorithm>
 #include <float.h>
+#include <fstream>
 
 #if 0
 #ifdef LFX_EXPORT

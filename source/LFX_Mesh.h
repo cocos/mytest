@@ -23,8 +23,6 @@ namespace LFX {
 		void SetLightingMapSize(int size) { mLightingMapSize = size;}
 		int GetLightingMapSize() { return mLightingMapSize; }
 
-	
-
 		void Alloc(int numVertex, int numTriangle, int numMaterial);
 
 		void Lock(Vertex ** ppVertex, Triangle ** ppTriangle, Material ** ppMaterial);
@@ -37,9 +35,12 @@ namespace LFX {
 		int NumOfVertices() { return mVertexBuffer.size(); }
 		int NumOfTriangles() { return mTriBuffer.size(); }
 		int NumOfMaterial() { return mMtlBuffer.size(); }
-		const Vertex& _getVertex(int i) { return mVertexBuffer[i]; }
-		const Triangle& _getTriangle(int i) { return mTriBuffer[i]; }
-		const Material& _getMaterial(int i) { return mMtlBuffer[i]; }
+		const auto& _getVertex(int i) { return mVertexBuffer[i]; }
+		const auto& _getTriangle(int i) { return mTriBuffer[i]; }
+		const auto& _getMaterial(int i) { return mMtlBuffer[i]; }
+		const auto& _getVertexBuffer() { return mVertexBuffer; }
+		const auto& _getTriangleBuffer() { return mTriBuffer; }
+		const auto& _getMaterialBuffer() { return mMtlBuffer; }
 
 		void RayCheck(Contact & contract, const Ray & ray, float length);
 		bool Occluded(const Ray & ray, float length);
