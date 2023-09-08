@@ -73,7 +73,9 @@ namespace LFX {
 	template <typename T> Vec4T<T> operator * (const Vec4T<T> &v, const T f);
 	template <typename T> Vec4T<T> operator * (const Vec4T<T> a, const Vec4T<T> &b);
 	template <typename T> Vec4T<T> operator / (const Vec4T<T> &a, const T f);
-	template <typename T> Vec4T<T> operator / (const Vec4T<T> a, const Vec4T<T> &b);
+	template <typename T> Vec4T<T> operator / (const Vec4T<T> a, const Vec4T<T>& b);
+	template <typename T> bool operator == (const Vec4T<T> a, const Vec4T<T>& b);
+	template <typename T> bool operator != (const Vec4T<T> a, const Vec4T<T>& b);
 
 #include "LFX_Vec4.inl"
 

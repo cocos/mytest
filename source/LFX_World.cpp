@@ -21,17 +21,28 @@ namespace LFX {
 		delete mShader;
 	}
 
-	static const int LFX_FILE_VERSION = 0x2000;
+	static const int LFXO_FILE_VERSION = 0x2000;
 	static const int LFX_FILE_VERSION_372 = 0x2001;
 	static const int LFX_FILE_VERSION_372_2 = 0x2002;
 	static const int LFX_FILE_VERSION_372_3 = 0x2003;
 	static const int LFX_FILE_VERSION_373 = 0x3730;
+	static const int LFX_FILE_VERSION_390 = 0x3900;
+
+	bool CheckFileVersion(int v)
+	{
+		return v == LFX_FILE_VERSION_372
+			|| v == LFX_FILE_VERSION_372_2
+			|| v == LFX_FILE_VERSION_372_3
+			|| v == LFX_FILE_VERSION_373
+			|| v == LFX_FILE_VERSION_390;
+	}
 
 	static const int LFX_FILE_TERRAIN = 0x01;
 	static const int LFX_FILE_MESH = 0x02;
 	static const int LFX_FILE_LIGHT = 0x03;
 	static const int LFX_FILE_SHPROBE = 0x04;
 	static const int LFX_FILE_CAMERA = 0x05;
+	static const int LFX_FILE_ENVIROMENT = 0x10;
 	static const int LFX_FILE_EOF = 0x00;
 
 	bool World::Load()
@@ -47,11 +58,7 @@ namespace LFX {
 		// Check verison
 		int version;
 		stream >> version;
-		if (version != LFX_FILE_VERSION &&
-			version != LFX_FILE_VERSION_372 &&
-			version != LFX_FILE_VERSION_372_2 &&
-			version != LFX_FILE_VERSION_372_3 &&
-			version != LFX_FILE_VERSION_373) {
+		if (!CheckFileVersion(version)) {
 			LOGE("file head invalid");
 			return false;
 		}
@@ -106,6 +113,12 @@ namespace LFX {
 			}
 
 			switch (ckId) {
+			case LFX_FILE_ENVIROMENT: {
+				stream >> mEnvironment.SkyColor;
+				stream >> mEnvironment.GroundColor;
+				stream >> mEnvironment.SkyIllum;
+				break;
+			}
 			case LFX_FILE_TERRAIN: {
 				Terrain::Desc desc;
 				stream >> desc.Position;
@@ -135,6 +148,9 @@ namespace LFX {
 				
 			case LFX_FILE_MESH: {
 				Mesh *m = CreateMesh();
+				if (version >= LFX_FILE_VERSION_390) {
+					m->SetName(stream.ReadString());
+				}
 				m->SetCastShadow(stream.ReadT<bool>());
 				m->SetRecieveShadow(stream.ReadT<bool>());
 				m->SetLightingMapSize(stream.ReadT<int>());
@@ -160,13 +176,17 @@ namespace LFX {
 
 				for (auto i = 0; i < numMtls; ++i) {
 					if (version >= LFX_FILE_VERSION_373) {
-						stream >> mtl[i].alphaCutoff;
+						stream >> mtl[i].AlphaCutoff;
 					}
 					stream >> mtl[i].Metallic;
 					stream >> mtl[i].Roughness;
 					stream >> mtl[i].Diffuse;
 					if (version >= LFX_FILE_VERSION_372_2) {
 						stream >> mtl[i].Emissive;
+					}
+
+					if (version >= LFX_FILE_VERSION_390) {
+						stream >> mtl[i].TilingOffset;
 					}
 
 					mtl[i]._diffuseMapFile = stream.ReadString();
@@ -228,6 +248,9 @@ namespace LFX {
 
 			case LFX_FILE_LIGHT: {
 				Light *l = CreateLight();
+				if (version >= LFX_FILE_VERSION_390) {
+					l->Name = stream.ReadString();
+				}
 				stream >> l->Type;
 				stream >> l->Position;
 				stream >> l->Direction;
@@ -247,6 +270,12 @@ namespace LFX {
 				}
 				if (l->Type == Light::DIRECTION && l->DirectScale == 0) {
 					l->SaveShadowMask = true;
+				}
+				if (version >= LFX_FILE_VERSION_390) {
+					stream >> l->transform[0];
+					stream >> l->transform[1];
+					stream >> l->transform[2];
+					stream >> l->transform[3];
 				}
 				break;
 			}
@@ -954,7 +983,7 @@ namespace LFX {
 
 		LOGD("Writing lfx file '%s'", lfx_file.c_str());
 
-		fwrite(&LFX_FILE_VERSION, 4, 1, fp);
+		fwrite(&LFXO_FILE_VERSION, 4, 1, fp);
 
 		if (mSetting.BakeLightMap) {
 			SaveLightmaps(fp, path);

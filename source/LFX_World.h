@@ -9,6 +9,7 @@
 #include "LFX_Shader.h"
 #include "LFX_SHBaker.h"
 #include "LFX_Rasterizer.h"
+#include "LFX_Enviroment.h"
 
 namespace LFX {
 
@@ -107,6 +108,7 @@ namespace LFX {
 		SHProbe* CreateSHProbe();
 		Terrain* CreateTerrain(float* heightfield, const Terrain::Desc& desc);
 		Light* GetMainLight() const; // main direction light
+		Environment* GetEnvironment() { return &mEnvironment; }
 		const std::vector<Camera*>& GetCameras() const { return mCameras; }
 		const std::vector<Mesh*>& GetMeshes() const { return mMeshes; }
 		const std::vector<Light*>& GetLights() const { return mLights; }
@@ -118,7 +120,7 @@ namespace LFX {
 
 	protected:
 		Settings mSetting;
-
+		Environment mEnvironment;
 		Shader* mShader;
 		std::vector<Texture *> mTextures;
 		std::vector<Camera*> mCameras;

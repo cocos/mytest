@@ -358,3 +358,15 @@ Vec4T<T> operator / (const Vec4T<T> a, const Vec4T<T> &b)
 {
 	return Vec4T<T>(a.x / b.x, a.y / b.y, a.z / b.z, a.w / b.w);
 }
+
+template <typename T> inline
+bool operator == (const Vec4T<T> a, const Vec4T<T>& b)
+{
+	return a.x == b.x && a.y == b.y && a.z == b.z && a.w == b.w;
+}
+
+template <typename T> inline
+bool operator != (const Vec4T<T> a, const Vec4T<T>& b)
+{
+	return a.x != b.x || a.y != b.y || a.z != b.z || a.w != b.w;
+}

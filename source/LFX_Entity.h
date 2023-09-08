@@ -12,9 +12,10 @@ namespace LFX {
 
 	struct LFX_ENTRY Material
 	{
-		float alphaCutoff;
+		float AlphaCutoff;
 		float Metallic;
 		float Roughness;
+		float GIWeight;
 		Float3 Diffuse;
 		Float3 Emissive;
 		Texture* EmissiveMap;
@@ -22,6 +23,7 @@ namespace LFX {
 		Texture* MetallicMap;
 		Texture* RoughnessMap;
 		Texture* PBRMap;
+		Float4 TilingOffset;
 
 		String _emissiveMapFile;
 		String _diffuseMapFile;
@@ -30,9 +32,10 @@ namespace LFX {
 
 		Material()
 		{
-			alphaCutoff = 0.5f;
+			AlphaCutoff = 0.5f;
 			Metallic = 0;
 			Roughness = 0;
+			GIWeight = 0.5f;
 			Diffuse = Float3(1, 1, 1);
 			Emissive = Float3(0, 0, 0);
 			EmissiveMap = NULL;
@@ -40,14 +43,32 @@ namespace LFX {
 			MetallicMap = NULL;
 			RoughnessMap = NULL;
 			PBRMap = NULL;
+			TilingOffset = Float4(1, 1, 0, 0);
 		}
 
 		Float3 GetSurfaceEmissive(float u, float v) const
 		{
 			Float3 value = Emissive;
 
+			u = u * TilingOffset.x + TilingOffset.z;
+			v = v * TilingOffset.y + TilingOffset.w;
+
 			if (EmissiveMap != nullptr) {
 				value = value * EmissiveMap->SampleColor3(u, v);
+			}
+
+			return value;
+		}
+
+		Float3 GetSurfaceDiffuse(float u, float v) const
+		{
+			Float3 value = Diffuse;
+
+			u = u * TilingOffset.x + TilingOffset.z;
+			v = v * TilingOffset.y + TilingOffset.w;
+
+			if (DiffuseMap != nullptr) {
+				value = value * DiffuseMap->SampleColor3(u, v);
 			}
 
 			return value;
@@ -57,8 +78,12 @@ namespace LFX {
 		{
 			float value = Metallic;
 
+			u = u * TilingOffset.x + TilingOffset.z;
+			v = v * TilingOffset.y + TilingOffset.w;
+
 			float m = 1.0f;
 			if (PBRMap != nullptr) {
+
 				m = PBRMap->SampleColor(u, v).x;
 			}
 			else if (MetallicMap != nullptr) {
@@ -71,6 +96,9 @@ namespace LFX {
 		float GetSurfaceRoughness(float u, float v) const
 		{
 			float value = Roughness;
+
+			u = u * TilingOffset.x + TilingOffset.z;
+			v = v * TilingOffset.y + TilingOffset.w;
 
 			float m = 1.0f;
 			if (PBRMap != nullptr) {

@@ -20,21 +20,39 @@ enum {
 	E_STOPPED,
 };
 
-bool GGLTFExp = false;
+bool GExpportGLTF = true;
 std::atomic<int> GStatus(0);
 int GProgress = 0;
 LFX::Log* GLog = NULL;
 LFX::World* GWorld = NULL;
 LFX::IRenderer* GRenderer = NULL;
 
-LFX::World* CreateEngine()
+void StartEngine(bool render)
 {
-	auto* p = new LFX::World();
-	if (GGLTFExp) {
-		p->GetSetting()->LoadTexture = false;
+	GWorld = new LFX::World();
+	if (GExpportGLTF) {
+		GWorld->GetSetting()->LoadTexture = false;
 	}
 
-	return p;
+	if (GWorld->Load()) {
+		if (GExpportGLTF) {
+			LOGD("-: Export to gltf scene");
+			if (!LFX::GLTFExp::Export()) {
+				LOGE("-: Export gltf failed");
+			}
+			GStatus = E_STOPPED;
+		}
+		else {
+			GRenderer = new LFX::CRenderer;
+			GRenderer->Build();
+			GRenderer->Start();
+			GStatus = E_STARTING;
+		}
+	}
+	else {
+		GStatus = E_STOPPED;
+		LOGE("?: Load scene failed");
+	}
 }
 
 time_t GetTicks()
@@ -43,9 +61,7 @@ time_t GetTicks()
 	return GetTickCount() * 1000;
 #else
 	timeval tv;
-
 	gettimeofday(&tv, NULL);
-
 	return tv.tv_sec * 1000000 + tv.tv_usec;
 #endif
 }
@@ -89,27 +105,7 @@ int remote_main(int argc, char* argv[])
 		}
 		
 		GProgress = 0;
-
-		GWorld = CreateEngine();
-		if (GWorld->Load()) {
-			if (GGLTFExp) {
-				LOGD("-: Export to gltf scene");
-				if (!LFX::GLTFExp::Export()) {
-					LOGE("-: Export gltf failed");
-				}
-				GStatus = E_STOPPED;
-			}
-			else {
-				GRenderer = new LFX::CRenderer;
-				GRenderer->Build();
-				GRenderer->Start();
-				GStatus = E_STARTING;
-			}
-		}
-		else {
-			GStatus = E_STOPPED;
-			LOGE("?: Load scene failed");
-		}
+		StartEngine(true);
 	});
 
 	h.socket()->on("Stop", [](sio::event &) {
@@ -210,17 +206,7 @@ int local_main(int argc, char* argv[])
 {
 	GLog = new LFX::Log("lfx.log");
 
-	GWorld = CreateEngine();
-	if (GWorld->Load()) {
-		GRenderer = new LFX::CRenderer;
-		GRenderer->Build();
-		GRenderer->Start();
-		GStatus = E_STARTING;
-	}
-	else {
-		GStatus = E_STOPPED;
-		LOGE("?: Load scene failed");
-	}
+	StartEngine(true);
 
 	while (GRenderer != NULL) {
 		float kp = (GRenderer->GetProgress() + 1) / (float)(GRenderer->GetTaskCount() + 1);
@@ -266,22 +252,17 @@ int cycles_main(int argc, char* argv[])
 {
 	GLog = new LFX::Log("lfx.log");
 
-	GWorld = CreateEngine();
-	if (GWorld->Load()) {
+	StartEngine(false);
+	if (GStatus == E_STARTING) {
 		LFX::CylcesRenderer renderer;
 		renderer.ExportScene();
-		GStatus = E_STARTING;
-	}
-	else {
-		GStatus = E_STOPPED;
-		LOGE("?: Load scene failed");
 	}
 
 	return 0;
 }
 #endif
 
-#define LFX_REMOTE_MODE 1
+#define LFX_REMOTE_MODE 0
 #define LFX_CYCLES_TEST 0
 
 int main(int argc, char* argv[])

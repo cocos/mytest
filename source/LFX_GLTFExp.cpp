@@ -21,6 +21,7 @@ namespace LFX {
 		int ExportCamera(Camera* camera);
 		int ExportLight(Light* light, int index);
 		int ExportMesh(Mesh* mesh, int index);
+		int ExportEvnviroment(Environment* env);
 
 		bool WriteToFile(const String& file, bool binary)
 		{
@@ -60,6 +61,44 @@ namespace LFX {
 	{
 		tinygltf::Material gltfMaterial;
 
+		gltfMaterial.pbrMetallicRoughness.baseColorFactor = {
+			(double)mtl->Diffuse.x,
+			(double)mtl->Diffuse.y,
+			(double)mtl->Diffuse.z,
+			(double)1.0,
+		};
+
+		gltfMaterial.pbrMetallicRoughness.metallicFactor = (double)mtl->Metallic;
+		gltfMaterial.pbrMetallicRoughness.roughnessFactor = (double)mtl->Roughness;
+
+		if (mtl->Emissive.dot(Float3(1, 1, 1)) > 0.01f) {
+			gltfMaterial.emissiveFactor.resize(3);
+			gltfMaterial.emissiveFactor[0] = (double)mtl->Emissive.x;
+			gltfMaterial.emissiveFactor[1] = (double)mtl->Emissive.y;
+			gltfMaterial.emissiveFactor[2] = (double)mtl->Emissive.z;
+		}
+
+		if (mtl->_diffuseMapFile != "") {
+			int texIdx = ExportTexture(mtl->_diffuseMapFile);
+			gltfMaterial.pbrMetallicRoughness.baseColorTexture.index = texIdx;
+		}
+
+		if (mtl->_pbrMapFile != "") {
+			int texIdx = ExportTexture(mtl->_pbrMapFile);
+			gltfMaterial.pbrMetallicRoughness.metallicRoughnessTexture.index = texIdx;
+		}
+
+		if (mtl->_normalMapFile != "") {
+			int texIdx = ExportTexture(mtl->_normalMapFile);
+			gltfMaterial.normalTexture.index = texIdx;
+		}
+
+		if (mtl->_emissiveMapFile != "") {
+			int texIdx = ExportTexture(mtl->_emissiveMapFile);
+			gltfMaterial.emissiveTexture.index = texIdx;
+		}
+
+#if 0
 		// base color
 		gltfMaterial.values["baseColorFactor"].number_array = {
 			(double)mtl->Diffuse.x,
@@ -78,6 +117,12 @@ namespace LFX {
 			gltfMaterial.values["metallicRoughnessTexture"].json_double_value["index"] = texIdx;
 		}
 
+		// base map
+		if (mtl->_diffuseMapFile != "") {
+			int texIdx = ExportTexture(mtl->_diffuseMapFile);
+			gltfMaterial.values["baseColorTexture"].json_double_value["index"] = texIdx;
+		}
+
 		// normal map
 		if (mtl->_normalMapFile != "") {
 			int texIdx = ExportTexture(mtl->_normalMapFile);
@@ -89,21 +134,24 @@ namespace LFX {
 			int texIdx = ExportTexture(mtl->_emissiveMapFile);
 			gltfMaterial.values["emissiveTexture"].json_double_value["index"] = texIdx;
 		}
-		if (mtl->Emissive.dot(Float3(0, 0, 0)) > 0.01f) {
-			gltfMaterial.emissiveFactor.resize(3);
-			gltfMaterial.emissiveFactor[0] = (double)mtl->Emissive.x;
-			gltfMaterial.emissiveFactor[1] = (double)mtl->Emissive.y;
-			gltfMaterial.emissiveFactor[2] = (double)mtl->Emissive.z;
-		}
+#endif
 
 		// alpha mode
-		if (mtl->alphaCutoff > 0) {
+		if (mtl->AlphaCutoff > 0) {
 			gltfMaterial.alphaMode = "MASK";
 		}
-		gltfMaterial.alphaCutoff = mtl->alphaCutoff;
+		gltfMaterial.alphaCutoff = mtl->AlphaCutoff;
 
 		// double sided
 		//gltfMaterial.doubleSided = true;
+
+		// tiling offset
+		if (mtl->TilingOffset != Float4(1, 1, 0, 0)) {
+			gltfMaterial.extensions["u_tiling"] = tinygltf::Value(mtl->TilingOffset.x);
+			gltfMaterial.extensions["v_tiling"] = tinygltf::Value(mtl->TilingOffset.y);
+			gltfMaterial.extensions["u_offset"] = tinygltf::Value(mtl->TilingOffset.z);
+			gltfMaterial.extensions["v_offset"] = tinygltf::Value(mtl->TilingOffset.w);
+		}
 
 		model.materials.push_back(gltfMaterial);
 		return (int)model.materials.size() - 1;
@@ -122,6 +170,7 @@ namespace LFX {
 
 		tinygltf::Node node;
 		node.name = gltfCamera.name;
+		node.matrix.resize(16);
 		for (int i = 0; i < 4; ++i) {
 			node.matrix[i * 4 + 0] = camera->transform[i][0];
 			node.matrix[i * 4 + 1] = camera->transform[i][1];
@@ -136,7 +185,7 @@ namespace LFX {
 	int GLTFModelExp::ExportLight(Light* light, int index)
 	{
 		tinygltf::Light gltfLight;
-		gltfLight.name = "light" + std::to_string(index);
+		gltfLight.name = light->Name.c_str();
 		gltfLight.color = {
 			(double)light->Color.x,
 			(double)light->Color.y,
@@ -164,6 +213,8 @@ namespace LFX {
 		}
 
 		gltfLight.extensions["gi"] = tinygltf::Value(light->GIEnable);
+		gltfLight.extensions["directScale"] = tinygltf::Value(light->DirectScale);
+		gltfLight.extensions["indirectScale"] = tinygltf::Value(light->IndirectScale);
 		gltfLight.extensions["shadowMask"] = tinygltf::Value(light->ShadowMask);
 		gltfLight.extensions["castShadow"] = tinygltf::Value(light->CastShadow);
 		gltfLight.extensions["saveShadowMask"] = tinygltf::Value(light->SaveShadowMask);
@@ -172,6 +223,13 @@ namespace LFX {
 
 		tinygltf::Node node;
 		node.name = gltfLight.name;
+		node.matrix.resize(16);
+		for (int i = 0; i < 4; ++i) {
+			node.matrix[i * 4 + 0] = light->transform[i][0];
+			node.matrix[i * 4 + 1] = light->transform[i][1];
+			node.matrix[i * 4 + 2] = light->transform[i][2];
+			node.matrix[i * 4 + 3] = light->transform[i][3];
+		}
 		tinygltf::Value::Object lightValue;
 		lightValue.insert(std::make_pair("light", (int)model.lights.size() - 1));
 		node.extensions["KHR_lights_punctual"] = tinygltf::Value(lightValue);
@@ -246,7 +304,7 @@ namespace LFX {
 			uvAccessor.count = mesh->NumOfVertices();
 			uvAccessor.type = TINYGLTF_TYPE_VEC2;
 			uvAccessor.componentType = TINYGLTF_COMPONENT_TYPE_FLOAT;
-			model.accessors.push_back(normalAccessor);
+			model.accessors.push_back(uvAccessor);
 
 			if (useLightmap) {
 				tinygltf::Accessor uvAccessor1;
@@ -255,7 +313,7 @@ namespace LFX {
 				uvAccessor1.count = mesh->NumOfVertices();
 				uvAccessor1.type = TINYGLTF_TYPE_VEC2;
 				uvAccessor1.componentType = TINYGLTF_COMPONENT_TYPE_FLOAT;
-				model.accessors.push_back(normalAccessor);
+				model.accessors.push_back(uvAccessor1);
 			}
 		}
 		model.buffers.push_back(vertexBuf);
@@ -283,7 +341,7 @@ namespace LFX {
 		int lastMaterial = -1;
 		int startIndex = 0;
 		tinygltf::Mesh gltfMesh;
-		gltfMesh.name = "mesh" + std::to_string(index);
+		gltfMesh.name = mesh->GetName().c_str();
 		for (int i = 0; i < mesh->NumOfTriangles(); ++i) {
 			const auto& triangle = mesh->_getTriangle(i);
 			if (i == 0) {
@@ -303,7 +361,7 @@ namespace LFX {
 				tinygltf::Accessor accessor;
 				accessor.bufferView = bufferViewStartIndex + 1;
 				accessor.byteOffset = startIndex * sizeof(int);
-				accessor.count = i - startIndex;
+				accessor.count = ((i - startIndex) + 1) * 3;
 				accessor.type = TINYGLTF_TYPE_SCALAR;
 				accessor.componentType = TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT;
 				model.accessors.push_back(accessor);
@@ -329,9 +387,31 @@ namespace LFX {
 		return (int)model.nodes.size() - 1;
 	}
 
+	int GLTFModelExp::ExportEvnviroment(Environment* env)
+	{
+		tinygltf::Node node;
+		node.name = "Environment";
+		node.extensions["skyColor"] = tinygltf::Value({ 
+			tinygltf::Value(env->SkyColor.x),
+			tinygltf::Value(env->SkyColor.y),
+			tinygltf::Value(env->SkyColor.z),
+			});
+		node.extensions["groundColor"] = tinygltf::Value({
+			tinygltf::Value(env->GroundColor.x),
+			tinygltf::Value(env->GroundColor.y),
+			tinygltf::Value(env->GroundColor.z),
+			});
+		node.extensions["skyIllum"] = tinygltf::Value(env->SkyIllum);
+		model.nodes.push_back(node);
+		return (int)model.nodes.size() - 1;
+	}
+
 	bool GLTFExp::Export()
 	{
 		GLTFModelExp exp;
+
+		exp.ExportEvnviroment(LFX::World::Instance()->GetEnvironment());
+
 		for (auto* camera : LFX::World::Instance()->GetCameras()) {
 			exp.ExportCamera(camera);
 		}
@@ -342,8 +422,8 @@ namespace LFX {
 		}
 
 		index = 0;
-		for (auto* mesh : LFX::World::Instance()->GetLights()) {
-			exp.ExportLight(mesh, index++);
+		for (auto* light : LFX::World::Instance()->GetLights()) {
+			exp.ExportLight(light, index++);
 		}
 
 		return exp.WriteToFile("lfx.gltf", false);

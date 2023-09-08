@@ -28,8 +28,8 @@ namespace LFX {
 			DIRECTION,
 		};
 
+		String Name;
 		int Type;
-
 		Float3 Position;
 		Float3 Direction;
 		Float3 Color;
@@ -61,6 +61,8 @@ namespace LFX {
 		bool SaveShadowMask;
 		float ShadowMask;
 
+		Float4 transform[4];
+
 		Light()
 		{
 			Type = Light::POINT;
@@ -84,6 +86,12 @@ namespace LFX {
 			CastShadow = false;
 			SaveShadowMask = false;
 			ShadowMask = 0.0f;
+
+			// identity
+			transform[0] = Float4(1, 0, 0, 0);
+			transform[1] = Float4(0, 1, 0, 0);
+			transform[2] = Float4(0, 0, 1, 0);
+			transform[3] = Float4(0, 0, 0, 1);
 		}
 	};
 

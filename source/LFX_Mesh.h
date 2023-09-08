@@ -14,6 +14,9 @@ namespace LFX {
 
 		virtual int GetType() { return LFX_MESH; }
 
+		void SetName(const String& name);
+		const String& GetName() const { return mName; }
+
 		void SetCastShadow(bool b) { mCastShadow = b; }
 		bool GetCastShadow() { return mCastShadow; }
 
@@ -72,7 +75,7 @@ namespace LFX {
 		BSPTree<int> mBSPTree;
 		Float2 mUVMin, mUVMax;
 
-		void* mUserData;
+		String mName;
 		bool mCastShadow;
 		bool mReceiveShadow;
 		int mLightingMapSize;

@@ -11,7 +11,6 @@ namespace LFX {
 
 	Mesh::Mesh()
 	{
-		mUserData = NULL;
 		mCastShadow = true;
 		mReceiveShadow = true;
 		mLightingMapSize = 0;
@@ -24,6 +23,11 @@ namespace LFX {
 		mMtlBuffer.clear();
 
 		mBSPTree.Clear();
+	}
+
+	void Mesh::SetName(const String& name)
+	{
+		mName = name;
 	}
 
 	void Mesh::Alloc(int numVertex, int numTriangle, int numMaterial)
@@ -132,8 +136,9 @@ namespace LFX {
 					Float2 uv = uv0 * (1 - tu - tv) + uv1 * tu + uv2 * tv;
 
 					Float4 color = m.DiffuseMap->SampleColor(uv.x, uv.y);
-					if (color.w < m.alphaCutoff)
+					if (color.w < m.AlphaCutoff) {
 						continue;
+					}
 				}
 
 				contract.td = dist;
@@ -186,7 +191,7 @@ namespace LFX {
 					Float2 uv = uv0 * (1 - tu - tv) + uv1 * tu + uv2 * tv;
 
 					Float4 color = m.DiffuseMap->SampleColor(uv.x, uv.y);
-					if (color.w < m.alphaCutoff) {
+					if (color.w < m.AlphaCutoff) {
 						continue;
 					}
 

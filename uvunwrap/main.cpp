@@ -66,7 +66,7 @@ void NLSaveOutMesh(FILE* fp, NLOutMesh& mesh)
 }
 
 /**
-* NLInMesh File Struct
+* XAInMesh File Struct
 * numVertices (int)
 * numNormals (int)
 * numIndices (int)
@@ -127,7 +127,7 @@ bool XAReadInMesh(FILE* fp, XAInMesh& mesh)
 }
 
 /**
-* NLOutMesh File Struct
+* XAOutMesh File Struct
 * numVertices (int)
 * vertexData (Float2 * numVertices)
 * vertexRef (int * numVertices)

@@ -13,7 +13,7 @@ namespace LFX { namespace ILBaker {
 		ray.dir = params.rayDir;
 
 		// Keep tracing paths until we reach the specified max
-		float throughput = 1.0f;
+		Float3 throughput = Float3(1.0f, 1.0f, 1.0f);
 		Entity* traceEntity = params.entity;
 		const int maxPathLength = params.maxPathLength;
 		for (; result.pathLen <= maxPathLength || maxPathLength == -1; ++result.pathLen) {
@@ -52,9 +52,8 @@ namespace LFX { namespace ILBaker {
 				}
 
 				float lenSq = (vtx.Position - ray.orig).lenSqr();
-				//throughput *= 1.0f / (lenSq + 1.0f);
-				throughput *= 1.0f / Pi;
-				result.color += (diffuse * throughput);
+				result.color += (diffuse * throughput) * mtl->GIWeight;
+				throughput = throughput * mtl->GetSurfaceDiffuse(vtx.UV.x, vtx.UV.y);
 
 				// Pick a new path, using MIS to sample both our diffuse and specular BRDF's
 				if (1) {
@@ -75,8 +74,6 @@ namespace LFX { namespace ILBaker {
 #else
 					sample = rand.RandomFloat2();
 #endif
-
-					//Float3 v = Float3::Normalize(rayOrigin - hitSurface.position);
 
 					// We're sampling the diffuse BRDF, so sample a cosine-weighted hemisphere
 					Float3 sampleDir;
