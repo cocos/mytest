@@ -10,4 +10,11 @@ namespace LFX {
 		static bool Export();
 	};
 
+#ifndef _WIN32
+	inline bool GLTFExp::Export()
+	{
+		return false;
+	}
+#endif
+
 }

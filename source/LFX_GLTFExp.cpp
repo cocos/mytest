@@ -1,5 +1,7 @@
 #include "LFX_GLTFExp.h"
 #include "LFX_World.h"
+
+#ifdef _WIN32
 #define TINYGLTF_IMPLEMENTATION
 #include "tiny_gltf.h"
 
@@ -430,3 +432,4 @@ namespace LFX {
 	}
 
 }
+#endif
