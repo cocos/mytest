@@ -35,7 +35,8 @@ namespace LFX {
 		{
 			for (int u = 0; u < w; ++u)
 			{
-				float color;
+				int n = 0;
+				float color = 0;
 
 				for (int y = -texels; y <= texels; ++y)
 				{
@@ -45,10 +46,13 @@ namespace LFX {
 						int t = Clamp<int>(v + y, 0, h - 1);
 
 						color += data[(t * stride) + s];
+						++n;
 					}
 				}
 
-				color /= 9.0f;
+				if (n > 1) {
+					color /= (float)n;
+				}
 
 				temp[index++] = color;
 			}
@@ -71,6 +75,7 @@ namespace LFX {
 		{
 			for (int u = 0; u < w; ++u)
 			{
+				int n = 0;
 				Float3 color(0, 0, 0);
 
 				for (int y = -texels; y <= texels; ++y)
@@ -81,10 +86,13 @@ namespace LFX {
 						int t = Clamp<int>(v + y, 0, h - 1);
 
 						color += data[(t * stride) + s];
+						++n;
 					}
 				}
 
-				color /= 9.0f;
+				if (n > 1) {
+					color /= (float)n;
+				}
 
 				temp[index++] = color;
 			}
@@ -107,6 +115,7 @@ namespace LFX {
 		{
 			for (int u = 0; u < w; ++u)
 			{
+				int n = 0;
 				Float4 color(0, 0, 0, 0);
 
 				for (int y = -texels; y <= texels; ++y)
@@ -117,10 +126,13 @@ namespace LFX {
 						int t = Clamp<int>(v + y, 0, h - 1);
 
 						color += data[(t * stride) + s];
+						++n;
 					}
 				}
 
-				color /= 9.0f;
+				if (n > 1) {
+					color /= (float)n;
+				}
 
 				temp[index++] = color;
 			}

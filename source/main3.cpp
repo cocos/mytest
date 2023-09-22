@@ -20,7 +20,7 @@ enum {
 	E_STOPPED,
 };
 
-bool GExpportGLTF = true;
+bool GExpportGLTF = false;
 std::atomic<int> GStatus(0);
 int GProgress = 0;
 LFX::Log* GLog = NULL;
@@ -262,11 +262,16 @@ int cycles_main(int argc, char* argv[])
 }
 #endif
 
-#define LFX_REMOTE_MODE 0
+#define LFX_REMOTE_MODE 1
 #define LFX_CYCLES_TEST 0
+#define LFX_GLTF_EXP 0
 
 int main(int argc, char* argv[])
 {
+#if LFX_GLTF_EXP
+	GExpportGLTF = true;
+#endif
+	
 #if LFX_REMOTE_MODE
 	return remote_main(argc, argv);
 #elif LFX_CYCLES_TEST

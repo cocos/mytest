@@ -409,7 +409,7 @@ namespace LFX {
 		std::vector<float> mmap(width * height);
 
 		for (int i = 0; i < mmap.size(); ++i) {
-			mmap[i] = 1.0f;
+			mmap[i] = 0.0f;
 		}
 
 		RasterizerScan2 rs(this, width, height, msaa, border);
@@ -441,14 +441,14 @@ namespace LFX {
 		{
 			for (int x = 0; x < width; ++x)
 			{
-				Float4 c = lmap[y * width + x];
+				Float4& c = lmap[y * width + x];
+				float& m = mmap[y * width + x];
 				if (c.w > 1) {
 					float invSampels = 1.0f / c.w;
 					c.x *= invSampels;
 					c.y *= invSampels;
 					c.z *= invSampels;
-					lmap[y * width + x] = c;
-					mmap[y * width + x] *= invSampels;
+					m *= invSampels;
 				}
 			}
 		}
@@ -459,6 +459,7 @@ namespace LFX {
 
 		if (World::Instance()->GetSetting()->Filter) {
 			Rasterizer::Filter(&lmap[0], width, height, width, 2);
+			Rasterizer::Filter(&mmap[0], width, height, width, 2);
 		}
 
 		for (int j = 0; j < height; ++j)
