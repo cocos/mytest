@@ -400,35 +400,6 @@ namespace LFX {
 		}
 	}
 
-	void CopyImage(Image& dst, const Image& src, int x, int y)
-	{
-		for (int j = 0; j < src.height; ++j) {
-			for (int i = 0; i < src.width; ++i) {
-				const int dstIndex = (y + j) * dst.width + x + i;
-				const int srcIndex = j * src.width + i;
-				dst.pixels[dstIndex * dst.channels + 0] = src.pixels[srcIndex * src.channels + 0];
-				dst.pixels[dstIndex * dst.channels + 1] = src.pixels[srcIndex * src.channels + 1];
-				dst.pixels[dstIndex * dst.channels + 2] = src.pixels[srcIndex * src.channels + 2];
-				if (dst.channels > 3 && src.channels > 3) {
-					dst.pixels[dstIndex * dst.channels + 3] = src.pixels[srcIndex * src.channels + 3];
-				}
-			}
-		}
-	}
-
-	void SaveImage(const Image& image, const char* filename)
-	{
-		LOGD("Save lighting map %s", filename);
-		FILE* fp = fopen(filename, "wb");
-		if (fp == nullptr) {
-			LOGE("Save lighting map failed!!!");
-			return;
-		}
-
-		LFX::PNG_Save(fp, image);
-		fclose(fp);
-	}
-
 	int GetLightmapChannels()
 	{
 		//mSetting.RGBEFormat ? 4 : 3;
@@ -476,7 +447,7 @@ namespace LFX {
 							item->atlasItem.OffsetV = j * lmapSize / (float)dims;
 							item->atlasItem.ScaleU = lmapSize / (float)dims;
 							item->atlasItem.ScaleV = lmapSize / (float)dims;
-							CopyImage(hpart, item->hpart, i * lmapSize, j * lmapSize);
+							Image::Copy(hpart, item->hpart, i * lmapSize, j * lmapSize);
 							packedItems.push_back(item);
 						}
 					}
@@ -485,7 +456,7 @@ namespace LFX {
 				LFX::Image& image = hpart;
 				char filename[256];
 				sprintf(filename, "%s/LFX_Terrain_%04d.png", path.c_str(), lmapIndex);
-				SaveImage(image, filename);
+				Image::Save(image, filename);
 
 				for (int j = 0; j < bh; ++j) {
 					for (int i = 0; i < bw; ++i) {
@@ -549,7 +520,7 @@ namespace LFX {
 
 				char filename[256];
 				sprintf(filename, "%s/LFX_Terrain_%04d.png", path.c_str(), index++);
-				SaveImage(image, filename);
+				Image::Save(image, filename);
 				Clear();
 			}
 		}
@@ -625,13 +596,13 @@ namespace LFX {
 							item->atlasItem.OffsetV = j * lmapSize / (float)dims;
 							item->atlasItem.ScaleU = lmapSize / (float)dims;
 							item->atlasItem.ScaleV = lmapSize / (float)dims;
-							CopyImage(hpart, item->hpart, i * lmapSize, j * lmapSize);
+							Image::Copy(hpart, item->hpart, i * lmapSize, j * lmapSize);
 							if (!item->lpart.pixels.empty()) {
 								lpart.width = hpart.width;
 								lpart.height = hpart.height;
 								lpart.channels = hpart.channels;
 								lpart.pixels.resize(lpart.width * lpart.height * lpart.channels, 0);
-								CopyImage(lpart, item->lpart, i * lmapSize, j * lmapSize);
+								Image::Copy(lpart, item->lpart, i * lmapSize, j * lmapSize);
 							}
 							packedItems.push_back(item);
 						}
@@ -894,7 +865,7 @@ namespace LFX {
 
 			char filename[256];
 			sprintf(filename, "%s/LFX_Mesh_%04d.png", path.c_str(), mapIdx);
-			SaveImage(hparts[0], filename);
+			Image::Save(hparts[0], filename);
 		}
 
 		// chunk

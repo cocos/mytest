@@ -43,7 +43,7 @@
 * Support shadow mask
 * Support alpha cutoff
 */
-#define LFX_VERSION 373
+#define LFX_VERSION 382
 
 #if LFX_VERSION < 35
 #define LFX_FORCE_RGBE 1

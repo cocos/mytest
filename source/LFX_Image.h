@@ -27,6 +27,35 @@ namespace LFX {
 		{
 			pixels.resize(w * h * channels);
 		}
+
+		static void Copy(Image& dst, const Image& src, int x, int y)
+		{
+			for (int j = 0; j < src.height; ++j) {
+				for (int i = 0; i < src.width; ++i) {
+					const int dstIndex = (y + j) * dst.width + x + i;
+					const int srcIndex = j * src.width + i;
+					dst.pixels[dstIndex * dst.channels + 0] = src.pixels[srcIndex * src.channels + 0];
+					dst.pixels[dstIndex * dst.channels + 1] = src.pixels[srcIndex * src.channels + 1];
+					dst.pixels[dstIndex * dst.channels + 2] = src.pixels[srcIndex * src.channels + 2];
+					if (dst.channels > 3 && src.channels > 3) {
+						dst.pixels[dstIndex * dst.channels + 3] = src.pixels[srcIndex * src.channels + 3];
+					}
+				}
+			}
+		}
+
+		static void Save(const Image& image, const char* filename)
+		{
+			LOGD("Save lighting map %s", filename);
+			FILE* fp = fopen(filename, "wb");
+			if (fp == nullptr) {
+				LOGE("Save lighting map failed!!!");
+				return;
+			}
+
+			LFX::PNG_Save(fp, image);
+			fclose(fp);
+		}
 	};
 
 	LFX_ENTRY bool BMP_Test(Stream & stream);

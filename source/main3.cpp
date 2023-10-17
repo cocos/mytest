@@ -10,7 +10,6 @@
 #include "LFX_Log.h"
 #include "LFX_World.h"
 #include "LFX_Renderer.h"
-#include "LFX_CyclesRenderer.h"
 #include "LFX_GLTFExp.h"
 
 enum {
@@ -247,23 +246,7 @@ int local_main(int argc, char* argv[])
 	return 0;
 }
 
-#ifdef LFX_CYLCES_RENDERER
-int cycles_main(int argc, char* argv[])
-{
-	GLog = new LFX::Log("lfx.log");
-
-	StartEngine(false);
-	if (GStatus == E_STARTING) {
-		LFX::CylcesRenderer renderer;
-		renderer.ExportScene();
-	}
-
-	return 0;
-}
-#endif
-
 #define LFX_REMOTE_MODE 1
-#define LFX_CYCLES_TEST 0
 #define LFX_GLTF_EXP 0
 
 int main(int argc, char* argv[])
@@ -274,8 +257,6 @@ int main(int argc, char* argv[])
 	
 #if LFX_REMOTE_MODE
 	return remote_main(argc, argv);
-#elif LFX_CYCLES_TEST
-	return cycles_main(argc, argv);
 #else
 	return local_main(argc, argv);
 #endif

@@ -16,11 +16,17 @@ namespace LFX {
 	public:
 		virtual ~IRenderer() {}
 
+		// 构建渲染器，主要任务构建碰撞场景
 		virtual void Build() = 0;
+		// 启动烘培
 		virtual void Start() = 0;
+		// 更新烘培，主要是分配烘培任务
 		virtual void Update() = 0;
+		// 判断是否结束
 		virtual bool End() = 0;
+		// 返回当前完成的进度
 		virtual int GetProgress() = 0;
+		// 返回总任务数
 		virtual int GetTaskCount() = 0;
 	};
 
