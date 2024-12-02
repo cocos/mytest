@@ -73,24 +73,6 @@ installVcpkg() {
     fi
 }
 
-downloadFile() {
-    url="$1"
-    dest="$2"
-    
-    file=$(basename "$dest")
-    dir=$(dirname "$dest")
-    mkdir -p "$dir"
-    
-    while true; do
-        curl -L --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36" -o "$file" "$url"
-        ret=$?
-        if [ $ret -eq 0 ]; then
-            mv "$file" "$dest"
-            break
-        fi
-    done
-}
-
 installDependenciesForMacOS() {
     # Download both x86-64 and arm-64 libs and merge them into a uniform binary.
     # https://www.f-ax.de/dev/2022/11/09/how-to-use-vcpkg-with-universal-binaries-on-macos/
@@ -123,7 +105,7 @@ build_mac() {
     buildType="${1}"
     exePath=build/bin/$buildType/LightFx
 
-    premake5 --os=macosx xcode4 --file=build/premake5.lua
+    premake5 --os=macosx xcode4 --file=build/premake5.lua --build=$buildType
 
     xcodebuild -project build/bin/LightFX.xcodeproj -configuration $buildType
     
@@ -159,7 +141,7 @@ build_windows() {
     extract_zip "3rd/embree/lib/embree_avx2.zip" "3rd/embree/lib"
     extract_zip "3rd/embree/lib/embree_sse42.zip" "3rd/embree/lib"
 
-    premake5 --os=windows vs2019 --file=build/premake5.lua
+    premake5 --os=windows vs2019 --file=build/premake5.lua --build=$buildType
 
     if [ -f "/c/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/devenv.exe" ]; then
         "/c/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/devenv.exe" build/bin/LightFX.sln /Project LightFX /Build $buildType /Out build.log

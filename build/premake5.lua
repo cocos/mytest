@@ -4,6 +4,10 @@ solution "LightFX"
     characterset "MBCS"
 	location "bin"
 
+	if _OPTIONS["build"] then
+		configurations { _OPTIONS["build"] }
+	end
+
 	--windows configure
 	filter {"system:windows"}
 		platforms { "Win64" }
