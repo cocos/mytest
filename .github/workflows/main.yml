@@ -24,14 +24,14 @@ jobs:
         uses: actions/upload-artifact@v4
         with: 
           name: Windows-artifact
-          path: build/win/bin/Release
+          path: build/bin/Release
 
   test_on_mac:
     name: Test on macOS
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-        name: 
+        name: Checkout
 
       - name: Download Premake
         uses: abel0b/setup-premake@v2.4
@@ -47,5 +47,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with: 
           name: macOS-artifact
-          path: build/mac/bin/Release
+          path: build/bin/Release
 
