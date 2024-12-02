@@ -56,6 +56,8 @@ EOF
 }
 
 installVcpkg() {
+    echo "installing vcpkg"
+
     vcpkgUrl='https://github.com/microsoft/vcpkg.git'
     git clone "$vcpkgUrl"
     
@@ -71,6 +73,8 @@ installVcpkg() {
         echo 'vcpkg is not available on target platform.'
         exit 1
     fi
+
+    echo "finish installing vcpkg"
 }
 
 installDependenciesForMacOS() {
@@ -78,8 +82,10 @@ installDependenciesForMacOS() {
     # https://www.f-ax.de/dev/2022/11/09/how-to-use-vcpkg-with-universal-binaries-on-macos/
     dependencies=('boost' 'openssl')
     for libName in "${dependencies[@]}"; do
+        echo "installing ${libName}"
         ./vcpkg/vcpkg install --triplet=x64-osx "$libName"
         ./vcpkg/vcpkg install --triplet=arm64-osx "$libName"
+        echo "finish installing ${libName}"
     done
 
     python3 ./CI/lipo-dir-merge.py ./vcpkg/installed/arm64-osx ./vcpkg/installed/x64-osx ./vcpkg/installed/uni-osx
