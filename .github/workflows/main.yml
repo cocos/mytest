@@ -14,8 +14,8 @@ jobs:
         run: |
           curl -L https://github.com/premake/premake-core/releases/download/v5.0.0-alpha16/premake-5.0.0-alpha16-windows.zip -o premake.zip
           unzip premake.zip
-          move premake5.exe C:\Program Files\premake
-          setx PATH "%PATH%;C:\Program Files\premake"
+          move premake5.exe "C:/Program Files/premake"
+          setx PATH "$env:PATH;C:/Program Files/premake"
           premake5 --version
     
       - name: Build
@@ -38,7 +38,7 @@ jobs:
 
       - name: Download Premake
         run: |
-          curl -L https://github.com/premake/premake-core/releases/download/v5.0.0-alpha16/premake-5.0.0-alpha16-macos.zip -o premake.gz
+          curl -L https://github.com/premake/premake-core/releases/download/v5.0.0-alpha16/premake-5.0.0-alpha16-macos.zip -o premake.zip
           unzip premake.zip
           sudo mv premake5 /usr/local/bin/premake5
           premake5 --version
