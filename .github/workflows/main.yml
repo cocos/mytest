@@ -1,184 +1,55 @@
-name: build cerator tools
+name: Pull Request Test
 
-on: 
-  #pull_request_target:
-  #pull_request:
-  issue_comment:
-    types: [created, edited]
-
-# github.head_ref is only defined on pull_request events
-concurrency:
-  group: ${{ github.workflow }}-${{ github.actor }}-${{ github.head_ref || github.run_id }}
-  cancel-in-progress: true
+on: [pull_request]
 
 jobs:
-  Win-Build:
-    if: |
-      contains(github.event.comment.body, '@cocos-build')
-    runs-on: win-build
+  test:
+    name: Test on Windows
+    runs-on: windows-latest
     steps:
-      - name: Get PR Number
-        id: get_pr
-        shell: pwsh
+      - uses: actions/checkout@v4
+        name: Checkout
+      
+      - name: Download Premake
         run: |
-          if ("${{ github.event_name }}" -eq "issue_comment") {
-            Write-Host "::set-output name=pr_number::${{ github.event.issue.number }}"
-          }
-          else {
-            Write-Host "::set-output name=pr_number::${{ github.event.pull_request.number }}"
-          }
-
-      - name: Get PR Details
-        id: pr_details
-        uses: octokit/request-action@v2.x
-        with:
-          route: GET /repos/cocos/LightFX/pulls/${{ steps.get_pr.outputs.pr_number }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Parse Pull Request
-        id: parse_pr
-        shell: pwsh
+          curl -L https://github.com/premake/premake-core/releases/download/v5.0.0-alpha16/premake-5.0.0-alpha16-windows.zip -o premake.zip
+          tar -xf premake.zip
+          mv premake5.exe C:/Windows/System32/
+          premake5 --version
+    
+      - name: Build
+        shell: bash
         run: |
-          $pull_request = @"
-          ${{ steps.pr_details.outputs.data }}
-          "@ | ConvertFrom-Json
-          Write-Host $pull_request
-          Write-Host "::set-output name=pr_html_url::$($pull_request.html_url)"
-          Write-Host "::set-output name=pr_author::$($pull_request.user.login)"
-          Write-Host "::set-output name=pr_head_ref::$($pull_request.head.ref)"
-          Write-Host "::set-output name=pr_head_sha::$($pull_request.head.sha)"
-          Write-Host "::set-output name=pr_base_ref::$($pull_request.base.ref)"
-          Write-Host "::set-output name=pr_base_sha::$($pull_request.base.sha)"
+          build/build.sh
 
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          ref: ${{ steps.parse_pr.outputs.pr_base_ref }}
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with: 
+          name: Windows-artifact
+          path: build/win/bin/Release
 
-      - name: windows build
-        run: |
-          ./build.bat
-          mkdir -p pack
-          cp build/lightmap-tools*.zip pack/
-
-      - name: Fast FTP Action
-        uses: SamKirkland/FTP-Deploy-Action@4.3.2
-        with:
-         server: ftp.cocos.org
-         port: 21
-         username: creator-only
-         password: cocos.com
-         local-dir: ./pack/
-         server-dir: /TestBuilds/Editor-3d/tools/
-
-  macOS-Build:
-    if: |
-      contains(github.event.comment.body, '@cocos-build')
-    runs-on: mac-build
+  test_on_mac:
+    name: Test on macOS
+    runs-on: macos-latest
     steps:
-      - name: Get PR Number
-        id: get_pr
-        shell: pwsh
+      - uses: actions/checkout@v4
+        name: 
+
+      - name: Download Premake
         run: |
-          if ("${{ github.event_name }}" -eq "issue_comment") {
-            Write-Host "::set-output name=pr_number::${{ github.event.issue.number }}"
-          }
-          else {
-            Write-Host "::set-output name=pr_number::${{ github.event.pull_request.number }}"
-          }
-
-      - name: Get PR Details
-        id: pr_deatils
-        uses: octokit/request-action@v2.x
-        with:
-          route: GET /repos/cocos/LightFX/pulls/${{ steps.get_pr.outputs.pr_number }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Parse Pull Request
-        id: parse_pr
-        shell: pwsh
+          curl -L https://github.com/premake/premake-core/releases/download/v5.0.0-alpha16/premake-5.0.0-alpha16-linux.tar.gz -o premake.tar.gz
+          tar -xzf premake.tar.gz
+          sudo mv premake5 /usr/local/bin/premake5
+          premake5 --version
+  
+      - name: Build
+        shell: bash
         run: |
-          $pull_request = @"
-          ${{ steps.pr_deatils.outputs.data }}
-          "@ | ConvertFrom-Json
-          Write-Host $pull_request
-          Write-Host "::set-output name=pr_html_url::$($pull_request.html_url)"
-          Write-Host "::set-output name=pr_author::$($pull_request.user.login)"
-          Write-Host "::set-output name=pr_head_ref::$($pull_request.head.ref)"
-          Write-Host "::set-output name=pr_head_sha::$($pull_request.head.sha)"
-          Write-Host "::set-output name=pr_base_ref::$($pull_request.base.ref)"
-          Write-Host "::set-output name=pr_base_sha::$($pull_request.base.sha)"
-          
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0          
-          ref: ${{ steps.parse_pr.outputs.pr_base_ref }}
+          build/build.sh
 
-      - name: mac build
-        run: |
-          chmod 755 build.sh
-          /bin/bash build.sh
-          mkdir -p pack
-          cp build/lightmap-tools*.zip pack/
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with: 
+          name: macOS-artifact
+          path: build/mac/bin/Release
 
-      - name: Fast FTP Action
-        uses: SamKirkland/FTP-Deploy-Action@4.3.2
-        with:
-         server: ftp.cocos.org
-         port: 21
-         username: creator-only
-         password: cocos.com
-         local-dir: ./pack/
-         server-dir: /TestBuilds/Editor-3d/tools/
-
-
-  CreatePullRequest:
-    defaults:
-     run:
-      working-directory: ../cocos-editor
-    runs-on: mac-build
-    needs: [Win-Build, macOS-Build]
-    steps:
-      - name: Get PR
-        id: get_branch
-        run: |
-          submit_branch=`echo ${{ github.event.comment.body }} | awk '{print $NF}'`
-          # 测试使用固定值 develop
-          # submit_branch="develop"
-          echo ${{ secrets.PR_TOKEN }}
-          echo "提交到仓库(cocos-editor), 分支: ${submit_branch}"
-          echo "::set-output name=submit_branch::$(submit_branch)"    
-
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          repository: cocos-robot/cocos-editor
-          ref: ${{ steps.get_branch.outputs.submit_branch }}
-          fetch-depth: 0
-          token: ${{ secrets.PR_TOKEN }}
-
-
-      - name: Change files
-        run: |
-          /bin/bash cd /Users/cocos/Documents/actions-runner/_work/LightFX/LightFX/cocos-editor
-          echo '修改文件 ./workflow/repos/editor/.build.config.js'
-          pwd
-          ls
-          datestr=`date +%Y%m%d`
-          win_zip="lightmap-tools-win32-${datestr}.zip"
-          mac_zip="lightmap-tools-darwin-${datestr}.zip"
-          gsed -i "s/lightmap-tools-win32-.*.zip/${win_zip}/g" workflow/repos/editor/.build.config.js
-          gsed -i "s/lightmap-tools-darwin-.*.zip/${mac_zip}/g" workflow/repos/editor/.build.config.js
-
-      - name: Create PR to cocos-editor
-        uses: TickX/auto-cross-pr@v0.1.3
-        with:
-          token: ${{ secrets.PR_TOKEN }}
-          repo: cocos-editor
-          repo_owner: cocos-robot
-          pr_title: "build tools lightmap"
-          pr_body: ${{ github.event.comment.body }}
