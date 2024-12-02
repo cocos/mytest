@@ -18,7 +18,7 @@ jobs:
       - name: Build
         shell: bash
         run: |
-          build/build.sh
+          CI/build.sh
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -41,7 +41,7 @@ jobs:
       - name: Build
         shell: bash
         run: |
-          build/build.sh
+          CI/build.sh
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
