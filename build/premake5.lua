@@ -49,7 +49,7 @@ solution "LightFX"
 		platforms { "Mac" }
 		system "macosx"
 		flags { "C++11" }
-		architecture "x64;arm64"
+		architecture { "x64", "arm64" }
 		
    
 	filter { "system:macosx", "configurations:Debug" }
