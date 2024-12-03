@@ -86,7 +86,8 @@ solution "LightFX"
 
 require "./LightFX"
 
-postbuildcommands {
-	"mkdir -p bin/Release/uni"
-    "lipo -create bin/Release/x64/LightFx bin/Release/arm64/LightFx -output bin/Release/uni/LightFx"
-}
+filter {"system:macosx"}
+    postbuildcommands {
+        "mkdir -p bin/Release/uni",
+        "lipo -create bin/Release/x64/LightFx bin/Release/arm64/LightFx -output bin/Release/uni/LightFx"
+    }
