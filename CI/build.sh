@@ -80,11 +80,11 @@ installVcpkg() {
 installDependenciesForMacOS() {
     # Download both x86-64 and arm-64 libs and merge them into a uniform binary.
     # https://www.f-ax.de/dev/2022/11/09/how-to-use-vcpkg-with-universal-binaries-on-macos/
-    dependencies=('boost[core]' 'openssl')
+    dependencies=('boost-atomic' 'boos-chrono' 'boost-container' 'boost-context' 'boost-coroutine' 'boost-date-time' 'boost-exception' 'boost-regex' 'boost-system' 'boost-thread' 'openssl')
     for libName in "${dependencies[@]}"; do
         echo "installing ${libName}"
-        ./vcpkg/vcpkg install --triplet=x64-osx "$libName" --no-debug
-        ./vcpkg/vcpkg install --triplet=arm64-osx "$libName" --no-debug
+        ./vcpkg/vcpkg install --triplet=x64-osx "$libName"
+        ./vcpkg/vcpkg install --triplet=arm64-osx "$libName"
         echo "finish installing ${libName}"
     done
 
@@ -92,9 +92,9 @@ installDependenciesForMacOS() {
 }
 
 installDependenciesForWindows() {
-    dependencies=('boost[core]' 'openssl')
+    dependencies=('boost-atomic' 'boos-chrono' 'boost-container' 'boost-context' 'boost-coroutine' 'boost-date-time' 'boost-exception' 'boost-regex' 'boost-system' 'boost-thread' 'openssl')
     for libName in "${dependencies[@]}"; do
-        ./vcpkg/vcpkg install "$libName" --triplet x64-windows-static --no-debug
+        ./vcpkg/vcpkg install "$libName" --triplet x64-windows-static 
     done
 }
 
