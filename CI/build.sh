@@ -168,7 +168,7 @@ build_windows() {
 
 check_premake5() {
     if command -v premake5 &> /dev/null; then
-        premake5 --os=windows vs2019
+        echo "premake5 is installed and available in PATH."
     else
         echo "Error: premake5 is not installed or not in PATH. Please install it and retry."
         exit 1
