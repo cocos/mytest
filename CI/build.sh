@@ -113,6 +113,8 @@ build_mac() {
 
     premake5 --os=macosx xcode4 --file=build/premake5.lua --build=$buildType
 
+    echo "after premake5 command"
+
     xcodebuild -project build/bin/LightFX.xcodeproj -configuration $buildType
     
     if [ ! -d $exePath ]; then

@@ -63,7 +63,7 @@ solution "LightFX"
 		targetdir "bin/Debug"
 		debugdir "bin/Debug"
 		defines { "DEBUG", "_DEBUG" }
-		sysincludedirs {
+		externalincludedirs {
 			"./vcpkg/installed/uni-osx/include",
 		}
 		libdirs {
@@ -75,7 +75,7 @@ solution "LightFX"
 		debugdir "bin/Release"
 		targetdir "bin/Release"
 		defines { "NDEBUG" }
-		sysincludedirs {
+		externalincludedirs {
 			"./vcpkg/installed/uni-osx/include",
 		}
 		libdirs {
