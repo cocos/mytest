@@ -111,6 +111,8 @@ build_mac() {
     buildType="${1}"
     exePath=build/bin/$buildType/uni/LightFx
 
+    echo "build type is ${buildType}"
+
     premake5 --os=macosx xcode4 --file=build/premake5.lua --build=$buildType
 
     echo "after premake5 command"
