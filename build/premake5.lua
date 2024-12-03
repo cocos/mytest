@@ -49,7 +49,13 @@ solution "LightFX"
 		platforms { "Mac" }
 		system "macosx"
 		flags { "C++11" }
-		architecture { "x64", "arm64" }
+		architecture "x64"
+
+	filter {"system:macosx"}
+		platforms { "Mac" }
+		system "macosx"
+		flags { "C++11" }
+		architecture "arm64"
 		
    
 	filter { "system:macosx", "configurations:Debug" }
@@ -79,3 +85,8 @@ solution "LightFX"
 	filter {}
 
 require "./LightFX"
+
+postbuildcommands {
+	"mkdir -p bin/Release/uni"
+    "lipo -create bin/Release/x64/LightFx bin/Release/arm64/LightFx -output bin/Release/uni/LightFx"
+}

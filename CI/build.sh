@@ -109,7 +109,7 @@ installDependencies() {
 
 build_mac() {
     buildType="${1}"
-    exePath=build/bin/$buildType/LightFx
+    exePath=build/bin/$buildType/uni/LightFx
 
     premake5 --os=macosx xcode4 --file=build/premake5.lua --build=$buildType
 
@@ -140,7 +140,7 @@ function extract_zip() {
 
 build_windows() {
     buildType="${1}"
-    exePath=build/bin/$buildType/LightFx.ext
+    exePath=build/bin/$buildType/x64/LightFx.exe
 
     extract_zip "3rd/embree/lib/embree.zip" "3rd/embree/lib"
     extract_zip "3rd/embree/lib/embree_avx.zip" "3rd/embree/lib"
