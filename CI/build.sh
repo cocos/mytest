@@ -109,23 +109,23 @@ installDependencies() {
 
 build_mac() {
     buildType="${1}"
-    exePath=build/bin/$buildType/uni/LightFx
+    exePath="build/bin/$buildType/uni/LightFx"
 
     echo "build type is ${buildType}"
 
-    premake5 --os=macosx xcode4 --file=build/premake5.lua --build=$buildType
+    premake5 --os=macosx xcode4 --file=build/premake5.lua --build="$buildType"
 
     echo "after premake5 command"
 
-    xcodebuild -project build/bin/LightFX.xcodeproj -configuration $buildType
+    xcodebuild -project build/bin/LightFX.xcodeproj -configuration "$buildType"
     
-    if [ ! -d $exePath ]; then
+    if [ ! -d "$exePath" ]; then
         echo "Can't find ${exePath}"
         return 1;
     fi
 
     datestr=`date +%Y%m%d`
-    filename=build/lightmap-tools-darwin-${datestr}.zip
+    filename="build/lightmap-tools-darwin-${datestr}.zip"
     zip -j $filename $exePath
 }
 
@@ -144,14 +144,14 @@ function extract_zip() {
 
 build_windows() {
     buildType="${1}"
-    exePath=build/bin/$buildType/x64/LightFx.exe
+    exePath="build/bin/$buildType/x64/LightFx.exe"
 
     extract_zip "3rd/embree/lib/embree.zip" "3rd/embree/lib"
     extract_zip "3rd/embree/lib/embree_avx.zip" "3rd/embree/lib"
     extract_zip "3rd/embree/lib/embree_avx2.zip" "3rd/embree/lib"
     extract_zip "3rd/embree/lib/embree_sse42.zip" "3rd/embree/lib"
 
-    premake5 --os=windows vs2019 --file=build/premake5.lua --build=$buildType
+    premake5 --os=windows vs2019 --file=build/premake5.lua --build="$buildType"
 
     if [ -f "/c/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/devenv.exe" ]; then
         "/c/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/devenv.exe" build/bin/LightFX.sln /Project LightFX /Build $buildType /Out build.log
@@ -166,7 +166,7 @@ build_windows() {
     fi
 
     datestr=`date +%Y%m%d`
-    filename=build/lightmap-tools-win32-$datestr.zip
+    filename="build/lightmap-tools-win32-$datestr.zip"
     zip -j $filename $exePath
 }
 
@@ -182,9 +182,9 @@ check_premake5() {
 do_build() {
     buildType="${1}"
     if [ "$IsWindows" = true ]; then
-        build_windows buildType
+        build_windows "$buildType"
     else
-        build_mac buildType
+        build_mac "$buildType"
     fi
 }
 
@@ -197,7 +197,7 @@ build() {
     fi
 
     for buildType in "${cmakeBuildTypes[@]}"; do
-        do_build $buildType
+        do_build "$buildType"
     done
     
     if [ -n "$ArtifactPath" ]; then
