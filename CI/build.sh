@@ -197,7 +197,7 @@ build() {
     fi
 
     for buildType in "${cmakeBuildTypes[@]}"; do
-        do_build "$buildType"
+        do_build $buildType
     done
     
     if [ -n "$ArtifactPath" ]; then
