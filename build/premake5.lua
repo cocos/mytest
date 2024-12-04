@@ -1,12 +1,12 @@
 solution "LightFX"
-    configurations { "Debug", "Release" }
+    configurations { "Release" }
 	language "C++"
     characterset "MBCS"
 	location "bin"
 
-	if _OPTIONS["build"] then
-		configurations { _OPTIONS["build"] }
-	end
+	-- if _OPTIONS["build"] then
+	-- 	configurations { _OPTIONS["build"] }
+	-- end
 
 	--windows configure
 	filter {"system:windows"}

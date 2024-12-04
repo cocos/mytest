@@ -113,7 +113,7 @@ build_mac() {
 
     echo "build type is ${buildType}"
 
-    premake5 --os=macosx xcode4 --file=build/premake5.lua --build=$buildType
+    premake5 --os=macosx xcode4 --file=build/premake5.lua
 
     echo "after premake5 command"
 
@@ -151,7 +151,7 @@ build_windows() {
     extract_zip "3rd/embree/lib/embree_avx2.zip" "3rd/embree/lib"
     extract_zip "3rd/embree/lib/embree_sse42.zip" "3rd/embree/lib"
 
-    premake5 --os=windows vs2019 --file=build/premake5.lua --build="$buildType"
+    premake5 --os=windows vs2019 --file=build/premake5.lua
 
     if [ -f "/c/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/devenv.exe" ]; then
         "/c/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/devenv.exe" build/bin/LightFX.sln /Project LightFX /Build $buildType /Out build.log
