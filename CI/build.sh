@@ -56,7 +56,7 @@ EOF
 }
 
 installVcpkg() {
-    if [ ! -d build ]; then
+    if [ ! -d vcpkg ]; then
         echo "installing vcpkg"
 
         vcpkgUrl='https://github.com/microsoft/vcpkg.git'
