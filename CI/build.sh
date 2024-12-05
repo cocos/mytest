@@ -159,10 +159,13 @@ build_windows() {
 
     premake5 --os=windows vs2019 --file=build/premake5.lua
 
-    if [ -f "/c/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/devenv.exe" ]; then
-        "/c/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/devenv.exe" build/bin/LightFX.sln /Project LightFX /Build $buildType /Out build.log
+    VS_PATH=$(find "/c/Program Files (x86)/Microsoft Visual Studio/2019/" -type f -name "devenv.exe" 2>/dev/null)
+
+    if [ -n "$VS_PATH" ]; then
+        echo "Found Visual Studio 2019 at: $VS_PATH"
+        "$VS_PATH" build/bin/LightFX.sln /Project LightFX /Build $buildType /Out build.log
     else
-        echo "Error: Visual Studio 2019 Community Edition is not installed or not in the expected location."
+        echo "Error: Visual Studio 2019 is not installed or not in the expected location."
         exit 1
     fi
 
