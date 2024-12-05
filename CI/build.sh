@@ -56,10 +56,12 @@ EOF
 }
 
 installVcpkg() {
-    echo "installing vcpkg"
+    if [ ! -d build ]; then
+        echo "installing vcpkg"
 
-    vcpkgUrl='https://github.com/microsoft/vcpkg.git'
-    git clone "$vcpkgUrl"
+        vcpkgUrl='https://github.com/microsoft/vcpkg.git'
+        git clone "$vcpkgUrl"
+    fi
     
     if [ "$IsWindows" = true ]; then
         ./vcpkg/bootstrap-vcpkg.bat
@@ -80,13 +82,17 @@ installVcpkg() {
 installDependenciesForMacOS() {
     # Download both x86-64 and arm-64 libs and merge them into a uniform binary.
     # https://www.f-ax.de/dev/2022/11/09/how-to-use-vcpkg-with-universal-binaries-on-macos/
-    dependencies=('boost-lexical-cast' 'boost-headers' 'boost-atomic' 'boost-chrono' 'boost-container' 'boost-context' 'boost-coroutine' 'boost-date-time' 'boost-exception' 'boost-regex' 'boost-system' 'boost-thread' 'openssl')
+    dependencies=('boost-asio' 'boost-lexical-cast' 'boost-headers' 'boost-atomic' 'boost-chrono' 'boost-container' 'boost-context' 'boost-coroutine' 'boost-date-time' 'boost-exception' 'boost-regex' 'boost-system' 'boost-thread' 'openssl')
     for libName in "${dependencies[@]}"; do
         echo "installing ${libName}"
         ./vcpkg/vcpkg install --triplet=x64-osx "$libName"
         ./vcpkg/vcpkg install --triplet=arm64-osx "$libName"
         echo "finish installing ${libName}"
     done
+
+    if [ -d vcpkg/installed/uni-osx ]; then
+        return 0;
+    fi
 
     python3 ./CI/lipo-dir-merge.py ./vcpkg/installed/arm64-osx ./vcpkg/installed/x64-osx ./vcpkg/installed/uni-osx
 }
@@ -109,7 +115,7 @@ installDependencies() {
 
 build_mac() {
     buildType="${1}"
-    exePath="build/bin/${buildType}/uni/LightFx"
+    exePath="build/bin/${buildType}/LightFX"
 
     echo "build type is ${buildType}"
 
@@ -119,13 +125,13 @@ build_mac() {
 
     xcodebuild -project build/bin/LightFX.xcodeproj -configuration $buildType
     
-    if [ ! -d "$exePath" ]; then
+    if [ ! -f "$exePath" ]; then
         echo "Can't find ${exePath}"
         return 1;
     fi
 
     datestr=`date +%Y%m%d`
-    filename="build/lightmap-tools-darwin-${datestr}.zip"
+    filename="build/bin/lightmap-tools-darwin-${datestr}.zip"
     zip -j $filename $exePath
 }
 
@@ -144,7 +150,7 @@ function extract_zip() {
 
 build_windows() {
     buildType="${1}"
-    exePath="build/bin/$buildType/x64/LightFx.exe"
+    exePath="build/bin/$buildType/x64/LightFX.exe"
 
     extract_zip "3rd/embree/lib/embree.zip" "3rd/embree/lib"
     extract_zip "3rd/embree/lib/embree_avx.zip" "3rd/embree/lib"
@@ -160,13 +166,13 @@ build_windows() {
         exit 1
     fi
 
-    if [ ! -d $exePath ]; then
+    if [ ! -f $exePath ]; then
         echo "Can't find ${exePath}"
         return 1;
     fi
 
     datestr=`date +%Y%m%d`
-    filename="build/lightmap-tools-win32-$datestr.zip"
+    filename="build/bin/lightmap-tools-win32-$datestr.zip"
     zip -j $filename $exePath
 }
 
@@ -180,6 +186,8 @@ check_premake5() {
 }
 
 do_build() {
+    export VCPKG_BUILD_TYPE=release
+
     buildType="${1}"
     if [ "$IsWindows" = true ]; then
         build_windows "$buildType"

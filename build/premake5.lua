@@ -21,12 +21,12 @@ solution "LightFX"
 		defines { "DEBUG", "_DEBUG" }
 		includedirs {
 			"../3rd/x64-win/include",
-			"./vcpkg/installed/x64-windows-static/include",
+			"../vcpkg/installed/x64-windows-static/include",
 		}
 		libdirs {
 			"../3rd/x64-win/debug/lib",
 			"../3rd/embree/debug/lib",
-			"./vcpkg/installed/x64-windows-static/lib",
+			"../vcpkg/installed/x64-windows-static/lib",
 		}
 		
 	filter { "system:windows", "configurations:Release" }
@@ -36,12 +36,12 @@ solution "LightFX"
 		defines { "NDEBUG" }
 		includedirs {
 			"../3rd/x64-win/include",
-			"./vcpkg/installed/x64-windows-static/include",
+			"../vcpkg/installed/x64-windows-static/include",
 		}
 		libdirs {
 			"../3rd/x64-win/lib",
 			"../3rd/embree/lib",
-			"./vcpkg/installed/x64-windows-static/lib",
+			"../vcpkg/installed/x64-windows-static/lib",
 		}
 		
     -- macOS configure
@@ -64,10 +64,10 @@ solution "LightFX"
 		debugdir "bin/Debug"
 		defines { "DEBUG", "_DEBUG" }
 		externalincludedirs {
-			"./vcpkg/installed/uni-osx/include",
+			"../vcpkg/installed/uni-osx/include",
 		}
 		libdirs {
-			"./vcpkg/installed/uni-osx/lib",
+			"../vcpkg/installed/uni-osx/lib",
 		}
 		
 	filter { "system:macosx", "configurations:Release" }
@@ -76,18 +76,12 @@ solution "LightFX"
 		targetdir "bin/Release"
 		defines { "NDEBUG" }
 		externalincludedirs {
-			"./vcpkg/installed/uni-osx/include",
+			"../vcpkg/installed/uni-osx/include",
 		}
 		libdirs {
-			"./vcpkg/installed/uni-osx/lib",
+			"../vcpkg/installed/uni-osx/lib",
 		}
 		
 	filter {}
 
 require "./LightFX"
-
--- filter {"system:macosx"}
---     postbuildcommands {
---         "mkdir -p bin/Release/uni",
---         "lipo -create bin/Release/x64/LightFx bin/Release/arm64/LightFx -output bin/Release/uni/LightFx"
---     }
