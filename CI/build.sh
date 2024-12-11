@@ -150,7 +150,7 @@ function extract_zip() {
 
 build_windows() {
     buildType="${1}"
-    exePath="build/bin/$buildType/x64/LightFX.exe"
+    exePath="build/bin/$buildType/LightFX.exe"
 
     extract_zip "3rd/embree/lib/embree.zip" "3rd/embree/lib"
     extract_zip "3rd/embree/lib/embree_avx.zip" "3rd/embree/lib"
@@ -163,7 +163,8 @@ build_windows() {
     VS_PATH=$(find "C:/Program Files (x86)/Microsoft Visual Studio/2019/" -type f -name "devenv.exe")
     if [ -n "$VS_PATH" ]; then
         echo "Found Visual Studio 2019 at: $VS_PATH"
-        "$VS_PATH" build/bin/LightFX.sln /Project LightFX /Build $buildType /Out build.log
+        echo "Start compiling build/bin/LightFX.sln..."
+        "$VS_PATH" build/bin/LightFX.sln /Project LightFX /Build $buildType
     else
         echo "Error: Visual Studio 2019 is not installed or not in the expected location."
         exit 1
@@ -174,6 +175,7 @@ build_windows() {
         return 1;
     fi
 
+    echo "zip exe..."
     datestr=`date +%Y%m%d`
     filename="build/bin/lightmap-tools-win32-$datestr.zip"
     zip -j $filename $exePath

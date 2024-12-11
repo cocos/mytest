@@ -21,7 +21,7 @@ project "LightFX"
 		"EMBREE_STATIC_LIB",
 		"LFX_CYLCES_RENDERER",
 	}
-	sysincludedirs {
+	externalincludedirs {
 		"../3rd/src/rapidjson/include",
 		"../3rd/src/websocketpp-0.8.2",
 	}
@@ -96,7 +96,7 @@ project "hm2terrain"
 	defines { 
 		"EMBREE_STATIC_LIB",
 	}
-	sysincludedirs {
+	externalincludedirs {
 		"../3rd/src/rapidjson/include",
 		"../3rd/src/websocketpp-0.8.2",
 	}
@@ -154,7 +154,7 @@ project "cc2ext"
 	defines { 
 		"EMBREE_STATIC_LIB",
 	}
-	sysincludedirs {
+	externalincludedirs {
 		"../3rd/src/rapidjson/include",
 		"../3rd/src/websocketpp-0.8.2",
 	}

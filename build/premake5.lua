@@ -48,13 +48,11 @@ solution "LightFX"
     filter {"system:macosx"}
 		platforms { "Mac" }
 		system "macosx"
-		flags { "C++11" }
 		architecture "x64"
 
 	filter {"system:macosx"}
 		platforms { "Mac" }
 		system "macosx"
-		flags { "C++11" }
 		architecture "arm64"
 		
    
