@@ -163,8 +163,10 @@ build_windows() {
     VS_PATH=$(find "C:/Program Files (x86)/Microsoft Visual Studio/2019/" -type f -name "devenv.exe")
     if [ -n "$VS_PATH" ]; then
         echo "Found Visual Studio 2019 at: $VS_PATH"
-        echo "Start compiling build/bin/LightFX.sln..."
-        "$VS_PATH" build/bin/LightFX.sln /Project LightFX /Build $buildType
+        
+        set -x
+        "$VS_PATH" build/bin/LightFX.sln /Project LightFX /Build $buildType | tee build.log
+        set +x
     else
         echo "Error: Visual Studio 2019 is not installed or not in the expected location."
         exit 1
