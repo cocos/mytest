@@ -150,6 +150,8 @@ function extract_zip() {
 
 build_windows() {
     buildType="${1}"
+    echo "build type is ${buildType}"
+
     exePath="build/bin/$buildType/LightFX.exe"
 
     extract_zip "3rd/embree/lib/embree.zip" "3rd/embree/lib"
@@ -170,7 +172,9 @@ build_windows() {
     #     exit 1
     # fi
 
-    "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/MSBuild/Current/Bin/amd64/MSBuild.exe" build/bin/LightFX.sln /p:Configuration=$buildType /m /v:diag
+    MSBuildPath="C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/MSBuild/Current/Bin/amd64/MSBuild.exe"
+    SolutionPath="build/bin/LightFX.sln"
+    "$MSBuildPath" "$SolutionPath" /p:Configuration="$buildType" /m /v:diag
     
 
     if [ ! -f $exePath ]; then
