@@ -3,6 +3,7 @@ solution "LightFX"
 	language "C++"
     characterset "MBCS"
 	location "bin"
+	flags { "C++11" }
 
 	-- if _OPTIONS["build"] then
 	-- 	configurations { _OPTIONS["build"] }
@@ -48,13 +49,11 @@ solution "LightFX"
     filter {"system:macosx"}
 		platforms { "Mac" }
 		system "macosx"
-		flags { "C++11" }
 		architecture "x64"
 
 	filter {"system:macosx"}
 		platforms { "Mac" }
 		system "macosx"
-		flags { "C++11" }
 		architecture "arm64"
 		
    
