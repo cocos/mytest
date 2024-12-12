@@ -173,7 +173,7 @@ build_windows() {
     # fi
 
     MSBuildPath="C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/MSBuild/Current/Bin/amd64/MSBuild.exe"
-    "$MSBuildPath" build/bin/LightFX.sln -p:Configuration=$buildType -m
+    "$MSBuildPath" build/bin/LightFX.sln -t:LightFX -p:Configuration=$buildType -m
     
 
     if [ ! -f $exePath ]; then
