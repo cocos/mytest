@@ -161,17 +161,7 @@ build_windows() {
 
     premake5 --os=windows vs2019 --file=build/premake5.lua
 
-
-    # VS_PATH=$(find "C:/Program Files (x86)/Microsoft Visual Studio/2019/" -type f -name "devenv.exe")
-    # if [ -n "$VS_PATH" ]; then
-    #     echo "Found Visual Studio 2019 at: $VS_PATH"
-        
-        
-    # else
-    #     echo "Error: Visual Studio 2019 is not installed or not in the expected location."
-    #     exit 1
-    # fi
-
+    # May change the path if ci changes.
     MSBuildPath="C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/MSBuild/Current/Bin/amd64/MSBuild.exe"
     "$MSBuildPath" build/bin/LightFX.sln -t:LightFX -p:Configuration=$buildType -m
     
