@@ -115,7 +115,7 @@ installDependencies() {
 
 build_mac() {
     buildType="${1}"
-    exePath="build/bin/${buildType}/LightFX"
+    oldExeName="${OutPathPrefix}/${buildType}/LightFX"
 
     echo "build type is ${buildType}"
 
@@ -123,16 +123,20 @@ build_mac() {
 
     echo "after premake5 command"
 
-    xcodebuild -project build/bin/LightFX.xcodeproj -configuration $buildType
+    xcodebuild -project $OutPathPrefix/LightFX.xcodeproj -configuration $buildType
     
-    if [ ! -f "$exePath" ]; then
-        echo "Can't find ${exePath}"
+    if [ ! -f "$oldExeName" ]; then
+        echo "Can't find ${oldExeName}"
         return 1;
     fi
 
+    # rename file
     datestr=`date +%Y%m%d`
-    filename="build/bin/lightmap-tools-darwin-${datestr}.zip"
-    zip -j $filename $exePath
+    newExeName="${OutPathPrefix}/${buildType}/lightmap-tools-darwin-$datestr"
+    mv $newExeName $oldExeName
+
+    # delete all files except newExeName
+    find $OutPathPrefix/$buildType -type f ! -name $newExeName -delete
 }
 
 function extract_zip() {
@@ -152,7 +156,7 @@ build_windows() {
     buildType=${1}
     echo "build type is ${buildType}"
 
-    exePath="build/bin/$buildType/LightFX.exe"
+    newExeName="${OutPathPrefix}/$buildType/LightFX.exe"
 
     extract_zip "3rd/embree/lib/embree.zip" "3rd/embree/lib"
     extract_zip "3rd/embree/lib/embree_avx.zip" "3rd/embree/lib"
@@ -163,18 +167,21 @@ build_windows() {
 
     # May change the path if ci changes.
     MSBuildPath="C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/MSBuild/Current/Bin/amd64/MSBuild.exe"
-    "$MSBuildPath" build/bin/LightFX.sln -t:LightFX -p:Configuration=$buildType -m
+    "$MSBuildPath" $OutPathPrefix/LightFX.sln -t:LightFX -p:Configuration=$buildType -m
     
 
-    if [ ! -f $exePath ]; then
-        echo "Can't find ${exePath}"
+    if [ ! -f $newExeName ]; then
+        echo "Can't find ${newExeName}"
         return 1;
     fi
 
-    echo "zip exe..."
+    # rename file
     datestr=`date +%Y%m%d`
-    filename="build/bin/lightmap-tools-win32-$datestr.zip"
-    zip -j $filename $exePath
+    newExeName="${OutPathPrefix}/${buildType}/lightmap-tools-win32-$datestr.exe"
+    mv $newExeName $oldExeName
+
+    # delete all files except newExeName
+    find $OutPathPrefix/$buildType -type f ! -name $newExeName -delete
 }
 
 check_premake5() {
