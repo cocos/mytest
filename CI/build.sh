@@ -173,8 +173,7 @@ build_windows() {
     # fi
 
     MSBuildPath="C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/MSBuild/Current/Bin/amd64/MSBuild.exe"
-    SolutionPath="build/bin/LightFX.sln"
-    "$MSBuildPath" "$SolutionPath" /p:Configuration="$buildType" /m /v:diag
+    "$MSBuildPath" build/bin/LightFX.sln /p:Configuration=Release /m /v:diag
     
 
     if [ ! -f $exePath ]; then
