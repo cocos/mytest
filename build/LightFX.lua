@@ -161,6 +161,7 @@ project "cc2ext"
 	includedirs {
 		"../3rd/src/stb",
 		"../3rd/src/tinyxml2",
+		"../3rd/src/tinygltf",
 		"../3rd/src/lodepng",
 		"../3rd/src/socket.io-client-cpp/src",
 		"../source",
