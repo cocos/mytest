@@ -179,7 +179,7 @@ build_lightfx_windows() {
     exeName="build/bin/${buildType}/LightFX.exe"
 
     MSBuildPath="C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/MSBuild/Current/Bin/amd64/MSBuild.exe"
-    "$MSBuildPath" $OutPathPrefix/LightFX.sln -t:LightFX -p:Configuration=$buildType -p:RuntimeLibrary=MultiThreaded -m
+    "$MSBuildPath" build/bin/LightFX.sln -t:LightFX -p:Configuration=$buildType -p:RuntimeLibrary=MultiThreaded -m
     
     if [ ! -f $exeName ]; then
         echo "Can't find ${exeName}"
@@ -198,7 +198,7 @@ build_uvunwrap_windows() {
     exeName="build/bin/${buildType}/uvunwrap.exe"
 
     MSBuildPath="C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/MSBuild/Current/Bin/amd64/MSBuild.exe"
-    "$MSBuildPath" $OutPathPrefix/LightFX.sln -t:uvunwrap -p:Configuration=$buildType -p:RuntimeLibrary=MultiThreaded -m
+    "$MSBuildPath" build/bin/LightFX.sln -t:uvunwrap -p:Configuration=$buildType -p:RuntimeLibrary=MultiThreaded -m
     
     if [ ! -f $exeName ]; then
         echo "Can't find ${exeName}"
