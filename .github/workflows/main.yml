@@ -22,13 +22,21 @@ jobs:
 
       - name: Set Artifact Name with Date
         shell: bash
-        run: echo "WINDOWS_ARTIFACT_NAME=lightmap-tools-win32-$(date +%Y%m%d)" >> $GITHUB_ENV
+        run: |
+        echo "LIGHTFX_ARTIFACT_NAME=lightmap-tools-win32-$(date +%Y%m%d)" >> $GITHUB_ENV
+        echo "UVUNWRAP_ARTIFACT_NAME=uvunwrap-tools_win32_$(date +%Y%m%d)" >> $GITHUB_ENV
 
-      - name: Upload Artifact
+      - name: Upload LightFX Artifact
         uses: actions/upload-artifact@v4
         with: 
-          name: ${{ env.WINDOWS_ARTIFACT_NAME }}
-          path: build/bin/Release
+          name: ${{ env.LIGHTFX_ARTIFACT_NAME }}
+          path: build/bin/LightFX
+
+      - name: Upload uvunwrap Artifact
+        uses: actions/upload-artifact@v4
+        with: 
+          name: ${{ env.UVUNWRAP_ARTIFACT_NAME }}
+          path: build/bin/uvunwrap
 
   test_on_mac:
     name: Test on macOS
@@ -36,10 +44,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         name: Checkout
-
-      # - name: Install autoconf automake autoconf-archive
-      #   run: |
-      #     brew install autoconf automake autoconf-archive
 
       - name: Download Premake
         uses: abel0b/setup-premake@v2.4
@@ -52,12 +56,20 @@ jobs:
           CI/build.sh
 
       - name: Set Artifact Name with Date
-        run: echo "ARTIFACT_NAME=lightmap-tools-darwin-$(date +%Y%m%d)" >> $GITHUB_ENV
+        run: |
+         echo "LIGHTFX_ARTIFACT_NAME=lightmap-tools-darwin-$(date +%Y%m%d)" >> $GITHUB_ENV
+         echo "UVUNWRAP_ARTIFACT_NAME=uvunwrap-tools_darwin_$(date +%Y%m%d)" >> $GITHUB_ENV
 
 
-      - name: Upload Artifact
+      - name: Upload LightFX Artifact
         uses: actions/upload-artifact@v4
         with: 
-          name: ${{ env.ARTIFACT_NAME }}
-          path: build/bin/Release
+          name: ${{ env.LIGHTFX_ARTIFACT_NAME }}
+          path: build/bin/LightFX
+
+      - name: Upload uvunwrap Artifact
+        uses: actions/upload-artifact@v4
+        with: 
+          name: ${{ env.UVUNWRAP_ARTIFACT_NAME }}
+          path: build/bin/uvunwrap
 

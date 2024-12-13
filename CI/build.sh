@@ -7,7 +7,6 @@ IsMacOS=false
 IsLinux=false
 is64BitOperatingSystem=false
 CurrentDir=$(dirname "$0")
-OutPathPrefix=build/bin
 
 ArtifactPath=''
 IncludeDebug=false
@@ -113,9 +112,44 @@ installDependencies() {
     fi
 }
 
+build_lightfx_mac() {
+    buildType=${1}
+    exeName="build/bin/${buildType}/LightFX"
+
+    xcodebuild -project build/bin/LightFX.xcodeproj -configuration $buildType DEBUG_INFORMATION_FORMAT=dwarf
+    
+    if [ ! -f $exeName ]; then
+        echo "Can't find ${exeName}"
+        return 1;
+    fi
+
+    if [ ! -d build/bin/LightFx ]; then
+        mkdir build/bin/LightFx
+    fi
+
+    cp $exeName build/bin/LightFX/LightFX
+}
+
+build_uvunwrap_mac() {
+    buildType=${1}
+    exeName="build/bin/${buildType}/uvunwrap"
+
+    xcodebuild -project build/bin/uvunwrap.xcodeproj -configuration $buildType DEBUG_INFORMATION_FORMAT=dwarf
+    
+    if [ ! -f $exeName ]; then
+        echo "Can't find ${exeName}"
+        return 1;
+    fi
+
+    if [ ! -d build/bin/uvunwrap ]; then
+        mkdir build/bin/uvunwrap
+    fi
+
+    cp $exeName build/bin/uvunwrap/uvunwrap
+}
+
 build_mac() {
-    buildType="${1}"
-    exeName="${OutPathPrefix}/${buildType}/LightFX"
+    buildType=${1}
 
     echo "build type is ${buildType}"
 
@@ -123,16 +157,8 @@ build_mac() {
 
     echo "after premake5 command"
 
-    xcodebuild -project $OutPathPrefix/LightFX.xcodeproj -configuration $buildType
-    
-    if [ ! -f "$exeName" ]; then
-        echo "Can't find ${exeName}"
-        return 1;
-    fi
-
-    # delete all files except exeName
-    cd $OutPathPrefix/$buildType
-    find . -maxdepth 1 ! -name LightFX -delete
+    build_lightfx_mac $buildType
+    build_uvunwrap_mac $buildType
 }
 
 function extract_zip() {
@@ -148,6 +174,44 @@ function extract_zip() {
     unzip -n -d "$dest_dir" "$zip_file"
 }
 
+build_lightfx_windows() {
+    buildType=${1}
+    exeName="build/bin/${buildType}/LightFX.exe"
+
+    MSBuildPath="C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/MSBuild/Current/Bin/amd64/MSBuild.exe"
+    "$MSBuildPath" $OutPathPrefix/LightFX.sln -t:LightFX -p:Configuration=$buildType -p:RuntimeLibrary=MultiThreaded -m
+    
+    if [ ! -f $exeName ]; then
+        echo "Can't find ${exeName}"
+        return 1;
+    fi
+
+    if [ ! -d build/bin/LightFx ]; then
+        mkdir build/bin/LightFx
+    fi
+
+    cp $exeName build/bin/LightFX/LightFX.exe
+}
+
+build_uvunwrap_windows() {
+    buildType=${1}
+    exeName="build/bin/${buildType}/uvunwrap.exe"
+
+    MSBuildPath="C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/MSBuild/Current/Bin/amd64/MSBuild.exe"
+    "$MSBuildPath" $OutPathPrefix/LightFX.sln -t:uvunwrap -p:Configuration=$buildType -p:RuntimeLibrary=MultiThreaded -m
+    
+    if [ ! -f $exeName ]; then
+        echo "Can't find ${exeName}"
+        return 1;
+    fi
+
+    if [ ! -d build/bin/uvunwrap ]; then
+        mkdir build/bin/uvunwrap
+    fi
+
+    cp $exeName build/bin/uvunmap/uvunwrap.exe
+}
+
 build_windows() {
     buildType=${1}
     echo "build type is ${buildType}"
@@ -161,19 +225,7 @@ build_windows() {
 
     premake5 --os=windows vs2019 --file=build/premake5.lua
 
-    # May change the path if ci changes.
-    MSBuildPath="C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/MSBuild/Current/Bin/amd64/MSBuild.exe"
-    "$MSBuildPath" $OutPathPrefix/LightFX.sln -t:LightFX -p:Configuration=$buildType -p:RuntimeLibrary=MultiThreaded -m
-    
-
-    if [ ! -f $exeName ]; then
-        echo "Can't find ${exeName}"
-        return 1;
-    fi
-
-    # delete all files except newExeName
-    cd $OutPathPrefix/$buildType
-    find . -maxdepth 1 ! -name LightFX.exe -delete
+    build_lightfx_windows $buildType
 }
 
 check_premake5() {
