@@ -132,7 +132,7 @@ build_mac() {
 
     # delete all files except exeName
     cd $OutPathPrefix/$buildType
-    find . ! -name LightFX -delete
+    find . -maxdepth 1 ! -name LightFX -delete
 }
 
 function extract_zip() {
@@ -173,7 +173,7 @@ build_windows() {
 
     # delete all files except newExeName
     cd $OutPathPrefix/$buildType
-    find . ! -name LightFX.exe -delete
+    find . -maxdepth 1 ! -name LightFX.exe -delete
 }
 
 check_premake5() {

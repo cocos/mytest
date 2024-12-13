@@ -25,12 +25,12 @@ jobs:
           CI/build.sh
 
       - name: Set Artifact Name with Date
-        run: echo "ARTIFACT_NAME=lightmap-tools-win32-$(date +%Y%m%d)" >> $GITHUB_ENV
+        run: echo "WINDOWS_ARTIFACT_NAME=lightmap-tools-win32-$(date +%Y%m%d)" >> $GITHUB_ENV
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with: 
-          name: ${{ env.ARTIFACT_NAME }}
+          name: ${{ env.WINDOWS_ARTIFACT_NAME }}
           path: build/bin/Release
 
   test_on_mac:
