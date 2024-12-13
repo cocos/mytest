@@ -24,7 +24,7 @@ jobs:
         shell: bash
         run: |
           echo "LIGHTFX_ARTIFACT_NAME=lightmap-tools-win32-$(date +%Y%m%d)" >> $GITHUB_ENV
-          echo "UVUNWRAP_ARTIFACT_NAME=uvunwrap-tools_win32_$(date +%Y%m%d)" >> $GITHUB_ENV
+          echo "UVUNWRAP_ARTIFACT_NAME=uvunwrap_win32_$(date +%Y%m%d)" >> $GITHUB_ENV
 
       - name: Upload LightFX Artifact
         uses: actions/upload-artifact@v4
@@ -58,7 +58,7 @@ jobs:
       - name: Set Artifact Name with Date
         run: |
            echo "LIGHTFX_ARTIFACT_NAME=lightmap-tools-darwin-$(date +%Y%m%d)" >> $GITHUB_ENV
-           echo "UVUNWRAP_ARTIFACT_NAME=uvunwrap-tools_darwin_$(date +%Y%m%d)" >> $GITHUB_ENV
+           echo "UVUNWRAP_ARTIFACT_NAME=uvunwrap_darwin_$(date +%Y%m%d)" >> $GITHUB_ENV
 
 
       - name: Upload LightFX Artifact

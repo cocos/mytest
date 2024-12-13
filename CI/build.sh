@@ -226,6 +226,7 @@ build_windows() {
     premake5 --os=windows vs2019 --file=build/premake5.lua
 
     build_lightfx_windows $buildType
+    build_uvunwrap_windows $buildType
 }
 
 check_premake5() {
