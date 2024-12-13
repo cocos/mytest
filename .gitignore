@@ -1,5 +1,4 @@
 .vscode
-/build*
 .DS_Store
 CMakeCache.txt
 CMakeFiles
@@ -19,7 +18,6 @@ rules.ninja
 Debug
 x64
 *.exr
-*.sh
 *.bat
 *.obj
 *.png

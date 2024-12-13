@@ -1,14 +1,7 @@
-# windows平台
-	需要安装vs2019
-	解压3rd/embree目录下的lib(由于github限制，无法上传大文件)
-	直接点击build/win/make.bat
-	打开build/win/bin下的vs工程
-	生成可直接运行build.bat
-# macosx平台
-	打开终端cd到build/mac
-	执行sudo bash ./make.sh
-	打开build/mac/bin下的xcode工程
-	生成可直接运行sudo bash ./build.sh
+# 编译
+	需要安装vs2019、premake
+	然后执行 CI/build.sh
+	可执行文件在 build/bin/Release
 	
 # debug
 	编辑器lightmap插件，LFX_App.ts开启lfx_debug = true, 需要重新编译，设置LFX_App.js lfx_debug = true就不需要编译了
