@@ -115,7 +115,7 @@ installDependencies() {
 
 build_mac() {
     buildType="${1}"
-    oldExeName="${OutPathPrefix}/${buildType}/LightFX"
+    exeName="${OutPathPrefix}/${buildType}/LightFX"
 
     echo "build type is ${buildType}"
 
@@ -125,18 +125,13 @@ build_mac() {
 
     xcodebuild -project $OutPathPrefix/LightFX.xcodeproj -configuration $buildType
     
-    if [ ! -f "$oldExeName" ]; then
-        echo "Can't find ${oldExeName}"
+    if [ ! -f "$exeName" ]; then
+        echo "Can't find ${exeName}"
         return 1;
     fi
 
-    # rename file
-    datestr=`date +%Y%m%d`
-    newExeName="${OutPathPrefix}/${buildType}/lightmap-tools-darwin-$datestr"
-    mv $oldExeName $newExeName
-
-    # delete all files except newExeName
-    find $OutPathPrefix/$buildType -type f ! -name $newExeName -delete
+    # delete all files except exeName
+    find $OutPathPrefix/$buildType -type f ! -name $exeName -delete
 }
 
 function extract_zip() {
@@ -156,7 +151,7 @@ build_windows() {
     buildType=${1}
     echo "build type is ${buildType}"
 
-    newExeName="${OutPathPrefix}/$buildType/LightFX.exe"
+    exeName="${OutPathPrefix}/$buildType/LightFX.exe"
 
     extract_zip "3rd/embree/lib/embree.zip" "3rd/embree/lib"
     extract_zip "3rd/embree/lib/embree_avx.zip" "3rd/embree/lib"
@@ -170,18 +165,13 @@ build_windows() {
     "$MSBuildPath" $OutPathPrefix/LightFX.sln -t:LightFX -p:Configuration=$buildType -m
     
 
-    if [ ! -f $newExeName ]; then
-        echo "Can't find ${newExeName}"
+    if [ ! -f $exeName ]; then
+        echo "Can't find ${exeName}"
         return 1;
     fi
 
-    # rename file
-    datestr=`date +%Y%m%d`
-    newExeName="${OutPathPrefix}/${buildType}/lightmap-tools-win32-$datestr.exe"
-    mv $oldExeName $newExeName
-
     # delete all files except newExeName
-    find $OutPathPrefix/$buildType -type f ! -name $newExeName -delete
+    find $OutPathPrefix/$buildType -type f ! -name $exeName -delete
 }
 
 check_premake5() {

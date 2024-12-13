@@ -24,10 +24,13 @@ jobs:
         run: |
           CI/build.sh
 
+      - name: Set Artifact Name with Date
+        run: echo "ARTIFACT_NAME=lightmap-tools-win32-$(date +%Y%m%d)" >> $GITHUB_ENV
+
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with: 
-          name: Windows-artifact
+          name: ${{ env.ARTIFACT_NAME }}
           path: build/bin/Release
 
   test_on_mac:
@@ -51,9 +54,13 @@ jobs:
         run: |
           CI/build.sh
 
+      - name: Set Artifact Name with Date
+        run: echo "ARTIFACT_NAME=lightmap-tools-darwin-$(date +%Y%m%d)" >> $GITHUB_ENV
+
+
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with: 
-          name: macOS-artifact
+          name: ${{ env.ARTIFACT_NAME }}
           path: build/bin/Release
 
