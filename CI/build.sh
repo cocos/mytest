@@ -133,7 +133,7 @@ build_mac() {
     # rename file
     datestr=`date +%Y%m%d`
     newExeName="${OutPathPrefix}/${buildType}/lightmap-tools-darwin-$datestr"
-    mv $newExeName $oldExeName
+    mv $oldExeName $newExeName
 
     # delete all files except newExeName
     find $OutPathPrefix/$buildType -type f ! -name $newExeName -delete
@@ -178,7 +178,7 @@ build_windows() {
     # rename file
     datestr=`date +%Y%m%d`
     newExeName="${OutPathPrefix}/${buildType}/lightmap-tools-win32-$datestr.exe"
-    mv $newExeName $oldExeName
+    mv $oldExeName $newExeName
 
     # delete all files except newExeName
     find $OutPathPrefix/$buildType -type f ! -name $newExeName -delete
